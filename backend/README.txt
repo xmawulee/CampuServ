@@ -78,4 +78,3 @@
   Wiki:               https://cwiki.apache.org/confluence/display/MAVEN/
   Available Plugins:  https://maven.apache.org/plugins/
 
-# Backend config update
