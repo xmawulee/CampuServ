@@ -68,9 +68,9 @@ export default function CategoryProvidersScreen({ route, navigation }: any) {
 
   const renderItem = ({ item }: { item: ProviderResponse }) => (
     <TouchableOpacity
-      style={[styles.providerCard, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}
+      style={[styles.providerCard, { backgroundColor: colors.cardBackground }]}
       onPress={() => navigation.navigate('ProviderProfile', { providerId: (item as any).id || item.providerId })}
-      activeOpacity={0.8}
+      activeOpacity={0.85}
     >
       <View style={styles.cardHeader}>
         <View style={styles.avatarWrap}>
@@ -84,12 +84,14 @@ export default function CategoryProvidersScreen({ route, navigation }: any) {
             <Ionicons name="star" size={14} color="#FFB800" />
             <Text style={[styles.ratingText, { color: colors.text }]}>
               {(item.completedJobsCount > 0 || item.rating > 0)
-                ? `${item.rating.toFixed(1)} per ${item.completedJobsCount} jobs done`
+                ? `${item.rating.toFixed(1)} rating • ${item.completedJobsCount} jobs done`
                 : 'New provider'}
             </Text>
           </View>
         </View>
-        <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
+        <View style={[styles.chevronWrap, { backgroundColor: `${colors.primary}15` }]}>
+          <Ionicons name="chevron-forward" size={18} color={colors.primary} />
+        </View>
       </View>
       {item.bio ? (
         <Text style={[styles.bio, { color: colors.textMuted }]} numberOfLines={2}>
@@ -101,12 +103,12 @@ export default function CategoryProvidersScreen({ route, navigation }: any) {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
-      <View style={[styles.header, { borderBottomColor: colors.border }]}>
-        <TouchableOpacity onPress={() => navigation.goBack()} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+      <View style={[styles.header, { backgroundColor: colors.cardBackground }]}>
+        <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
           <Ionicons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: colors.text }]}>{categoryName || 'Providers'}</Text>
-        <TouchableOpacity onPress={toggleSort} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+        <TouchableOpacity style={styles.sortBtn} onPress={toggleSort} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
           <Ionicons name={sortOption === 'rating' ? 'star' : 'time'} size={22} color={colors.primary} />
         </TouchableOpacity>
       </View>
@@ -121,6 +123,7 @@ export default function CategoryProvidersScreen({ route, navigation }: any) {
           keyExtractor={(item) => (item as any).id || item.providerId}
           renderItem={renderItem}
           contentContainerStyle={styles.list}
+          showsVerticalScrollIndicator={false}
           refreshing={refreshing}
           onRefresh={onRefresh}
           onEndReached={loadMore}
@@ -128,7 +131,9 @@ export default function CategoryProvidersScreen({ route, navigation }: any) {
           ListFooterComponent={() => loadingMore ? <ActivityIndicator style={{ padding: 16 }} color={colors.primary} /> : null}
           ListEmptyComponent={() => (
             <View style={styles.center}>
-              <Ionicons name="people-outline" size={60} color={colors.textMuted} />
+              <View style={[styles.emptyIconWrap, { backgroundColor: 'rgba(107, 114, 128, 0.1)' }]}>
+                <Ionicons name="people" size={48} color={colors.textMuted} />
+              </View>
               <Text style={[styles.emptyTitle, { color: colors.text }]}>No Providers Found</Text>
               <Text style={[styles.emptySub, { color: colors.textMuted }]}>
                 Try again later when providers sign up for this category.
@@ -147,74 +152,97 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: 16,
-    borderBottomWidth: 1,
+    paddingHorizontal: 16,
+    height: 60,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.05,
+    shadowRadius: 12,
+    elevation: 4,
+    zIndex: 10,
   },
-  headerTitle: { fontSize: 18, fontFamily: 'Outfit-SemiBold' },
-  list: { padding: 16, paddingBottom: 40 },
-  center: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingTop: 60 },
+  headerTitle: { fontSize: 18, fontWeight: '800', letterSpacing: -0.3 },
+  backBtn: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
+  sortBtn: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
+  list: { padding: 20, paddingBottom: 40 },
+  center: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingTop: 60, paddingHorizontal: 40 },
   providerCard: {
-    borderWidth: 1,
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 12,
+    borderRadius: 24,
+    padding: 20,
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.05,
+    shadowRadius: 12,
+    elevation: 3,
   },
   cardHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 8,
   },
   avatarWrap: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: 52,
+    height: 52,
+    borderRadius: 26,
     backgroundColor: '#3b82f6',
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 12,
+    marginRight: 16,
   },
   avatarText: {
     color: '#FFF',
-    fontSize: 20,
-    fontFamily: 'Outfit-Bold',
+    fontSize: 22,
+    fontWeight: '800',
   },
   cardBody: {
     flex: 1,
   },
   name: {
-    fontSize: 16,
-    fontFamily: 'Outfit-SemiBold',
-    marginBottom: 4,
+    fontSize: 17,
+    fontWeight: '800',
+    marginBottom: 6,
+    letterSpacing: -0.2,
   },
   ratingRow: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   ratingText: {
-    marginLeft: 4,
+    marginLeft: 6,
     fontSize: 13,
-    fontFamily: 'Inter-Medium',
+    fontWeight: '600',
   },
-  jobsText: {
-    marginLeft: 8,
-    fontSize: 12,
-    fontFamily: 'Inter-Regular',
+  chevronWrap: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: 12,
   },
   bio: {
-    fontSize: 13,
-    fontFamily: 'Inter-Regular',
-    marginTop: 4,
+    fontSize: 14,
+    lineHeight: 22,
+    fontWeight: '500',
+    marginTop: 16,
+  },
+  emptyIconWrap: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 16,
   },
   emptyTitle: {
-    fontSize: 18,
-    fontFamily: 'Outfit-SemiBold',
-    marginTop: 16,
+    fontSize: 20,
+    fontWeight: '800',
     marginBottom: 8,
+    letterSpacing: -0.4,
   },
   emptySub: {
-    fontSize: 14,
-    fontFamily: 'Inter-Regular',
+    fontSize: 15,
     textAlign: 'center',
-    paddingHorizontal: 32,
+    lineHeight: 22,
   }
 });

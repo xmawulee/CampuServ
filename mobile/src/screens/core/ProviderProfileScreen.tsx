@@ -79,17 +79,18 @@ export default function ProviderProfileScreen({ route, navigation }: any) {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
-      <View style={[styles.header, { borderBottomColor: colors.border }]}>
-        <TouchableOpacity onPress={() => navigation.goBack()} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+      <View style={[styles.header, { backgroundColor: colors.cardBackground }]}>
+        <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
           <Ionicons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: colors.text }]}>Provider Profile</Text>
-        <View style={{ width: 24 }} />
+        <View style={{ width: 44 }} />
       </View>
 
       <ScrollView 
         contentContainerStyle={styles.scrollContent}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}
+        showsVerticalScrollIndicator={false}
       >
         <View style={styles.topSection}>
           <View style={styles.avatarWrap}>
@@ -97,13 +98,17 @@ export default function ProviderProfileScreen({ route, navigation }: any) {
           </View>
           <Text style={[styles.name, { color: colors.text }]}>{profile.fullName}</Text>
           <View style={styles.statsRow}>
-            <View style={[styles.statBox, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
-              <Ionicons name="star" size={20} color="#FFB800" />
+            <View style={[styles.statBox, { backgroundColor: colors.cardBackground }]}>
+              <View style={[styles.statIconWrap, { backgroundColor: 'rgba(255, 184, 0, 0.1)' }]}>
+                <Ionicons name="star" size={22} color="#FFB800" />
+              </View>
               <Text style={[styles.statValue, { color: colors.text }]}>{profile.rating.toFixed(1)}</Text>
               <Text style={[styles.statLabel, { color: colors.textMuted }]}>Rating</Text>
             </View>
-            <View style={[styles.statBox, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
-              <Ionicons name="briefcase" size={20} color={colors.primary} />
+            <View style={[styles.statBox, { backgroundColor: colors.cardBackground }]}>
+              <View style={[styles.statIconWrap, { backgroundColor: `${colors.primary}1A` }]}>
+                <Ionicons name="briefcase" size={22} color={colors.primary} />
+              </View>
               <Text style={[styles.statValue, { color: colors.text }]}>{profile.completedJobsCount}</Text>
               <Text style={[styles.statLabel, { color: colors.textMuted }]}>Jobs Done</Text>
             </View>
@@ -120,10 +125,10 @@ export default function ProviderProfileScreen({ route, navigation }: any) {
         {(profile as any).categoryRatings && (profile as any).categoryRatings.length > 0 && (
           <View style={styles.section}>
             <Text style={[styles.sectionTitle, { color: colors.text }]}>Category Ratings</Text>
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 8 }}>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginTop: 12 }}>
               {(profile as any).categoryRatings.map((cr: any) => (
-                <View key={cr.categoryId} style={{ alignItems: 'center' }}>
-                  <Text style={{ fontSize: 12, color: colors.textMuted }}>{cr.categoryId.replace('_', ' ')}</Text>
+                <View key={cr.categoryId} style={[styles.catRatingBox, { backgroundColor: colors.cardBackground }]}>
+                  <Text style={{ fontSize: 13, fontWeight: '700', color: colors.text, marginBottom: 8 }}>{cr.categoryId.replace('_', ' ')}</Text>
                   <RatingBadge
                     rating={cr.rating}
                     reviewCount={cr.reviewCount}
@@ -138,29 +143,21 @@ export default function ProviderProfileScreen({ route, navigation }: any) {
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: colors.text }]}>Offered Service Categories</Text>
           {profile.services && profile.services.length > 0 ? (
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 8 }}>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginTop: 12 }}>
               {profile.services.map((svc: any, idx: number) => (
                 <View
                   key={idx}
-                  style={{
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    gap: 8,
-                    paddingHorizontal: 14,
-                    paddingVertical: 8,
-                    borderRadius: 16,
-                    borderWidth: 1,
-                    borderColor: colors.border,
-                    backgroundColor: colors.cardBackground,
-                  }}
+                  style={[styles.servicePill, { backgroundColor: `${colors.primary}1A` }]}
                 >
-                  <Text style={{ fontSize: 14, fontWeight: '600', color: colors.text }}>
+                  <Text style={{ fontSize: 14, fontWeight: '700', color: colors.primary }}>
                     {svc.category?.name || svc.title || 'Service'}
                   </Text>
                   {svc.basePrice !== undefined && (
-                    <Text style={{ fontSize: 13, fontWeight: '700', color: colors.primary }}>
-                      GHS {svc.basePrice}
-                    </Text>
+                    <View style={[styles.priceTag, { backgroundColor: colors.primary }]}>
+                      <Text style={{ fontSize: 12, fontWeight: '800', color: '#FFF' }}>
+                        GHS {svc.basePrice}
+                      </Text>
+                    </View>
                   )}
                 </View>
               ))}
@@ -171,11 +168,11 @@ export default function ProviderProfileScreen({ route, navigation }: any) {
         </View>
       </ScrollView>
 
-      <View style={[styles.bottomBar, { backgroundColor: colors.background, borderTopColor: colors.border }]}>
+      <View style={[styles.bottomBar, { backgroundColor: colors.cardBackground }]}>
         <TouchableOpacity
           style={[styles.requestBtn, { backgroundColor: colors.primary }]}
           onPress={handleRequestService}
-          activeOpacity={0.8}
+          activeOpacity={0.85}
         >
           <Text style={styles.requestBtnText}>Request Service</Text>
         </TouchableOpacity>
@@ -191,37 +188,51 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: 16,
-    borderBottomWidth: 1,
+    paddingHorizontal: 16,
+    height: 60,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.05,
+    shadowRadius: 12,
+    elevation: 4,
+    zIndex: 10,
   },
-  headerTitle: { fontSize: 18, fontFamily: 'Outfit-SemiBold' },
+  headerTitle: { fontSize: 18, fontWeight: '800', letterSpacing: -0.3 },
+  backBtn: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
   scrollContent: {
-    paddingBottom: 100,
+    paddingBottom: 120,
   },
   topSection: {
     alignItems: 'center',
-    paddingVertical: 24,
-    paddingHorizontal: 16,
+    paddingTop: 32,
+    paddingBottom: 24,
+    paddingHorizontal: 20,
   },
   avatarWrap: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+    width: 100,
+    height: 100,
+    borderRadius: 50,
     backgroundColor: '#3b82f6',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 16,
+    shadowColor: '#3b82f6',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.3,
+    shadowRadius: 16,
+    elevation: 6,
   },
   avatarText: {
     color: '#FFF',
-    fontSize: 32,
-    fontFamily: 'Outfit-Bold',
+    fontSize: 40,
+    fontWeight: '800',
   },
   name: {
-    fontSize: 22,
-    fontFamily: 'Outfit-Bold',
-    marginBottom: 20,
+    fontSize: 26,
+    fontWeight: '900',
+    marginBottom: 24,
     textAlign: 'center',
+    letterSpacing: -0.5,
   },
   statsRow: {
     flexDirection: 'row',
@@ -231,72 +242,101 @@ const styles = StyleSheet.create({
   },
   statBox: {
     flex: 1,
-    maxWidth: 140,
-    borderWidth: 1,
-    borderRadius: 16,
-    padding: 16,
+    maxWidth: 160,
+    borderRadius: 24,
+    padding: 20,
     alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.05,
+    shadowRadius: 16,
+    elevation: 4,
+  },
+  statIconWrap: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 12,
   },
   statValue: {
-    fontSize: 18,
-    fontFamily: 'Outfit-Bold',
-    marginTop: 8,
+    fontSize: 22,
+    fontWeight: '800',
     marginBottom: 4,
   },
   statLabel: {
-    fontSize: 13,
-    fontFamily: 'Inter-Medium',
+    fontSize: 14,
+    fontWeight: '600',
   },
   section: {
-    paddingHorizontal: 16,
-    marginBottom: 24,
+    paddingHorizontal: 24,
+    marginBottom: 32,
   },
   sectionTitle: {
-    fontSize: 18,
-    fontFamily: 'Outfit-SemiBold',
-    marginBottom: 12,
+    fontSize: 16,
+    fontWeight: '800',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+    marginBottom: 16,
   },
   bio: {
     fontSize: 15,
-    fontFamily: 'Inter-Regular',
-    lineHeight: 22,
+    lineHeight: 24,
+    fontWeight: '500',
   },
-  serviceCard: {
-    borderWidth: 1,
-    borderRadius: 12,
+  catRatingBox: {
     padding: 16,
-    marginBottom: 12,
+    borderRadius: 20,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.05,
+    shadowRadius: 12,
+    elevation: 3,
+    flex: 1,
+    minWidth: 140,
   },
-  serviceTitle: {
-    fontSize: 16,
-    fontFamily: 'Outfit-Medium',
-    marginBottom: 4,
+  servicePill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingLeft: 16,
+    paddingRight: 6,
+    paddingVertical: 6,
+    borderRadius: 100,
   },
-  serviceDesc: {
-    fontSize: 14,
-    fontFamily: 'Inter-Regular',
-    marginBottom: 8,
-  },
-  servicePrice: {
-    fontSize: 15,
-    fontFamily: 'Inter-SemiBold',
+  priceTag: {
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 100,
   },
   bottomBar: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
-    padding: 16,
-    borderTopWidth: 1,
+    paddingHorizontal: 24,
+    paddingVertical: 16,
+    paddingBottom: 32, // Extra padding for safe area
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.05,
+    shadowRadius: 12,
+    elevation: 8,
   },
   requestBtn: {
-    paddingVertical: 16,
-    borderRadius: 16,
+    paddingVertical: 18,
+    borderRadius: 100,
     alignItems: 'center',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.25,
+    shadowRadius: 12,
+    elevation: 6,
   },
   requestBtnText: {
     color: '#FFF',
     fontSize: 16,
-    fontFamily: 'Inter-SemiBold',
+    fontWeight: '800',
   },
 });

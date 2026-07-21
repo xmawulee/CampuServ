@@ -1,5 +1,6 @@
 import { useAuthStore } from '../store/authStore';
-import { api } from './api';
+import axios from 'axios';
+import { BASE_URL } from './api';
 
 let lastCheckTime = 0;
 let lastStatusUpdateTimestamp = 0;
@@ -31,7 +32,7 @@ export async function fetchAndResolveAccountStatus(source: string): Promise<'ACT
 
   try {
     console.log(`[AccountStatus] Executing check-status request for ${user.email} (Source: ${source}, ts: ${fetchTimestamp})`);
-    const res = await api.get('/auth/check-status', { params: { email: user.email } });
+    const res = await axios.get(`${BASE_URL}/auth/check-status`, { params: { email: user.email } });
     const serverStatus = (res.data?.accountStatus || 'ACTIVE').toUpperCase() as 'ACTIVE' | 'SUSPENDED' | 'BANNED';
 
     console.log(`[AccountStatus] "${source}" received server status: ${serverStatus}`);

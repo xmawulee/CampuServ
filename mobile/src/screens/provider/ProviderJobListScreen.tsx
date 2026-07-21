@@ -60,6 +60,7 @@ export default function ProviderJobListScreen({ navigation }: any) {
 
   useFocusEffect(
     useCallback(() => {
+      navigation.setOptions({ headerShown: false });
       setLoading(true);
       fetchJobs(activeTab, 0, true);
     }, [activeTab, fetchJobs])
@@ -180,20 +181,22 @@ export default function ProviderJobListScreen({ navigation }: any) {
         <View style={{ width: 24 }} />
       </View>
 
-      <View style={[styles.tabContainer, { borderBottomColor: colors.border }]}>
+      <View style={styles.tabContainer}>
         <TouchableOpacity
-          style={[styles.tabButton, activeTab === 'active' && { borderBottomColor: colors.primary }]}
+          style={[styles.tabButton, activeTab === 'active' ? { backgroundColor: colors.primary, shadowColor: colors.primary, elevation: 4 } : { backgroundColor: colors.inputBackground }]}
           onPress={() => switchTab('active')}
+          activeOpacity={0.8}
         >
-          <Text style={[styles.tabText, { color: activeTab === 'active' ? colors.primary : colors.textMuted }]}>
+          <Text style={[styles.tabText, { color: activeTab === 'active' ? '#FFF' : colors.textMuted }]}>
             Active
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={[styles.tabButton, activeTab === 'history' && { borderBottomColor: colors.primary }]}
+          style={[styles.tabButton, activeTab === 'history' ? { backgroundColor: colors.primary, shadowColor: colors.primary, elevation: 4 } : { backgroundColor: colors.inputBackground }]}
           onPress={() => switchTab('history')}
+          activeOpacity={0.8}
         >
-          <Text style={[styles.tabText, { color: activeTab === 'history' ? colors.primary : colors.textMuted }]}>
+          <Text style={[styles.tabText, { color: activeTab === 'history' ? '#FFF' : colors.textMuted }]}>
             History
           </Text>
         </TouchableOpacity>
@@ -240,17 +243,19 @@ const styles = StyleSheet.create({
   headerTitle: { fontSize: 18, fontFamily: 'Outfit-SemiBold' },
   tabContainer: {
     flexDirection: 'row',
-    borderBottomWidth: 1,
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    paddingBottom: 8,
+    gap: 12,
   },
   tabButton: {
     flex: 1,
-    paddingVertical: 14,
+    paddingVertical: 12,
     alignItems: 'center',
-    borderBottomWidth: 2,
-    borderBottomColor: 'transparent',
+    borderRadius: 100,
   },
   tabText: {
-    fontFamily: 'Outfit-Medium',
+    fontFamily: 'Outfit-SemiBold',
     fontSize: 15,
   },
   centerContainer: {
@@ -259,14 +264,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   listContent: {
-    padding: 16,
+    padding: 20,
     paddingBottom: 40,
+    gap: 16,
   },
   jobCard: {
-    borderWidth: 1,
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 12,
+    borderWidth: 0,
+    borderRadius: 24,
+    padding: 20,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.1,
+    shadowRadius: 16,
+    elevation: 8,
   },
   jobTop: {
     flexDirection: 'row',
@@ -275,22 +284,25 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   jobId: {
-    fontSize: 12,
-    fontFamily: 'Inter-Medium',
-    marginBottom: 4,
+    fontSize: 13,
+    fontFamily: 'Inter-SemiBold',
+    marginBottom: 6,
+    textTransform: 'uppercase',
   },
   jobTitle: {
-    fontSize: 16,
-    fontFamily: 'Outfit-Medium',
+    fontSize: 17,
+    fontFamily: 'Outfit-Bold',
+    letterSpacing: -0.3,
   },
   statusPill: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
   },
   statusPillText: {
     fontSize: 11,
-    fontFamily: 'Inter-SemiBold',
+    fontFamily: 'Inter-Bold',
+    textTransform: 'uppercase',
   },
   jobFooter: {
     paddingTop: 12,

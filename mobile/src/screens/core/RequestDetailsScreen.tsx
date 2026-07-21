@@ -66,7 +66,10 @@ export default function RequestDetailsScreen({ route, navigation }: any) {
     }
   }, [requestId, navigation]);
 
-  useEffect(() => { fetchRequestDetails(); }, [fetchRequestDetails]);
+  useEffect(() => {
+    navigation.setOptions({ headerShown: false });
+    fetchRequestDetails();
+  }, [fetchRequestDetails, navigation]);
 
   const fetchLocationAndJob = useCallback(async () => {
     if (!requestId) return;
@@ -268,10 +271,20 @@ export default function RequestDetailsScreen({ route, navigation }: any) {
   const totalCharge = offerPrice + commission;
 
   return (
-    <>
+    <View style={{ flex: 1, backgroundColor: colors.background }}>
+      {/* ── Fixed Header ── */}
+      <View style={[styles.header, { backgroundColor: colors.cardBackground }]}>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.closeBtn}>
+          <Ionicons name="chevron-back" size={28} color={colors.text} />
+        </TouchableOpacity>
+        <Text style={[styles.headerTitle, { color: colors.text }]}>Request Details</Text>
+        <View style={{ width: 40 }} />
+      </View>
+
       <ScrollView 
-        style={[styles.container, { backgroundColor: colors.background }]} 
+        style={styles.container} 
         contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}
       >
       
@@ -283,15 +296,21 @@ export default function RequestDetailsScreen({ route, navigation }: any) {
         <Text style={styles.heroDesc} numberOfLines={4}>{request.description}</Text>
         <View style={styles.heroStats}>
           <View style={styles.heroStat}>
-            <Ionicons name="location-outline" size={14} color="rgba(255,255,255,0.75)" />
-            <Text style={styles.heroStatText}>{request.location || 'Campus'}</Text>
+            <View style={styles.heroStatIconWrap}>
+              <Ionicons name="location" size={12} color={colors.primary} />
+            </View>
+            <Text style={styles.heroStatText} numberOfLines={1}>{request.location || 'Campus'}</Text>
           </View>
           <View style={styles.heroStat}>
-            <Ionicons name="calendar-outline" size={14} color="rgba(255,255,255,0.75)" />
+            <View style={styles.heroStatIconWrap}>
+              <Ionicons name="calendar" size={12} color={colors.primary} />
+            </View>
             <Text style={styles.heroStatText}>{new Date(request.deadline).toLocaleDateString()}</Text>
           </View>
           <View style={styles.heroStat}>
-            <Ionicons name="cash-outline" size={14} color="rgba(255,255,255,0.75)" />
+            <View style={styles.heroStatIconWrap}>
+              <Ionicons name="wallet" size={12} color={colors.primary} />
+            </View>
             <Text style={styles.heroStatText}>{request.budget ? `${request.budget} GHS` : 'Open'}</Text>
           </View>
         </View>
@@ -299,20 +318,20 @@ export default function RequestDetailsScreen({ route, navigation }: any) {
 
       {/* ── Status pill ── */}
       <View style={styles.statusRow}>
-        <Text style={[styles.statusLabel, { color: colors.textMuted }]}>Status</Text>
+        <Text style={[styles.statusLabel, { color: colors.text }]}>Status</Text>
         <View style={[
           styles.statusPill,
           {
-            backgroundColor: request.status === 'OPEN' ? colors.successLight : colors.warningLight,
+            backgroundColor: request.status === 'OPEN' ? 'rgba(16, 185, 129, 0.12)' : (request.status === 'COMPLETED' ? 'rgba(59, 130, 246, 0.12)' : 'rgba(245, 158, 11, 0.12)'),
           }
         ]}>
           <View style={[
             styles.statusDot,
-            { backgroundColor: request.status === 'OPEN' ? colors.success : colors.warning }
+            { backgroundColor: request.status === 'OPEN' ? '#10B981' : (request.status === 'COMPLETED' ? '#3B82F6' : '#F59E0B') }
           ]} />
           <Text style={[
             styles.statusPillText,
-            { color: request.status === 'OPEN' ? colors.success : colors.warning }
+            { color: request.status === 'OPEN' ? '#10B981' : (request.status === 'COMPLETED' ? '#3B82F6' : '#F59E0B') }
           ]}>
             {request.status}
           </Text>
@@ -323,13 +342,13 @@ export default function RequestDetailsScreen({ route, navigation }: any) {
       {(request.attachments ?? []).length > 0 && (
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: colors.text }]}>
-            Attached Photos ({request.attachments.length})
+            Attached Photos <Text style={{ color: colors.textMuted }}>({request.attachments.length})</Text>
           </Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 10 }}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 12 }}>
             {request.attachments.map((att: any) => {
               const url = att.fileUrl.startsWith('/') ? `${BASE_URL}${att.fileUrl}` : att.fileUrl;
               return (
-                <TouchableOpacity key={att.id} onPress={() => setSelectedImage(url)} activeOpacity={0.8}>
+                <TouchableOpacity key={att.id} onPress={() => setSelectedImage(url)} activeOpacity={0.85}>
                   <Image source={{ uri: url }} style={[styles.attachmentImg, { borderColor: colors.border }]} />
                 </TouchableOpacity>
               );
@@ -341,10 +360,12 @@ export default function RequestDetailsScreen({ route, navigation }: any) {
       {/* ── Location & Navigation Section ── */}
       {requestLocation && (
         <View style={[styles.locationDetailsCard, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
-          <Text style={[styles.locationDetailsTitle, { color: colors.text }]}>Service Location</Text>
+          <Text style={[styles.sectionTitle, { color: colors.text, marginBottom: 16 }]}>Service Location</Text>
           
           <View style={styles.locationDetailsRow}>
-            <Ionicons name="location" size={20} color={colors.primary} style={{ marginRight: 6 }} />
+            <View style={[styles.locIconContainer, { backgroundColor: 'rgba(21, 101, 192, 0.1)' }]}>
+              <Ionicons name="location" size={20} color={colors.primary} />
+            </View>
             <Text style={[styles.locationDetailsAddress, { color: colors.text }]} numberOfLines={2}>
               {requestLocation.pickupAddress}
             </Text>
@@ -353,7 +374,7 @@ export default function RequestDetailsScreen({ route, navigation }: any) {
           {/* If there's an active provider landmark (released only after start task / IN_PROGRESS) */}
           {requestLocation.pickupLandmark ? (
             <View style={[styles.landmarkDetailsBox, { backgroundColor: colors.inputBackground }]}>
-              <Ionicons name="information-circle" size={16} color={colors.primary} style={{ marginRight: 6 }} />
+              <Ionicons name="information-circle" size={18} color={colors.primary} style={{ marginRight: 8 }} />
               <Text style={[styles.landmarkDetailsText, { color: colors.text }]}>
                 Landmark: "{requestLocation.pickupLandmark}"
               </Text>
@@ -367,7 +388,7 @@ export default function RequestDetailsScreen({ route, navigation }: any) {
                 name={distanceEstimate.mode === 'driving' ? 'car-outline' : 'footsteps-outline'} 
                 size={16} 
                 color={colors.primary} 
-                style={{ marginRight: 6 }} 
+                style={{ marginRight: 8 }} 
               />
               <Text style={[styles.distanceEstimateText, { color: colors.text }]}>
                 {distanceEstimate.mode === 'driving' ? '🚗' : '📍'} ~{distanceEstimate.distanceText} away · ~{distanceEstimate.durationText} {distanceEstimate.mode === 'driving' ? 'drive' : 'walk'}
@@ -375,7 +396,7 @@ export default function RequestDetailsScreen({ route, navigation }: any) {
             </View>
           )}
 
-          {/* Static Map Thumbnail: if coordinates are available (Requester, or Confirmed Provider) */}
+          {/* Static Map Thumbnail */}
           {requestLocation.pickupLatitude && requestLocation.pickupLongitude ? (
             <View style={styles.staticMapContainer}>
               <Image
@@ -395,14 +416,14 @@ export default function RequestDetailsScreen({ route, navigation }: any) {
           {job && (
             <View style={styles.navigationActions}>
               <TouchableOpacity
-                style={[styles.navigationBtn, { backgroundColor: colors.primary }]}
+                style={[styles.navigationBtn, { backgroundColor: colors.primary, shadowColor: colors.primary }]}
                 onPress={() => {
                   navigation.navigate("ActiveJob", {
                     jobId: job.id,
                   });
                 }}
               >
-                <Ionicons name="briefcase-outline" size={18} color="#FFF" style={{ marginRight: 8 }} />
+                <Ionicons name="briefcase" size={18} color="#FFF" style={{ marginRight: 8 }} />
                 <Text style={styles.navigationBtnText}>Go to Active Job Dashboard</Text>
               </TouchableOpacity>
             </View>
@@ -413,24 +434,28 @@ export default function RequestDetailsScreen({ route, navigation }: any) {
       {/* ── Offers Section (for requester) ── */}
       {isMyRequest && (
         <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>
+          <Text style={[styles.sectionTitle, { color: colors.text, marginBottom: 16 }]}>
             Provider Bids
             <Text style={[styles.sectionCount, { color: colors.primary }]}> ({request.offers?.length || 0})</Text>
           </Text>
 
           {request.targetProviderId && (request.offers || []).length === 0 ? (
-            <View style={[styles.emptyOffers, { backgroundColor: colors.inputBackground, borderColor: colors.accent, borderWidth: 1, borderStyle: 'dashed', padding: 20 }]}>
-              <Ionicons name="person-circle-outline" size={32} color={colors.accent} />
-              <Text style={[styles.emptyOffersText, { color: colors.text, fontWeight: '700', marginTop: 8 }]}>
+            <View style={[styles.emptyOffers, { backgroundColor: colors.inputBackground, borderColor: colors.accent, borderWidth: 2, borderStyle: 'dashed' }]}>
+              <View style={[styles.emptyOffersIconWrap, { backgroundColor: 'rgba(255, 107, 53, 0.1)' }]}>
+                <Ionicons name="person-circle-outline" size={32} color={colors.accent} />
+              </View>
+              <Text style={[styles.emptyOffersText, { color: colors.text }]}>
                 Awaiting response from {request.targetProviderName || 'selected provider'}...
               </Text>
-              <Text style={{ color: colors.textMuted, fontSize: 12, marginTop: 4, textAlign: 'center' }}>
+              <Text style={{ color: colors.textMuted, fontSize: 13, marginTop: 4, textAlign: 'center' }}>
                 We have notified them of your request.
               </Text>
             </View>
           ) : (request.offers || []).length === 0 ? (
             <View style={[styles.emptyOffers, { backgroundColor: colors.inputBackground }]}>
-              <Ionicons name="hourglass-outline" size={28} color={colors.textMuted} />
+              <View style={[styles.emptyOffersIconWrap, { backgroundColor: 'rgba(100, 116, 139, 0.1)' }]}>
+                <Ionicons name="hourglass" size={28} color={colors.textMuted} />
+              </View>
               <Text style={[styles.emptyOffersText, { color: colors.textMuted }]}>
                 Waiting for providers to bid...
               </Text>
@@ -442,9 +467,9 @@ export default function RequestDetailsScreen({ route, navigation }: any) {
                   <View style={styles.offerProviderInfo}>
                     <View style={[styles.offerAvatar, { backgroundColor: colors.primaryLight }]}>
                       {offer.providerAvatar ? (
-                        <Image source={{ uri: offer.providerAvatar }} style={{ width: '100%', height: '100%', borderRadius: 12 }} />
+                        <Image source={{ uri: offer.providerAvatar }} style={{ width: '100%', height: '100%', borderRadius: 16 }} />
                       ) : (
-                        <Ionicons name="person" size={16} color={colors.primary} />
+                        <Ionicons name="person" size={20} color={colors.primary} />
                       )}
                     </View>
                     <View>
@@ -453,9 +478,9 @@ export default function RequestDetailsScreen({ route, navigation }: any) {
                         {offer.providerIsVerified && <Ionicons name="checkmark-circle" size={14} color={colors.primary} style={{ marginLeft: 4 }} />}
                       </Text>
                       {(offer.providerCompletedJobs > 0 || offer.providerTotalReviews > 0) ? (
-                         <Text style={{ fontSize: 12, color: colors.textMuted, marginTop: 2 }}>⭐ {Number(offer.providerRating).toFixed(1)} per {offer.providerCompletedJobs || offer.providerTotalReviews} jobs done</Text>
+                         <Text style={{ fontSize: 13, color: colors.textMuted, marginTop: 4, fontWeight: '500' }}>⭐ {Number(offer.providerRating).toFixed(1)} per {offer.providerCompletedJobs || offer.providerTotalReviews} jobs done</Text>
                       ) : (
-                         <Text style={{ fontSize: 12, color: colors.textMuted, marginTop: 2 }}>✨ New provider</Text>
+                         <Text style={{ fontSize: 13, color: colors.textMuted, marginTop: 4, fontWeight: '500' }}>✨ New provider</Text>
                       )}
                       <Text style={[styles.offerEta, { color: colors.textMuted }]}>ETA: {offer.eta}</Text>
                     </View>
@@ -468,12 +493,12 @@ export default function RequestDetailsScreen({ route, navigation }: any) {
                 ) : null}
 
                 {offer.attachmentUrls && offer.attachmentUrls.length > 0 && (
-                  <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 8, marginBottom: 12 }}>
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 12, marginBottom: 12 }}>
                     {offer.attachmentUrls.map((url: string, idx: number) => {
                       const fullUrl = url.startsWith('/') ? `${BASE_URL}${url}` : url;
                       return (
-                        <TouchableOpacity key={idx} onPress={() => setSelectedImage(fullUrl)} activeOpacity={0.8}>
-                          <Image source={{ uri: fullUrl }} style={{ width: 80, height: 80, borderRadius: 12, marginRight: 8 }} />
+                        <TouchableOpacity key={idx} onPress={() => setSelectedImage(fullUrl)} activeOpacity={0.85}>
+                          <Image source={{ uri: fullUrl }} style={{ width: 80, height: 80, borderRadius: 16, marginRight: 10 }} />
                         </TouchableOpacity>
                       );
                     })}
@@ -489,7 +514,7 @@ export default function RequestDetailsScreen({ route, navigation }: any) {
                       <Text style={[styles.declineBtnText, { color: colors.text }]}>Decline</Text>
                     </TouchableOpacity>
                     <TouchableOpacity
-                      style={[styles.acceptBtn, { backgroundColor: colors.primary }]}
+                      style={[styles.acceptBtn, { backgroundColor: colors.primary, shadowColor: colors.primary }]}
                       onPress={() => handleAcceptOffer(offer.id)}
                     >
                       <Text style={styles.acceptBtnText}>Accept Bid</Text>
@@ -498,9 +523,9 @@ export default function RequestDetailsScreen({ route, navigation }: any) {
                 )}
 
                 {offer.status === 'ACCEPTED' && (
-                  <View style={[styles.acceptedBadge, { backgroundColor: colors.successLight }]}>
-                    <Ionicons name="checkmark-circle" size={14} color={colors.success} />
-                    <Text style={[styles.acceptedBadgeText, { color: colors.success }]}>ACCEPTED & HIRED</Text>
+                  <View style={[styles.acceptedBadge, { backgroundColor: 'rgba(16, 185, 129, 0.12)' }]}>
+                    <Ionicons name="checkmark-circle" size={16} color="#10B981" />
+                    <Text style={[styles.acceptedBadgeText, { color: '#10B981' }]}>ACCEPTED & HIRED</Text>
                   </View>
                 )}
                 {offer.status === 'DECLINED' && (
@@ -515,12 +540,14 @@ export default function RequestDetailsScreen({ route, navigation }: any) {
       {/* ── Bid Form (for providers) ── */}
       {isProvider && request.targetProviderId && request.targetProviderId !== user?.id && request.status === 'OPEN' && (
         <View style={styles.section}>
-          <View style={[styles.emptyOffers, { backgroundColor: colors.inputBackground, borderColor: colors.border, borderWidth: 1, padding: 18 }]}>
-            <Ionicons name="lock-closed-outline" size={26} color={colors.textMuted} />
-            <Text style={{ color: colors.textMuted, fontSize: 14, fontWeight: '600', marginTop: 8, textAlign: 'center' }}>
+          <View style={[styles.emptyOffers, { backgroundColor: colors.inputBackground, borderColor: colors.border, borderWidth: 1 }]}>
+            <View style={[styles.emptyOffersIconWrap, { backgroundColor: 'rgba(100, 116, 139, 0.1)' }]}>
+              <Ionicons name="lock-closed" size={26} color={colors.textMuted} />
+            </View>
+            <Text style={{ color: colors.text, fontSize: 16, fontWeight: '700', marginTop: 12, textAlign: 'center' }}>
               Direct Hire Request
             </Text>
-            <Text style={{ color: colors.textMuted, fontSize: 12, marginTop: 4, textAlign: 'center' }}>
+            <Text style={{ color: colors.textMuted, fontSize: 14, marginTop: 6, textAlign: 'center', lineHeight: 22 }}>
               This request is private and targeted to a specific provider.
             </Text>
           </View>
@@ -555,7 +582,7 @@ export default function RequestDetailsScreen({ route, navigation }: any) {
               </View>
             </View>
 
-            <Text style={[styles.inputLabel, { color: colors.textMuted, marginTop: 12 }]}>Message (Optional)</Text>
+            <Text style={[styles.inputLabel, { color: colors.textMuted, marginTop: 16 }]}>Message (Optional)</Text>
             <TextInput
               style={[styles.textArea, { backgroundColor: colors.inputBackground, color: colors.text, borderColor: colors.border }]}
               placeholder="Tell them why you're the best fit..."
@@ -568,7 +595,7 @@ export default function RequestDetailsScreen({ route, navigation }: any) {
             />
 
             <TouchableOpacity
-              style={[styles.submitBidBtn, { backgroundColor: colors.primary }, bidding && { opacity: 0.6 }]}
+              style={[styles.submitBidBtn, { backgroundColor: colors.primary, shadowColor: colors.primary }, bidding && { opacity: 0.6 }]}
               onPress={handleBidSubmit}
               disabled={bidding}
             >
@@ -576,7 +603,7 @@ export default function RequestDetailsScreen({ route, navigation }: any) {
                 <ActivityIndicator color="#fff" />
               ) : (
                 <>
-                  <Ionicons name="send-outline" size={16} color="#FFF" style={{ marginRight: 8 }} />
+                  <Ionicons name="send" size={16} color="#FFF" style={{ marginRight: 8 }} />
                   <Text style={styles.submitBidBtnText}>Submit Bid Offer</Text>
                 </>
               )}
@@ -591,8 +618,8 @@ export default function RequestDetailsScreen({ route, navigation }: any) {
           <Text style={[styles.bidStatusLabel, { color: colors.textMuted }]}>Your Bid Status</Text>
           <Text style={[
             styles.bidStatusValue,
-            userOffer.status === 'ACCEPTED' ? { color: colors.success } :
-              userOffer.status === 'DECLINED' ? { color: colors.error } : { color: colors.warning }
+            userOffer.status === 'ACCEPTED' ? { color: '#10B981' } :
+              userOffer.status === 'DECLINED' ? { color: colors.error } : { color: '#F59E0B' }
           ]}>
             {userOffer.status}
           </Text>
@@ -601,45 +628,19 @@ export default function RequestDetailsScreen({ route, navigation }: any) {
           </Text>
           {userOffer.status === 'ACCEPTED' && (
             <TouchableOpacity
-              style={[styles.chatBtn, { backgroundColor: colors.primary }]}
+              style={[styles.chatBtn, { backgroundColor: colors.primary, shadowColor: colors.primary }]}
               onPress={() => thread && navigation.navigate('Chat', { requestId: request.id, threadId: thread.id })}
             >
-              <Ionicons name="chatbubble-outline" size={16} color="#FFF" style={{ marginRight: 8 }} />
+              <Ionicons name="chatbubbles" size={18} color="#FFF" style={{ marginRight: 8 }} />
               <Text style={styles.chatBtnText}>Open Chat Channel</Text>
             </TouchableOpacity>
           )}
         </View>
       )}
 
-      {/* ── Chat / Call Action Bar ── */}
-      {thread && (
-        <View style={[styles.actionCard, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
-          {request.status === 'ASSIGNED' ? (
-            <TouchableOpacity
-              style={[styles.messageBtn, { backgroundColor: colors.primary }]}
-              onPress={() => navigation.navigate('Chat', { requestId: request.id, threadId: thread.id })}
-            >
-              <Ionicons name="chatbubble-outline" size={18} color="#FFF" style={{ marginRight: 8 }} />
-              <Text style={styles.actionBtnText}>Message {thread.otherParticipant?.fullName?.split(' ')[0] || 'User'}</Text>
-            </TouchableOpacity>
-          ) : (
-            // COMPLETED or CANCELLED status
-            thread.hasHistory && (
-              <TouchableOpacity
-                style={[styles.viewConvBtn, { backgroundColor: colors.inputBackground, borderColor: colors.border }]}
-                onPress={() => navigation.navigate('Chat', { requestId: request.id, threadId: thread.id })}
-              >
-                <Ionicons name="eye-outline" size={18} color={colors.text} style={{ marginRight: 8 }} />
-                <Text style={[styles.viewConvBtnText, { color: colors.text }]}>View Conversation</Text>
-              </TouchableOpacity>
-            )
-          )}
-        </View>
-      )}
-
       {/* ── Student Cancel / Dispute Actions (state-gated) ── */}
       {isMyRequest && request.status === 'OPEN' && (
-        <View style={[styles.cancelSection, { borderTopColor: colors.border }]}>
+        <View style={styles.cancelSection}>
           {cancellingRequest ? (
             <ActivityIndicator size="small" color="#D32F2F" />
           ) : (
@@ -648,7 +649,7 @@ export default function RequestDetailsScreen({ route, navigation }: any) {
               onPress={() => setCancelDialog(true)}
               disabled={cancellingRequest}
             >
-              <Ionicons name="close-circle-outline" size={18} color="#D32F2F" style={{ marginRight: 6 }} />
+              <Ionicons name="close-circle" size={18} color="#EF4444" style={{ marginRight: 8 }} />
               <Text style={styles.cancelRequestText}>Cancel Request</Text>
             </TouchableOpacity>
           )}
@@ -658,12 +659,12 @@ export default function RequestDetailsScreen({ route, navigation }: any) {
         </View>
       )}
       {isMyRequest && request.status === 'ASSIGNED' && (
-        <View style={[styles.cancelSection, { borderTopColor: colors.border }]}>
+        <View style={styles.cancelSection}>
           <TouchableOpacity
             style={styles.reportIssueBtn}
             onPress={() => navigation.navigate('RaiseDispute', { jobId: job?.id })}
           >
-            <Ionicons name="alert-circle-outline" size={18} color="#F59E0B" style={{ marginRight: 6 }} />
+            <Ionicons name="warning" size={18} color="#F59E0B" style={{ marginRight: 8 }} />
             <Text style={styles.reportIssueText}>Report an Issue</Text>
           </TouchableOpacity>
           <Text style={[styles.cancelHintText, { color: colors.textMuted }]}>
@@ -672,8 +673,33 @@ export default function RequestDetailsScreen({ route, navigation }: any) {
         </View>
       )}
 
-      <View style={{ height: 40 }} />
+      <View style={{ height: 120 }} />
       </ScrollView>
+
+      {/* ── Chat Action Footer ── */}
+      {thread && (
+        <View style={[styles.footerAction, { backgroundColor: colors.cardBackground, borderTopColor: colors.border }]}>
+          {request.status === 'ASSIGNED' ? (
+            <TouchableOpacity
+              style={[styles.messageBtn, { backgroundColor: colors.primary, shadowColor: colors.primary }]}
+              onPress={() => navigation.navigate('Chat', { requestId: request.id, threadId: thread.id })}
+            >
+              <Ionicons name="chatbubbles" size={20} color="#FFF" style={{ marginRight: 10 }} />
+              <Text style={styles.actionBtnText}>Message {thread.otherParticipant?.fullName?.split(' ')[0] || 'User'}</Text>
+            </TouchableOpacity>
+          ) : (
+            thread.hasHistory && (
+              <TouchableOpacity
+                style={[styles.viewConvBtn, { backgroundColor: colors.inputBackground, borderColor: colors.border }]}
+                onPress={() => navigation.navigate('Chat', { requestId: request.id, threadId: thread.id })}
+              >
+                <Ionicons name="eye" size={20} color={colors.text} style={{ marginRight: 10 }} />
+                <Text style={[styles.viewConvBtnText, { color: colors.text }]}>View Conversation</Text>
+              </TouchableOpacity>
+            )
+          )}
+        </View>
+      )}
 
       {/* Acceptance Confirmation Sheet */}
       <Modal visible={acceptDialogVisible} transparent animationType="slide" onRequestClose={() => setAcceptDialogVisible(false)}>
@@ -697,8 +723,8 @@ export default function RequestDetailsScreen({ route, navigation }: any) {
               </View>
             </View>
 
-            <View style={[styles.escrowInfo, { backgroundColor: colors.primaryLight }]}>
-              <Ionicons name="lock-closed" size={20} color={colors.primary} />
+            <View style={[styles.escrowInfo, { backgroundColor: 'rgba(21, 101, 192, 0.1)' }]}>
+              <Ionicons name="lock-closed" size={24} color={colors.primary} />
               <Text style={[styles.escrowInfoText, { color: colors.primary }]}>
                 Funds will be securely locked in escrow. They are only released to the provider once you confirm the job is complete.
               </Text>
@@ -708,7 +734,7 @@ export default function RequestDetailsScreen({ route, navigation }: any) {
               <TouchableOpacity style={[styles.sheetBtn, styles.sheetBtnCancel, { borderColor: colors.border }]} onPress={() => setAcceptDialogVisible(false)}>
                 <Text style={[styles.sheetBtnCancelText, { color: colors.text }]}>Cancel</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={[styles.sheetBtn, styles.sheetBtnConfirm, { backgroundColor: colors.primary }]} onPress={confirmAcceptOffer}>
+              <TouchableOpacity style={[styles.sheetBtn, styles.sheetBtnConfirm, { backgroundColor: colors.primary, shadowColor: colors.primary }]} onPress={confirmAcceptOffer}>
                 <Text style={styles.sheetBtnConfirmText}>Accept & Lock Funds</Text>
               </TouchableOpacity>
             </View>
@@ -736,270 +762,286 @@ export default function RequestDetailsScreen({ route, navigation }: any) {
         onCancel={() => setCancelDialog(false)}
         onClose={() => setCancelDialog(false)}
       />
-    </>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
+  header: {
+    height: 60,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    zIndex: 10,
+  },
+  closeBtn: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
+  headerTitle: { fontSize: 18, fontWeight: '800', letterSpacing: -0.3 },
+  
   content: { padding: 24 },
   loadingContainer: { flex: 1, alignItems: 'center', justifyContent: 'center' },
 
-  // Cancel / dispute actions
-  cancelSection: { paddingVertical: 20, paddingHorizontal: 24, borderTopWidth: 1, alignItems: 'center' },
-  cancelRequestBtn: { flexDirection: 'row', alignItems: 'center', paddingVertical: 10, paddingHorizontal: 20, borderRadius: 20, borderWidth: 1.5, borderColor: '#D32F2F', marginBottom: 8 },
-  cancelRequestText: { color: '#D32F2F', fontSize: 14, fontWeight: '700' },
-  reportIssueBtn: { flexDirection: 'row', alignItems: 'center', paddingVertical: 10, paddingHorizontal: 20, borderRadius: 20, borderWidth: 1.5, borderColor: '#F59E0B', marginBottom: 8 },
-  reportIssueText: { color: '#F59E0B', fontSize: 14, fontWeight: '700' },
-  cancelHintText: { fontSize: 12, textAlign: 'center', lineHeight: 16, maxWidth: 280 },
-
-  sheetOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
-  sheetContent: { borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, paddingBottom: 40 },
-  sheetTitle: { fontSize: 20, fontWeight: '800', marginBottom: 20 },
-  sheetSummaryCard: { borderRadius: 16, borderWidth: 1, padding: 16, marginBottom: 20 },
-  sheetRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
-  sheetRowLabel: { fontSize: 15, fontWeight: '500' },
-  sheetRowValue: { fontSize: 15, fontWeight: '700' },
-  sheetDivider: { height: 1, marginVertical: 8 },
-  sheetTotalLabel: { fontSize: 16, fontWeight: '700' },
-  sheetTotalValue: { fontSize: 20, fontWeight: '800' },
-  escrowInfo: { flexDirection: 'row', padding: 16, borderRadius: 12, alignItems: 'center', marginBottom: 24, gap: 12 },
-  escrowInfoText: { flex: 1, fontSize: 13, lineHeight: 18, fontWeight: '600' },
-  sheetActions: { flexDirection: 'row', gap: 12 },
-  sheetBtn: { flex: 1, height: 52, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
-  sheetBtnCancel: { borderWidth: 1 },
-  sheetBtnCancelText: { fontSize: 15, fontWeight: '700' },
-  sheetBtnConfirm: { },
-  sheetBtnConfirmText: { color: '#FFF', fontSize: 15, fontWeight: '700' },
-
   heroCard: {
-    borderRadius: 24, padding: 24, marginBottom: 16,
-    shadowColor: '#FF6B35', shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.25, shadowRadius: 16, elevation: 6,
+    borderRadius: 24, padding: 24, marginBottom: 24,
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.2, shadowRadius: 20, elevation: 8,
   },
   heroBadge: {
     alignSelf: 'flex-start',
     backgroundColor: 'rgba(255,255,255,0.25)',
-    paddingHorizontal: 10, paddingVertical: 4,
-    borderRadius: 8, marginBottom: 12,
+    paddingHorizontal: 12, paddingVertical: 6,
+    borderRadius: 100, marginBottom: 16,
   },
-  heroBadgeText: { color: '#FFFFFF', fontSize: 11, fontWeight: '700' },
-  heroDesc: { color: '#FFFFFF', fontSize: 18, fontWeight: '700', lineHeight: 26, marginBottom: 16 },
-  heroStats: { flexDirection: 'row', gap: 16 },
-  heroStat: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  heroStatText: { color: 'rgba(255,255,255,0.85)', fontSize: 12, fontWeight: '600' },
+  heroBadgeText: { color: '#FFFFFF', fontSize: 12, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.5 },
+  heroDesc: { color: '#FFFFFF', fontSize: 19, fontWeight: '800', lineHeight: 28, marginBottom: 24, letterSpacing: -0.4 },
+  heroStats: { flexDirection: 'row', flexWrap: 'wrap', gap: 16 },
+  heroStat: { flexDirection: 'row', alignItems: 'center', gap: 8, minWidth: '45%' },
+  heroStatIconWrap: { width: 24, height: 24, borderRadius: 12, backgroundColor: '#FFF', alignItems: 'center', justifyContent: 'center' },
+  heroStatText: { color: '#FFFFFF', fontSize: 13, fontWeight: '700' },
 
   statusRow: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-    marginBottom: 24,
+    marginBottom: 28,
   },
-  statusLabel: { fontSize: 14, fontWeight: '600' },
+  statusLabel: { fontSize: 16, fontWeight: '800' },
   statusPill: {
-    flexDirection: 'row', alignItems: 'center', gap: 6,
-    paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20,
+    flexDirection: 'row', alignItems: 'center', gap: 8,
+    paddingHorizontal: 16, paddingVertical: 8, borderRadius: 100,
   },
-  statusDot: { width: 7, height: 7, borderRadius: 4 },
-  statusPillText: { fontSize: 12, fontWeight: '700' },
+  statusDot: { width: 8, height: 8, borderRadius: 4 },
+  statusPillText: { fontSize: 13, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.5 },
 
-  section: { marginBottom: 24 },
-  sectionTitle: { fontSize: 18, fontWeight: '800', marginBottom: 14 },
-  sectionCount: { fontWeight: '600' },
+  section: { marginBottom: 28 },
+  sectionTitle: { fontSize: 18, fontWeight: '800', marginBottom: 16, letterSpacing: -0.3 },
+  sectionCount: { fontWeight: '800' },
 
   emptyOffers: {
-    borderRadius: 16, padding: 28, alignItems: 'center', gap: 10,
+    borderRadius: 20, padding: 32, alignItems: 'center', gap: 12,
   },
-  emptyOffersText: { fontSize: 13 },
+  emptyOffersIconWrap: {
+    width: 64, height: 64, borderRadius: 32, alignItems: 'center', justifyContent: 'center', marginBottom: 8,
+  },
+  emptyOffersText: { fontSize: 15, fontWeight: '700', textAlign: 'center' },
 
   offerCard: {
-    borderRadius: 16, padding: 16, borderWidth: 1, marginBottom: 12,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.05, shadowRadius: 10, elevation: 2,
+    borderRadius: 20, padding: 20, borderWidth: 1, marginBottom: 16,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.04, shadowRadius: 16, elevation: 2,
   },
-  offerTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
-  offerProviderInfo: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  offerTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
+  offerProviderInfo: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   offerAvatar: {
-    width: 38, height: 38, borderRadius: 12,
+    width: 48, height: 48, borderRadius: 24,
     alignItems: 'center', justifyContent: 'center',
   },
-  offerProviderName: { fontSize: 14, fontWeight: '700' },
-  offerEta: { fontSize: 12, marginTop: 2 },
-  offerPrice: { fontSize: 18, fontWeight: '800' },
-  offerMsg: { fontSize: 13, fontStyle: 'italic', marginBottom: 12, lineHeight: 18 },
-  offerActions: { flexDirection: 'row', gap: 10 },
+  offerProviderName: { fontSize: 16, fontWeight: '800' },
+  offerEta: { fontSize: 13, marginTop: 4, fontWeight: '600' },
+  offerPrice: { fontSize: 20, fontWeight: '800' },
+  offerMsg: { fontSize: 14, fontStyle: 'italic', marginBottom: 16, lineHeight: 22 },
+  offerActions: { flexDirection: 'row', gap: 12 },
   declineBtn: {
-    flex: 1, height: 40, borderRadius: 12, borderWidth: 1,
+    flex: 1, height: 48, borderRadius: 100, borderWidth: 1.5,
     alignItems: 'center', justifyContent: 'center',
   },
-  declineBtnText: { fontWeight: '600', fontSize: 13 },
+  declineBtnText: { fontWeight: '700', fontSize: 14 },
   acceptBtn: {
-    flex: 1.5, height: 40, borderRadius: 12,
+    flex: 1.5, height: 48, borderRadius: 100,
     alignItems: 'center', justifyContent: 'center',
+    shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.25, shadowRadius: 8, elevation: 4,
   },
-  acceptBtnText: { color: '#FFF', fontWeight: '700', fontSize: 13 },
+  acceptBtnText: { color: '#FFF', fontWeight: '800', fontSize: 14 },
   acceptedBadge: {
-    flexDirection: 'row', alignItems: 'center', gap: 6,
-    paddingHorizontal: 12, paddingVertical: 7, borderRadius: 10, alignSelf: 'flex-start',
+    flexDirection: 'row', alignItems: 'center', gap: 8,
+    paddingHorizontal: 14, paddingVertical: 8, borderRadius: 100, alignSelf: 'flex-start',
   },
-  acceptedBadgeText: { fontSize: 12, fontWeight: '700' },
-  declinedText: { fontSize: 13, fontStyle: 'italic' },
+  acceptedBadgeText: { fontSize: 12, fontWeight: '800', letterSpacing: 0.5 },
+  declinedText: { fontSize: 14, fontStyle: 'italic', fontWeight: '600' },
 
   bidCard: {
-    borderRadius: 20, padding: 20, borderWidth: 1,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.06, shadowRadius: 14, elevation: 3,
+    borderRadius: 24, padding: 24, borderWidth: 1,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.05, shadowRadius: 20, elevation: 4,
   },
   bidInputRow: { flexDirection: 'row' },
-  inputLabel: { fontSize: 12, fontWeight: '600', marginBottom: 6 },
-  input: { borderRadius: 12, height: 46, paddingHorizontal: 14, borderWidth: 1, fontSize: 14 },
-  textArea: { borderRadius: 12, padding: 14, minHeight: 80, borderWidth: 1, fontSize: 14 },
+  inputLabel: { fontSize: 13, fontWeight: '700', marginBottom: 8 },
+  input: { borderRadius: 14, height: 52, paddingHorizontal: 16, borderWidth: 1, fontSize: 15 },
+  textArea: { borderRadius: 14, padding: 16, minHeight: 90, borderWidth: 1, fontSize: 15 },
   submitBidBtn: {
-    flexDirection: 'row', height: 52, borderRadius: 16,
-    alignItems: 'center', justifyContent: 'center', marginTop: 16,
-    shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.25, shadowRadius: 12, elevation: 4,
+    flexDirection: 'row', height: 56, borderRadius: 100,
+    alignItems: 'center', justifyContent: 'center', marginTop: 24,
+    shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.3, shadowRadius: 16, elevation: 6,
   },
-  submitBidBtnText: { color: '#FFF', fontSize: 15, fontWeight: '700' },
+  submitBidBtnText: { color: '#FFF', fontSize: 16, fontWeight: '800' },
 
   bidStatusCard: {
-    borderRadius: 20, padding: 24, borderWidth: 1, alignItems: 'center', gap: 6,
-    marginBottom: 24,
+    borderRadius: 24, padding: 28, borderWidth: 1, alignItems: 'center', gap: 8,
+    marginBottom: 28, shadowColor: '#000', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.04, shadowRadius: 20, elevation: 3,
   },
-  bidStatusLabel: { fontSize: 13 },
-  bidStatusValue: { fontSize: 24, fontWeight: '800', letterSpacing: 0.5 },
-  bidStatusMeta: { fontSize: 12 },
+  bidStatusLabel: { fontSize: 14, fontWeight: '600' },
+  bidStatusValue: { fontSize: 26, fontWeight: '800', letterSpacing: -0.5 },
+  bidStatusMeta: { fontSize: 14, fontWeight: '500' },
   chatBtn: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    paddingVertical: 12, paddingHorizontal: 24, borderRadius: 14, marginTop: 8,
+    height: 48, paddingHorizontal: 32, borderRadius: 100, marginTop: 12,
+    shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.25, shadowRadius: 8, elevation: 4,
   },
-  chatBtnText: { color: '#FFF', fontWeight: '700', fontSize: 14 },
+  chatBtnText: { color: '#FFF', fontWeight: '800', fontSize: 14 },
   
-  actionCard: {
-    borderRadius: 20,
-    padding: 16,
-    borderWidth: 1,
-    marginTop: 16,
+  footerAction: {
+    position: 'absolute',
+    bottom: 0, left: 0, right: 0,
+    padding: 24,
+    paddingBottom: 40,
+    borderTopWidth: 1,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.05,
-    shadowRadius: 10,
-    elevation: 2,
-  },
-  actionButtonsRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
+    shadowOffset: { width: 0, height: -6 },
+    shadowOpacity: 0.06,
+    shadowRadius: 16,
+    elevation: 8,
   },
   messageBtn: {
-    flex: 1,
     flexDirection: 'row',
-    height: 48,
-    borderRadius: 14,
+    height: 56,
+    borderRadius: 100,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  callBtn: {
-    width: 48,
-    height: 48,
-    borderRadius: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
+    elevation: 6,
   },
   actionBtnText: {
     color: '#FFF',
-    fontSize: 14,
-    fontWeight: '700',
+    fontSize: 16,
+    fontWeight: '800',
   },
   viewConvBtn: {
-    height: 48,
-    borderRadius: 14,
-    borderWidth: 1,
+    height: 56,
+    borderRadius: 100,
+    borderWidth: 1.5,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
   },
   viewConvBtnText: {
-    fontSize: 14,
-    fontWeight: '700',
-  },
-  locationDetailsCard: {
-    borderRadius: 20,
-    padding: 16,
-    borderWidth: 1,
-    marginTop: 16,
-    marginBottom: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.05,
-    shadowRadius: 10,
-    elevation: 2,
-  },
-  locationDetailsTitle: {
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: '800',
-    marginBottom: 10,
+  },
+
+  locationDetailsCard: {
+    borderRadius: 24,
+    padding: 24,
+    borderWidth: 1,
+    marginTop: 8,
+    marginBottom: 28,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.04,
+    shadowRadius: 16,
+    elevation: 3,
   },
   attachmentImg: {
-    width: 80,
-    height: 80,
-    borderRadius: 8,
+    width: 100,
+    height: 100,
+    borderRadius: 16,
     borderWidth: 1,
-    marginRight: 10,
+    marginRight: 12,
   },
   locationDetailsRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: 16,
+  },
+  locIconContainer: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
   },
   locationDetailsAddress: {
-    fontSize: 14,
-    fontWeight: '600',
+    fontSize: 15,
+    fontWeight: '700',
     flex: 1,
+    lineHeight: 22,
   },
   landmarkDetailsBox: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 10,
-    borderRadius: 8,
-    marginBottom: 8,
+    padding: 14,
+    borderRadius: 12,
+    marginBottom: 12,
   },
   landmarkDetailsText: {
-    fontSize: 12,
-    fontWeight: '500',
+    fontSize: 13,
+    fontWeight: '600',
     flex: 1,
   },
   distanceEstimateRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 10,
-    paddingHorizontal: 2,
+    marginBottom: 12,
   },
   distanceEstimateText: {
-    fontSize: 13,
-    fontWeight: '600',
+    fontSize: 14,
+    fontWeight: '700',
   },
   staticMapContainer: {
-    height: 150,
-    borderRadius: 12,
+    height: 160,
+    borderRadius: 16,
     overflow: 'hidden',
     marginTop: 8,
-    marginBottom: 8,
+    marginBottom: 16,
   },
   staticMapImage: {
     width: '100%',
     height: '100%',
   },
   navigationActions: {
-    marginTop: 10,
+    marginTop: 8,
   },
   navigationBtn: {
-    height: 48,
-    borderRadius: 12,
+    height: 52,
+    borderRadius: 100,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 4,
   },
   navigationBtnText: {
     color: '#FFF',
-    fontSize: 14,
-    fontWeight: '700',
+    fontSize: 15,
+    fontWeight: '800',
   },
+
+  cancelSection: { paddingVertical: 16, alignItems: 'center' },
+  cancelRequestBtn: { flexDirection: 'row', alignItems: 'center', paddingVertical: 12, paddingHorizontal: 24, borderRadius: 100, borderWidth: 1.5, borderColor: '#EF4444', marginBottom: 12 },
+  cancelRequestText: { color: '#EF4444', fontSize: 14, fontWeight: '800' },
+  reportIssueBtn: { flexDirection: 'row', alignItems: 'center', paddingVertical: 12, paddingHorizontal: 24, borderRadius: 100, borderWidth: 1.5, borderColor: '#F59E0B', marginBottom: 12 },
+  reportIssueText: { color: '#F59E0B', fontSize: 14, fontWeight: '800' },
+  cancelHintText: { fontSize: 13, textAlign: 'center', lineHeight: 20, maxWidth: 300, fontWeight: '500' },
+
+  sheetOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'flex-end' },
+  sheetContent: { borderTopLeftRadius: 32, borderTopRightRadius: 32, padding: 32, paddingBottom: 48 },
+  sheetTitle: { fontSize: 22, fontWeight: '800', marginBottom: 24, letterSpacing: -0.5 },
+  sheetSummaryCard: { borderRadius: 20, borderWidth: 1, padding: 20, marginBottom: 24 },
+  sheetRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 },
+  sheetRowLabel: { fontSize: 15, fontWeight: '600' },
+  sheetRowValue: { fontSize: 16, fontWeight: '800' },
+  sheetDivider: { height: 1, marginVertical: 12 },
+  sheetTotalLabel: { fontSize: 18, fontWeight: '800' },
+  sheetTotalValue: { fontSize: 24, fontWeight: '900' },
+  escrowInfo: { flexDirection: 'row', padding: 20, borderRadius: 16, alignItems: 'center', marginBottom: 32, gap: 16 },
+  escrowInfoText: { flex: 1, fontSize: 14, lineHeight: 22, fontWeight: '700' },
+  sheetActions: { flexDirection: 'row', gap: 16 },
+  sheetBtn: { flex: 1, height: 56, borderRadius: 100, alignItems: 'center', justifyContent: 'center' },
+  sheetBtnCancel: { borderWidth: 1.5 },
+  sheetBtnCancelText: { fontSize: 16, fontWeight: '800' },
+  sheetBtnConfirm: { shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.25, shadowRadius: 8, elevation: 4 },
+  sheetBtnConfirmText: { color: '#FFF', fontSize: 16, fontWeight: '800' },
 });

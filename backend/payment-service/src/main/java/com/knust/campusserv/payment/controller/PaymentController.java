@@ -597,12 +597,16 @@ public class PaymentController {
         tx.setUpdatedAt(LocalDateTime.now());
 
         BigDecimal totalAmount = tx.getAmount();
-        BigDecimal providerShare = totalAmount.multiply(new BigDecimal(providerPercentage)).divide(new BigDecimal(100), 2, java.math.RoundingMode.HALF_UP);
-        BigDecimal requesterRefund = totalAmount.subtract(providerShare);
+        BigDecimal divisor = new BigDecimal("1.05");
+        BigDecimal basePrice = totalAmount.divide(divisor, 10, java.math.RoundingMode.HALF_UP)
+                                         .setScale(2, java.math.RoundingMode.HALF_UP);
+        BigDecimal totalPlatformFee = totalAmount.subtract(basePrice).setScale(2, java.math.RoundingMode.HALF_UP);
 
-        // Platform commission is flat 5% of provider share
-        BigDecimal platformFee = CommissionUtils.calculateCommission(providerShare);
-        BigDecimal netPayout = providerShare.subtract(platformFee);
+        BigDecimal providerPercentageDec = new BigDecimal(providerPercentage).divide(new BigDecimal(100), 10, java.math.RoundingMode.HALF_UP);
+
+        BigDecimal netPayout = basePrice.multiply(providerPercentageDec).setScale(2, java.math.RoundingMode.HALF_UP);
+        BigDecimal platformFee = totalPlatformFee.multiply(providerPercentageDec).setScale(2, java.math.RoundingMode.HALF_UP);
+        BigDecimal requesterRefund = totalAmount.subtract(netPayout).subtract(platformFee);
 
         tx.setPlatformCommission(platformFee);
         tx.setProviderPayout(netPayout);

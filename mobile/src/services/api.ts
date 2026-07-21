@@ -1,5 +1,8 @@
 import axios from 'axios';
-import { useAuthStore } from '../store/authStore';
+// Lazy getter to break the api.ts <-> authStore.ts circular dependency.
+// authStore dynamically imports api, so api must NOT statically import authStore
+// or Metro will re-bundle this module on every logout/login cycle.
+const getAuthStore = () => require('../store/authStore').useAuthStore;
 
 import ENV from '../config/env';
 
@@ -10,13 +13,16 @@ export const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
     'Bypass-Tunnel-Reminder': 'true',
+    'Cache-Control': 'no-cache, no-store, must-revalidate',
+    'Pragma': 'no-cache',
+    'Expires': '0',
   },
 });
 
 // Request interceptor to attach JWT token
 api.interceptors.request.use(
   async (config) => {
-    const token = useAuthStore.getState().accessToken;
+    const token = getAuthStore().getState().accessToken;
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -64,9 +70,13 @@ api.interceptors.response.use(
       ));
 
     if (isAccountRestricted) {
-      import('./accountStatusService').then(({ fetchAndResolveAccountStatus }) => {
-        fetchAndResolveAccountStatus('api.ts interceptor');
-      }).catch(() => {});
+      // Default to SUSPENDED to trigger the global AppNavigator redirect.
+      // AccountRestrictedScreen will then fetch the true authoritative status (SUSPENDED vs BANNED)
+      // using the unauthenticated /auth/check-status endpoint.
+      const currentUser = getAuthStore().getState().user;
+      if (currentUser && (currentUser.accountStatus !== 'SUSPENDED' && currentUser.accountStatus !== 'BANNED')) {
+        getAuthStore().getState().updateUser({ accountStatus: 'SUSPENDED' }).catch(() => {});
+      }
       return Promise.reject(error);
     }
 
@@ -93,7 +103,7 @@ api.interceptors.response.use(
       isRefreshing = true;
 
       try {
-        const refreshToken = useAuthStore.getState().refreshToken;
+        const refreshToken = getAuthStore().getState().refreshToken;
         if (!refreshToken) {
           throw new Error('No refresh token available');
         }
@@ -106,7 +116,7 @@ api.interceptors.response.use(
         const { accessToken: newAccessToken } = response.data;
         
         // Update the Zustand store
-        await useAuthStore.getState().updateAccessToken(newAccessToken);
+        await getAuthStore().getState().updateAccessToken(newAccessToken);
 
         // Process any queued requests
         processQueue(null, newAccessToken);
@@ -134,7 +144,7 @@ api.interceptors.response.use(
         isRefreshing = false;
         
         // Signal session expired (not a voluntary logout) so navigator can show a targeted message
-        await useAuthStore.getState().setSessionExpired();
+        await getAuthStore().getState().setSessionExpired();
         return Promise.reject(refreshError);
       }
     }

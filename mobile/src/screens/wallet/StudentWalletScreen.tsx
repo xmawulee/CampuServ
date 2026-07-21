@@ -74,10 +74,13 @@ export default function StudentWalletScreen() {
       showsVerticalScrollIndicator={false}
     >
       {/* ── Balance Card ── */}
-      <View style={[styles.balanceCard, { backgroundColor: '#0B132B' }]}>
-        <Text style={styles.balanceCardLabel}>
-          Escrow Spending Balance
-        </Text>
+      <View style={[styles.balanceCard, { backgroundColor: colors.primary }]}>
+        <View style={styles.balanceHeaderRow}>
+          <Text style={styles.balanceCardLabel}>
+            Escrow Spending Balance
+          </Text>
+          <Ionicons name="wallet" size={20} color="rgba(255,255,255,0.7)" />
+        </View>
         <Text style={styles.balanceCardAmount}>
           GHS {wallet ? Number(wallet.balance).toFixed(2) : '0.00'}
         </Text>
@@ -87,22 +90,22 @@ export default function StudentWalletScreen() {
 
         {/* Quick actions row */}
         <View style={styles.quickActionsRow}>
-          <TouchableOpacity style={[styles.quickAction, { backgroundColor: colors.primary }]} onPress={handleDeposit}>
-            <Ionicons name="add-circle-outline" size={20} color="#FFF" />
-            <Text style={styles.quickActionLabel}>Add Funds</Text>
+          <TouchableOpacity style={[styles.quickAction, { backgroundColor: '#FFFFFF' }]} onPress={handleDeposit}>
+            <Ionicons name="add" size={18} color={colors.primary} />
+            <Text style={[styles.quickActionLabel, { color: colors.primary }]}>Add Funds</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={[styles.quickAction, { backgroundColor: 'rgba(255,255,255,0.12)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.2)' }]} onPress={handleWithdrawal}>
-            <Ionicons name="arrow-up-circle-outline" size={20} color="#FFF" />
-            <Text style={styles.quickActionLabel}>Withdraw</Text>
+          <TouchableOpacity style={[styles.quickAction, { backgroundColor: 'rgba(255,255,255,0.15)' }]} onPress={handleWithdrawal}>
+            <Ionicons name="arrow-up" size={18} color="#FFF" />
+            <Text style={[styles.quickActionLabel, { color: '#FFF' }]}>Withdraw</Text>
           </TouchableOpacity>
         </View>
       </View>
 
       {/* ── Escrow Card ── */}
       <View style={[styles.escrowCard, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 8 }}>
-          <View style={[styles.escrowIcon, { backgroundColor: colors.warningLight }]}>
-            <Ionicons name="lock-closed-outline" size={20} color={colors.warning} />
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14, marginBottom: 12 }}>
+          <View style={[styles.escrowIcon, { backgroundColor: 'rgba(245, 158, 11, 0.12)' }]}>
+            <Ionicons name="lock-closed" size={20} color="#F59E0B" />
           </View>
           <View>
             <Text style={[styles.escrowLabel, { color: colors.textMuted }]}>
@@ -124,13 +127,15 @@ export default function StudentWalletScreen() {
       {(!txnList || txnList.length === 0) ? (
         <WalletEmptyState onDepositPress={handleDeposit} />
       ) : (
-        txnList.map((tx: any) => (
-          <WalletTxnCard
-            key={tx.walletTxnId}
-            transaction={tx}
-            onPress={(id) => navigation.navigate('WalletReceiptScreen', { walletTxnId: id })}
-          />
-        ))
+        <View style={styles.txnListContainer}>
+          {txnList.map((tx: any) => (
+            <WalletTxnCard
+              key={tx.walletTxnId}
+              transaction={tx}
+              onPress={(id) => navigation.navigate('WalletReceiptScreen', { walletTxnId: id })}
+            />
+          ))}
+        </View>
       )}
 
       <View style={{ height: 40 }} />
@@ -143,25 +148,27 @@ const styles = StyleSheet.create({
   loadingContainer: { flex: 1, alignItems: 'center', justifyContent: 'center' },
 
   balanceCard: {
-    margin: 20, borderRadius: 24, padding: 24,
-    shadowColor: '#1A1A1A', shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.25, shadowRadius: 20, elevation: 8,
+    margin: 24, borderRadius: 28, padding: 28,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.2, shadowRadius: 24, elevation: 8,
   },
-  balanceCardLabel: { color: 'rgba(255,255,255,0.65)', fontSize: 13, fontWeight: '600' },
-  balanceCardAmount: { color: '#FFFFFF', fontSize: 40, fontWeight: '900', marginVertical: 6, letterSpacing: -1 },
-  balanceCardSub: { color: 'rgba(255,255,255,0.55)', fontSize: 12, marginBottom: 24 },
+  balanceHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  balanceCardLabel: { color: 'rgba(255,255,255,0.7)', fontSize: 14, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5 },
+  balanceCardAmount: { color: '#FFFFFF', fontSize: 44, fontWeight: '900', marginVertical: 8, letterSpacing: -1.5 },
+  balanceCardSub: { color: 'rgba(255,255,255,0.6)', fontSize: 13, marginBottom: 28, fontWeight: '500' },
   quickActionsRow: { flexDirection: 'row', gap: 12 },
-  quickAction: { flex: 1, height: 52, borderRadius: 16, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8 },
-  quickActionLabel: { color: '#FFFFFF', fontSize: 14, fontWeight: '700' },
+  quickAction: { flex: 1, height: 48, borderRadius: 100, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 6 },
+  quickActionLabel: { fontSize: 15, fontWeight: '800' },
 
   escrowCard: {
-    marginHorizontal: 24, borderRadius: 20, padding: 18, borderWidth: 1,
-    marginBottom: 24,
+    marginHorizontal: 24, borderRadius: 24, padding: 20, borderWidth: 1,
+    marginBottom: 24, shadowColor: '#000', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.04, shadowRadius: 16, elevation: 2,
   },
-  escrowIcon: { width: 42, height: 42, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
-  escrowLabel: { fontSize: 12, fontWeight: '600' },
-  escrowAmount: { fontSize: 20, fontWeight: '800', marginTop: 2 },
-  escrowSub: { fontSize: 11, lineHeight: 16 },
+  escrowIcon: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
+  escrowLabel: { fontSize: 13, fontWeight: '700' },
+  escrowAmount: { fontSize: 22, fontWeight: '800', marginTop: 2, letterSpacing: -0.5 },
+  escrowSub: { fontSize: 12, lineHeight: 18 },
 
-  sectionTitle: { fontSize: 16, fontWeight: '800', paddingHorizontal: 24, marginBottom: 12 },
+  sectionTitle: { fontSize: 18, fontWeight: '800', paddingHorizontal: 24, marginBottom: 16, letterSpacing: -0.3 },
+  txnListContainer: { paddingHorizontal: 20 },
 });

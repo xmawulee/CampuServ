@@ -49,6 +49,7 @@ export default function IncomingRequestsScreen({ navigation }: any) {
 
   useFocusEffect(
     useCallback(() => {
+      navigation.setOptions({ headerShown: false });
       setLoading(true);
       pageRef.current = 0;
       fetchRequests(0, true);
@@ -209,24 +210,24 @@ const styles = StyleSheet.create({
   footerLoader: { paddingVertical: 16, alignItems: 'center' },
 
   requestCard: {
-    flexDirection: 'row', borderRadius: 16, borderWidth: 1,
+    flexDirection: 'row', borderRadius: 24, borderWidth: 0,
     overflow: 'hidden', alignItems: 'center',
-    shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 4, elevation: 2,
+    shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.1, shadowRadius: 16, elevation: 8,
   },
-  cardStrip: { width: 4, alignSelf: 'stretch' },
-  cardBody: { flex: 1, padding: 14 },
-  cardTop: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 },
-  cardBadge: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6 },
-  cardBadgeText: { fontSize: 10, fontWeight: '800', textTransform: 'uppercase' },
-  statusPill: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6 },
-  statusPillText: { fontSize: 10, fontWeight: '800' },
-  cardTitle: { fontSize: 14, fontWeight: '700', marginBottom: 4 },
-  cardDesc: { fontSize: 12, lineHeight: 17, marginBottom: 10 },
+  cardStrip: { width: 6, alignSelf: 'stretch' },
+  cardBody: { flex: 1, padding: 20 },
+  cardTop: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 },
+  cardBadge: { paddingHorizontal: 10, paddingVertical: 5, borderRadius: 8 },
+  cardBadgeText: { fontSize: 11, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.5 },
+  statusPill: { paddingHorizontal: 10, paddingVertical: 5, borderRadius: 8 },
+  statusPillText: { fontSize: 11, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.5 },
+  cardTitle: { fontSize: 17, fontWeight: '800', marginBottom: 6, letterSpacing: -0.2 },
+  cardDesc: { fontSize: 14, lineHeight: 20, marginBottom: 14 },
   cardFooter: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  cardMeta: { flexDirection: 'row', alignItems: 'center', gap: 4, flex: 1 },
-  cardMetaText: { fontSize: 11, fontWeight: '500' },
-  cardPrice: { fontSize: 13, fontWeight: '800' },
-  cardChevron: { paddingRight: 16 },
+  cardMeta: { flexDirection: 'row', alignItems: 'center', gap: 6, flex: 1 },
+  cardMetaText: { fontSize: 13, fontWeight: '600' },
+  cardPrice: { fontSize: 16, fontWeight: '800' },
+  cardChevron: { paddingRight: 20 },
 
   emptyIconWrap: { width: 96, height: 96, borderRadius: 48, alignItems: 'center', justifyContent: 'center', marginBottom: 20 },
   emptyTitle: { fontSize: 19, fontWeight: '700', marginBottom: 6 },

@@ -114,16 +114,20 @@ const styles = StyleSheet.create({
   loadingContainer: { flex: 1, alignItems: 'center', justifyContent: 'center' },
 
   balanceCard: {
-    margin: 20, borderRadius: 24, padding: 24,
-    shadowColor: '#1A1A1A', shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.25, shadowRadius: 20, elevation: 8,
+    margin: 20, borderRadius: 32, padding: 28,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 16 },
+    shadowOpacity: 0.2, shadowRadius: 32, elevation: 12,
   },
-  balanceCardLabel: { color: 'rgba(255,255,255,0.65)', fontSize: 13, fontWeight: '600' },
-  balanceCardAmount: { color: '#FFFFFF', fontSize: 40, fontWeight: '900', marginVertical: 6, letterSpacing: -1 },
-  balanceCardSub: { color: 'rgba(255,255,255,0.55)', fontSize: 12, marginBottom: 24 },
+  balanceCardLabel: { color: 'rgba(255,255,255,0.7)', fontSize: 14, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5 },
+  balanceCardAmount: { color: '#FFFFFF', fontSize: 48, fontWeight: '900', marginVertical: 8, letterSpacing: -1.5 },
+  balanceCardSub: { color: 'rgba(255,255,255,0.6)', fontSize: 13, marginBottom: 32 },
   quickActionsRow: { flexDirection: 'row', gap: 12 },
-  quickAction: { flex: 1, height: 52, borderRadius: 16, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8 },
-  quickActionLabel: { color: '#FFFFFF', fontSize: 14, fontWeight: '700' },
+  quickAction: { 
+    flex: 1, height: 56, borderRadius: 100, alignItems: 'center', justifyContent: 'center', 
+    flexDirection: 'row', gap: 8,
+    shadowColor: '#F97316', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.3, shadowRadius: 16, elevation: 8,
+  },
+  quickActionLabel: { color: '#FFFFFF', fontSize: 16, fontWeight: '800' },
 
   escrowCard: {
     marginHorizontal: 24, borderRadius: 20, padding: 18, borderWidth: 1,

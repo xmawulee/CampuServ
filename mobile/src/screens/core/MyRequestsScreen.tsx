@@ -460,30 +460,40 @@ export default function MyRequestsScreen({ navigation }: any) {
     let title = 'No requests';
     let subtext = '';
     let showActionButton = false;
+    let iconBg = 'rgba(21, 101, 192, 0.1)';
+    let iconColor = colors.primary;
 
     if (activeTab === 'active') {
       icon = 'document-text-outline';
       title = 'No active requests';
-      subtext = 'Tap the + button to post your first request.';
+      subtext = 'Tap the button below to post your first request and get started.';
       showActionButton = true;
+      iconBg = 'rgba(21, 101, 192, 0.1)';
+      iconColor = colors.primary;
     } else if (activeTab === 'completed') {
       icon = 'checkmark-circle-outline';
-      title = 'No completed requests yet';
+      title = 'No completed requests';
       subtext = "Once a provider finishes a job, it'll show up here.";
+      iconBg = 'rgba(16, 185, 129, 0.1)';
+      iconColor = '#10B981';
     } else if (activeTab === 'cancelled') {
       icon = 'close-circle-outline';
       title = 'No cancelled requests';
       subtext = 'Requests you cancel will appear here.';
+      iconBg = 'rgba(239, 68, 68, 0.1)';
+      iconColor = '#EF4444';
     }
 
     return (
       <View style={styles.emptyContainer}>
-        <Ionicons name={icon as any} size={48} color={colors.textMuted} />
+        <View style={[styles.emptyIconWrap, { backgroundColor: iconBg }]}>
+          <Ionicons name={icon as any} size={56} color={iconColor} />
+        </View>
         <Text style={[styles.emptyTitle, { color: colors.text }]}>{title}</Text>
         <Text style={[styles.emptySubtext, { color: colors.textMuted }]}>{subtext}</Text>
         {showActionButton && (
           <TouchableOpacity
-            style={[styles.emptyPostButton, { backgroundColor: colors.accent }]}
+            style={[styles.emptyPostButton, { backgroundColor: colors.primary, shadowColor: colors.primary }]}
             onPress={() => navigation.navigate('PostRequest')}
           >
             <Text style={styles.emptyPostButtonText}>Post a Request</Text>
@@ -496,69 +506,35 @@ export default function MyRequestsScreen({ navigation }: any) {
   return (
     <View style={[styles.container, { backgroundColor: colors.screenBackground }]}>
       {/* Tab bar header */}
-      <View style={[styles.tabBar, { borderBottomColor: colors.border }]}>
-        <TouchableOpacity
-          accessibilityRole="tab"
-          accessibilityState={{ selected: activeTab === 'active' }}
-          style={[
-            styles.tabButton,
-            activeTab === 'active' && styles.activeTab,
-            activeTab === 'active' && { borderBottomColor: '#1565C0' },
-          ]}
-          onPress={() => setActiveTab('active')}
-        >
-          <Text
-            style={[
-              styles.tabText,
-              { color: colors.textMuted },
-              activeTab === 'active' && { color: '#1565C0', fontWeight: '700' },
-            ]}
-          >
-            Active {counts.active > 0 ? `(${counts.active})` : ''}
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          accessibilityRole="tab"
-          accessibilityState={{ selected: activeTab === 'completed' }}
-          style={[
-            styles.tabButton,
-            activeTab === 'completed' && styles.activeTab,
-            activeTab === 'completed' && { borderBottomColor: '#1565C0' },
-          ]}
-          onPress={() => setActiveTab('completed')}
-        >
-          <Text
-            style={[
-              styles.tabText,
-              { color: colors.textMuted },
-              activeTab === 'completed' && { color: '#1565C0', fontWeight: '700' },
-            ]}
-          >
-            Completed {counts.completed > 0 ? `(${counts.completed})` : ''}
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          accessibilityRole="tab"
-          accessibilityState={{ selected: activeTab === 'cancelled' }}
-          style={[
-            styles.tabButton,
-            activeTab === 'cancelled' && styles.activeTab,
-            activeTab === 'cancelled' && { borderBottomColor: '#1565C0' },
-          ]}
-          onPress={() => setActiveTab('cancelled')}
-        >
-          <Text
-            style={[
-              styles.tabText,
-              { color: colors.textMuted },
-              activeTab === 'cancelled' && { color: '#1565C0', fontWeight: '700' },
-            ]}
-          >
-            Cancelled {counts.cancelled > 0 ? `(${counts.cancelled})` : ''}
-          </Text>
-        </TouchableOpacity>
+      <View style={[styles.tabBarContainer, { borderBottomColor: colors.border, backgroundColor: colors.background }]}>
+        <View style={[styles.segmentedControl, { backgroundColor: isDark ? colors.cardBackground : '#F1F5F9' }]}>
+          {(['active', 'completed', 'cancelled'] as const).map((tab) => {
+            const isActive = activeTab === tab;
+            const count = counts[tab];
+            const label = tab.charAt(0).toUpperCase() + tab.slice(1);
+            return (
+              <TouchableOpacity
+                key={tab}
+                accessibilityRole="tab"
+                accessibilityState={{ selected: isActive }}
+                style={[
+                  styles.segmentButton,
+                  isActive && [styles.segmentActive, { backgroundColor: colors.cardBackground, shadowColor: isDark ? '#000' : '#000' }]
+                ]}
+                onPress={() => setActiveTab(tab as any)}
+              >
+                <Text
+                  style={[
+                    styles.segmentText,
+                    { color: isActive ? colors.text : colors.textMuted },
+                  ]}
+                >
+                  {label} {count > 0 ? `(${count})` : ''}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
       </View>
 
       {isLoading && !isRefreshing ? (
@@ -596,7 +572,7 @@ export default function MyRequestsScreen({ navigation }: any) {
         accessibilityRole="button"
         onPress={() => navigation.navigate('PostRequest')}
       >
-        <Ionicons name="add" size={28} color="#FFFFFF" />
+        <Ionicons name="add" size={32} color="#FFFFFF" />
       </TouchableOpacity>
 
       {/* Status Dialog */}
@@ -621,24 +597,33 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  tabBar: {
-    flexDirection: 'row',
+  tabBarContainer: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
     borderBottomWidth: 1,
-    height: 48,
+    zIndex: 10,
   },
-  tabButton: {
+  segmentedControl: {
+    flexDirection: 'row',
+    borderRadius: 14,
+    padding: 4,
+  },
+  segmentButton: {
     flex: 1,
+    paddingVertical: 10,
     alignItems: 'center',
     justifyContent: 'center',
-    borderBottomWidth: 2,
-    borderBottomColor: 'transparent',
+    borderRadius: 12,
   },
-  activeTab: {
-    borderBottomWidth: 3,
+  segmentActive: {
+    elevation: 2,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
   },
-  tabText: {
-    fontSize: 13,
-    fontWeight: '600',
+  segmentText: {
+    fontSize: 14,
+    fontWeight: '700',
   },
   centerLoader: {
     flex: 1,
@@ -646,7 +631,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   listContainer: {
-    paddingVertical: 16,
+    paddingVertical: 20,
     flexGrow: 1,
   },
   footerLoader: {
@@ -658,48 +643,54 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     padding: 32,
-    marginTop: 40,
+    marginTop: 60,
   },
-  emptyTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    marginTop: 16,
-    marginBottom: 8,
-  },
-  emptySubtext: {
-    fontSize: 14,
-    textAlign: 'center',
-    lineHeight: 20,
+  emptyIconWrap: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    alignItems: 'center',
+    justifyContent: 'center',
     marginBottom: 24,
   },
+  emptyTitle: {
+    fontSize: 20,
+    fontWeight: '800',
+    marginBottom: 12,
+    letterSpacing: -0.5,
+  },
+  emptySubtext: {
+    fontSize: 15,
+    textAlign: 'center',
+    lineHeight: 24,
+    marginBottom: 32,
+  },
   emptyPostButton: {
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 8,
+    paddingVertical: 14,
+    paddingHorizontal: 32,
+    borderRadius: 100,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 4,
   },
   emptyPostButtonText: {
     color: '#FFF',
-    fontSize: 15,
-    fontWeight: '600',
+    fontSize: 16,
+    fontWeight: '700',
   },
   fab: {
     position: 'absolute',
     bottom: 24,
     right: 24,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+    width: 64,
+    height: 64,
+    borderRadius: 32,
     alignItems: 'center',
     justifyContent: 'center',
-    ...Platform.select({
-      ios: {
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.3,
-        shadowRadius: 8,
-      },
-      android: {
-        elevation: 6,
-      },
-    }),
+    elevation: 8,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.35,
+    shadowRadius: 16,
   },
 });

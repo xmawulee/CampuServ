@@ -1,7 +1,7 @@
 import { api, BASE_URL } from './api';
 import ENV from '../config/env';
 
-const GOOGLE_MAPS_API_KEY = ENV.googleMapsApiKey || 'mock-key-for-development';
+const GOOGLE_MAPS_API_KEY = (ENV.googleMapsApiKey || 'mock-key-for-development').trim();
 
 export interface ReverseGeocodeResponse {
   address: string;

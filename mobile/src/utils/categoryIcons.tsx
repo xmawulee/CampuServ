@@ -19,7 +19,9 @@ export const CATEGORY_STYLES: Record<string, { icon: any; bg: string; iconColor:
   'Styling & Grooming': { icon: 'face-woman-shimmer', bg: '#FCE4EC', iconColor: '#D81B60' },
   'Tech Support': { icon: 'monitor-cellphone', bg: '#E3F2FD', iconColor: '#1E88E5' },
   'Moving': { icon: 'truck-fast', bg: '#E8F5E9', iconColor: '#43A047' },
-  'Photography': { icon: 'camera-iris', bg: '#F3E5F5', iconColor: '#8E24AA' },
+  'Photography': { icon: 'camera', bg: '#F3E5F5', iconColor: '#8E24AA' },
+  'Videography': { icon: 'camcorder', bg: '#E8EAF6', iconColor: '#3949AB' },
+  'Catering': { icon: 'silverware', bg: '#E8F5E9', iconColor: '#43A047' },
   'Plumbing': { icon: 'pipe-wrench', bg: '#E0F7FA', iconColor: '#00ACC1' },
   'Event Setup': { icon: 'calendar', bg: '#FFF9E6', iconColor: '#F39C12' },
 };

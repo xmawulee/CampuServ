@@ -29,7 +29,8 @@ type NotifType =
   | 'PAYMENT_RELEASED'
   | 'DISPUTE_UPDATE'
   | 'REVIEW_REQUEST'
-  | 'SYSTEM';
+  | 'SYSTEM'
+  | 'ANNOUNCEMENT';
 
 interface Notification {
   id: string;
@@ -39,6 +40,8 @@ interface Notification {
   read: boolean;
   referenceId?: string; // jobId, requestId, disputeId, etc.
   createdAt: string;
+  isAnnouncement?: boolean;
+  severity?: string;
 }
 
 // ─────────────────────────────────────────────────────────
@@ -54,6 +57,7 @@ const NOTIF_META: Record<NotifType, { icon: string; color: string }> = {
   DISPUTE_UPDATE: { icon: 'alert-circle-outline', color: '#EF4444' },
   REVIEW_REQUEST: { icon: 'star-outline', color: '#F59E0B' },
   SYSTEM: { icon: 'information-circle-outline', color: '#6B7280' },
+  ANNOUNCEMENT: { icon: 'megaphone-outline', color: '#3B82F6' },
 };
 
 const getMeta = (type: NotifType) =>
@@ -111,34 +115,43 @@ function NotificationRow({
   onPress: (n: Notification) => void;
   onDelete: (id: string) => void;
 }) {
-  const meta = getMeta(item.type);
+  let meta = getMeta(item.type);
+  if (item.isAnnouncement) {
+    if (item.severity === 'HIGH') meta = { icon: 'megaphone-outline', color: '#EF4444' };
+    else if (item.severity === 'WARNING') meta = { icon: 'warning-outline', color: '#F59E0B' };
+    else meta = { icon: 'megaphone-outline', color: '#3B82F6' };
+  }
+  const isUnread = !item.read;
+
   return (
     <View
       style={[
         styles.row,
         {
-          backgroundColor: item.read ? colors.cardBackground : colors.inputBackground,
-          borderColor: colors.border,
+          backgroundColor: isUnread ? colors.cardBackground : colors.inputBackground,
         },
+        isUnread && styles.rowUnreadShadow,
       ]}
     >
       <TouchableOpacity
         style={styles.rowPressable}
         onPress={() => onPress(item)}
-        activeOpacity={0.75}
+        activeOpacity={0.85}
       >
-        {/* Icon */}
-        <View style={[styles.iconWrap, { backgroundColor: `${meta.color}18` }]}>
-          <Ionicons name={meta.icon as any} size={22} color={meta.color} />
+        {/* Icon Container */}
+        <View style={[styles.iconWrap, { backgroundColor: `${meta.color}15` }]}>
+          <Ionicons name={meta.icon as any} size={24} color={meta.color} />
         </View>
 
         {/* Content */}
         <View style={styles.textWrap}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-            <Text style={[styles.rowTitle, { color: colors.text }]} numberOfLines={1}>
-              {item.title}
-            </Text>
-            {!item.read && <View style={[styles.unreadDot, { backgroundColor: meta.color }]} />}
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flex: 1 }}>
+              <Text style={[styles.rowTitle, { color: colors.text }]} numberOfLines={1}>
+                {item.title}
+              </Text>
+              {isUnread && <View style={[styles.unreadDot, { backgroundColor: meta.color }]} />}
+            </View>
           </View>
           <Text style={[styles.rowBody, { color: colors.textMuted }]} numberOfLines={2}>
             {item.body}
@@ -148,13 +161,15 @@ function NotificationRow({
       </TouchableOpacity>
 
       {/* Delete button */}
-      <TouchableOpacity 
-        style={styles.deleteItemBtn} 
-        onPress={() => onDelete(item.id)}
-        activeOpacity={0.7}
-      >
-        <Ionicons name="trash-outline" size={18} color={colors.textMuted} />
-      </TouchableOpacity>
+      {!item.isAnnouncement && (
+        <TouchableOpacity 
+          style={[styles.deleteItemBtn, { backgroundColor: 'rgba(239, 68, 68, 0.08)' }]} 
+          onPress={() => onDelete(item.id)}
+          activeOpacity={0.7}
+        >
+          <Ionicons name="trash-outline" size={18} color="#EF4444" />
+        </TouchableOpacity>
+      )}
     </View>
   );
 }
@@ -179,8 +194,12 @@ export default function NotificationCenterScreen({ navigation }: any) {
     if (isRefresh) setRefreshing(true);
     else setLoading(true);
     try {
-      const res = await api.get('/notifications');
-      const rawList = res.data?.content ?? (Array.isArray(res.data) ? res.data : []);
+      const [notifRes, annRes] = await Promise.all([
+        api.get('/notifications').catch(() => ({ data: [] })),
+        api.get('/announcements/active').catch(() => ({ data: [] }))
+      ]);
+
+      const rawList = notifRes.data?.content ?? (Array.isArray(notifRes.data) ? notifRes.data : []);
       const mapped = rawList.map((n: any) => ({
         id: n.id,
         type: n.type || 'SYSTEM',
@@ -190,7 +209,22 @@ export default function NotificationCenterScreen({ navigation }: any) {
         referenceId: n.referenceId,
         createdAt: n.createdAt,
       }));
-      setNotifications(mapped);
+
+      const rawAnn = annRes.data ?? [];
+      const mappedAnn = rawAnn.map((a: any) => ({
+        id: a.id,
+        type: 'ANNOUNCEMENT',
+        title: a.title,
+        body: a.message,
+        read: true,
+        referenceId: undefined,
+        createdAt: a.createdAt,
+        isAnnouncement: true,
+        severity: a.severity
+      }));
+
+      const combined = [...mapped, ...mappedAnn].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      setNotifications(combined as any);
     } catch {
       setNotifications([]);
     } finally {
@@ -206,6 +240,7 @@ export default function NotificationCenterScreen({ navigation }: any) {
   );
 
   const filteredNotifications = (notifications ?? []).filter((item) => {
+    if (item.isAnnouncement) return true; // Show announcements to everyone
     const isProvType = ['BID_ACCEPTED', 'PAYMENT_RELEASED'].includes(item.type);
     if (isViewingAsProvider) {
       return isProvType || item.type === 'SYSTEM' || item.type === 'DISPUTE_UPDATE';
@@ -215,6 +250,10 @@ export default function NotificationCenterScreen({ navigation }: any) {
   });
 
   const handlePress = async (notification: Notification) => {
+    if (notification.isAnnouncement) {
+      Alert.alert(notification.title, notification.body);
+      return;
+    }
     // Mark as read
     if (!notification.read) {
       try {
@@ -224,11 +263,6 @@ export default function NotificationCenterScreen({ navigation }: any) {
         );
       } catch (error: any) {
         console.error("Failed to mark notification as read:", error.response?.data || error.message);
-        showToast({
-          status: 'error',
-          title: 'Failed to mark notification as read',
-          subtitle: error.response?.data || error.message
-        });
       }
     }
 
@@ -260,7 +294,7 @@ export default function NotificationCenterScreen({ navigation }: any) {
   const handleMarkAllRead = async () => {
     try {
       await api.put('/notifications/read-all');
-      setNotifications((prev) => (prev ?? []).map((n) => ({ ...n, read: true })));
+      setNotifications((prev) => (prev ?? []).map((n) => n.isAnnouncement ? n : { ...n, read: true }));
       showToast({ status: 'success', title: 'All notifications marked as read.' });
     } catch {
       showToast({ status: 'error', title: 'Failed to mark all as read.' });
@@ -279,7 +313,7 @@ export default function NotificationCenterScreen({ navigation }: any) {
           onPress: async () => {
             try {
               await api.delete('/notifications');
-              setNotifications([]);
+              setNotifications((prev) => (prev ?? []).filter(n => n.isAnnouncement));
               showToast({ status: 'success', title: 'All notifications cleared.' });
             } catch {
               showToast({ status: 'error', title: 'Failed to clear notifications.' });
@@ -305,22 +339,22 @@ export default function NotificationCenterScreen({ navigation }: any) {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
       {/* Header */}
-      <View style={[styles.header, { borderBottomColor: colors.border }]}>
+      <View style={[styles.header, { backgroundColor: colors.cardBackground }]}>
         <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
-          <Ionicons name="arrow-back" size={22} color={colors.text} />
+          <Ionicons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: colors.text }]}>
           Notifications{unreadCount > 0 ? ` (${unreadCount})` : ''}
         </Text>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, minWidth: 60, justifyContent: 'flex-end' }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, minWidth: 60, justifyContent: 'flex-end' }}>
           {unreadCount > 0 && (
-            <TouchableOpacity onPress={handleMarkAllRead} style={{ padding: 4 }}>
-              <Ionicons name="mail-open-outline" size={20} color={colors.primary} />
+            <TouchableOpacity onPress={handleMarkAllRead} style={[styles.headerActionBtn, { backgroundColor: 'rgba(16, 185, 129, 0.1)' }]}>
+              <Ionicons name="mail-open" size={20} color="#10B981" />
             </TouchableOpacity>
           )}
           {filteredNotifications.length > 0 && (
-            <TouchableOpacity onPress={handleClearAll} style={{ padding: 4 }}>
-              <Ionicons name="trash-outline" size={20} color={colors.error} />
+            <TouchableOpacity onPress={handleClearAll} style={[styles.headerActionBtn, { backgroundColor: 'rgba(239, 68, 68, 0.1)' }]}>
+              <Ionicons name="trash" size={20} color="#EF4444" />
             </TouchableOpacity>
           )}
         </View>
@@ -344,9 +378,10 @@ export default function NotificationCenterScreen({ navigation }: any) {
           )}
           contentContainerStyle={[
             styles.listContent,
-            { paddingBottom: Math.max(insets.bottom, 24) },
+            { paddingBottom: Math.max(insets.bottom, 40) },
           ]}
-          ItemSeparatorComponent={() => <View style={{ height: 8 }} />}
+          showsVerticalScrollIndicator={false}
+          ItemSeparatorComponent={() => <View style={{ height: 16 }} />}
           refreshControl={
             <RefreshControl
               refreshing={refreshing}
@@ -356,7 +391,9 @@ export default function NotificationCenterScreen({ navigation }: any) {
           }
           ListEmptyComponent={
             <View style={styles.centeredState}>
-              <Ionicons name="notifications-off-outline" size={52} color={colors.textMuted} />
+              <View style={[styles.emptyIconWrap, { backgroundColor: 'rgba(59, 130, 246, 0.1)' }]}>
+                <Ionicons name="notifications-off" size={48} color="#3B82F6" />
+              </View>
               <Text style={[styles.emptyTitle, { color: colors.text }]}>No Notifications</Text>
               <Text style={[styles.emptySubtitle, { color: colors.textMuted }]}>
                 You're all caught up! Notifications for bids, job updates, and payments will appear here.
@@ -376,64 +413,91 @@ export default function NotificationCenterScreen({ navigation }: any) {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   header: {
-    height: 56,
+    height: 60,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
-    borderBottomWidth: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.05,
+    shadowRadius: 12,
+    elevation: 4,
+    zIndex: 10,
   },
-  headerTitle: { fontSize: 17, fontWeight: '800' },
-  backBtn: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
-  markAllBtn: { paddingHorizontal: 8 },
-  markAllText: { fontSize: 13, fontWeight: '600' },
-  listContent: { padding: 16, paddingTop: 12 },
+  headerTitle: { fontSize: 18, fontWeight: '800', letterSpacing: -0.3 },
+  backBtn: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
+  headerActionBtn: {
+    width: 40, height: 40, borderRadius: 20,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  
+  listContent: { padding: 20, paddingTop: 16 },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: 16,
-    borderWidth: 1,
-    paddingRight: 8,
+    borderRadius: 24,
+    paddingRight: 12,
+  },
+  rowUnreadShadow: {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.06,
+    shadowRadius: 16,
+    elevation: 3,
   },
   rowPressable: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    padding: 14,
+    padding: 16,
     flex: 1,
-    gap: 12,
+    gap: 16,
   },
   deleteItemBtn: {
-    padding: 10,
+    width: 40, height: 40, borderRadius: 20,
     justifyContent: 'center',
     alignItems: 'center',
   },
   iconWrap: {
-    width: 44,
-    height: 44,
-    borderRadius: 14,
+    width: 52,
+    height: 52,
+    borderRadius: 26,
     alignItems: 'center',
     justifyContent: 'center',
     flexShrink: 0,
   },
-  textWrap: { flex: 1 },
-  rowTitle: { fontSize: 14, fontWeight: '700', marginBottom: 3 },
-  rowBody: { fontSize: 13, lineHeight: 18, marginBottom: 6 },
-  rowTime: { fontSize: 11 },
+  textWrap: { flex: 1, paddingTop: 2 },
+  rowTitle: { fontSize: 16, fontWeight: '800', letterSpacing: -0.2 },
+  rowBody: { fontSize: 14, lineHeight: 22, marginBottom: 8 },
+  rowTime: { fontSize: 12, fontWeight: '600' },
   unreadDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    alignSelf: 'center',
+    width: 10,
+    height: 10,
+    borderRadius: 5,
     flexShrink: 0,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 2,
   },
+  
   centeredState: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingTop: 80,
-    paddingHorizontal: 32,
-    gap: 12,
+    paddingHorizontal: 40,
+    gap: 16,
+    paddingBottom: 80,
   },
-  emptyTitle: { fontSize: 18, fontWeight: '700', textAlign: 'center' },
-  emptySubtitle: { fontSize: 13, textAlign: 'center', lineHeight: 20 },
+  emptyIconWrap: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 8,
+  },
+  emptyTitle: { fontSize: 20, fontWeight: '800', textAlign: 'center', letterSpacing: -0.4 },
+  emptySubtitle: { fontSize: 15, textAlign: 'center', lineHeight: 24 },
 });

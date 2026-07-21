@@ -18,6 +18,7 @@ export interface User {
   rejectionReason?: string;
   serviceCategory?: string;
   bio?: string;
+  whatsappNumber?: string;
 }
 
 interface AuthState {
@@ -47,11 +48,15 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   sessionExpired: false,
   setAuth: async (accessToken, refreshToken, user) => {
     const derivedRoleMode = user.role === 'PROVIDER' ? 'PROVIDER' : 'CLIENT';
-    await SecureStore.setItemAsync('accessToken', accessToken);
-    await SecureStore.setItemAsync('refreshToken', refreshToken);
-    await SecureStore.setItemAsync('user', JSON.stringify(user));
-    await SecureStore.setItemAsync('roleMode', derivedRoleMode);
     set({ accessToken, refreshToken, user, isAuthenticated: true, roleMode: derivedRoleMode, sessionExpired: false });
+    try {
+      await SecureStore.setItemAsync('accessToken', accessToken);
+      await SecureStore.setItemAsync('refreshToken', refreshToken);
+      await SecureStore.setItemAsync('user', JSON.stringify(user));
+      await SecureStore.setItemAsync('roleMode', derivedRoleMode);
+    } catch (err) {
+      console.warn('[authStore] Failed to save auth data to SecureStore:', err);
+    }
   },
   updateUser: async (userUpdates) => {
     const currentUser = get().user;
@@ -64,9 +69,15 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       }
       const updatedUser = { ...currentUser, ...userUpdates };
       const derivedRoleMode = updatedUser.role === 'PROVIDER' ? 'PROVIDER' : 'CLIENT';
-      await SecureStore.setItemAsync('user', JSON.stringify(updatedUser));
-      await SecureStore.setItemAsync('roleMode', derivedRoleMode);
+      // Update in-memory state immediately to unblock the UI
       set({ user: updatedUser, roleMode: derivedRoleMode });
+      // Then try to persist, ignoring errors if size is too large
+      try {
+        await SecureStore.setItemAsync('user', JSON.stringify(updatedUser));
+        await SecureStore.setItemAsync('roleMode', derivedRoleMode);
+      } catch (err) {
+        console.warn('[authStore] Failed to save user to SecureStore:', err);
+      }
     }
   },
   updateAccessToken: async (accessToken) => {

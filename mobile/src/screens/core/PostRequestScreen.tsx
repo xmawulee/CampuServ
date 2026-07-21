@@ -72,7 +72,10 @@ export default function PostRequestScreen({ route, navigation }: any) {
             'truck': 'car-outline',
             'scissors': 'cut-outline',
             'sparkles': 'sparkles-outline',
-            'calendar': 'calendar-outline'
+            'calendar': 'calendar-outline',
+            'camera': 'camera-outline',
+            'video': 'videocam-outline',
+            'food-fork-drink': 'restaurant-outline',
           };
           mappedIcon = ioniconMap[baseKey] || (c.iconKey.endsWith('-outline') ? c.iconKey : `${c.iconKey}-outline`);
         }
@@ -513,16 +516,11 @@ export default function PostRequestScreen({ route, navigation }: any) {
       style={[styles.container, { backgroundColor: colors.background }]}
     >
       {/* ── Fixed Header ── */}
-      <View style={[styles.header, { borderBottomColor: colors.border }]}>
-        <TouchableOpacity
-          onPress={() => navigation.goBack()}
-          style={styles.closeBtn}
-          accessibilityLabel="Close"
-          accessibilityRole="button"
-        >
+      <View style={[styles.header, { backgroundColor: colors.cardBackground, borderBottomColor: colors.border }]}>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.closeBtn}>
           <Ionicons name="close" size={24} color={colors.text} />
         </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: colors.text }]}>Post a Request</Text>
+        <Text style={[styles.headerTitle, { color: colors.text }]}>New Request</Text>
         <View style={{ width: 40 }} />
       </View>
 
@@ -535,14 +533,14 @@ export default function PostRequestScreen({ route, navigation }: any) {
       >
         {bannerError && (
           <View style={[styles.bannerError, { backgroundColor: colors.errorLight, borderColor: colors.error }]}>
-            <Ionicons name="alert-circle" size={18} color={colors.error} />
+            <Ionicons name="alert-circle" size={20} color={colors.error} />
             <Text style={[styles.bannerErrorText, { color: colors.error }]}>{bannerError}</Text>
           </View>
         )}
 
         {/* ── Category Selector ── */}
         <View style={styles.section}>
-          <Text style={[styles.sectionLabel, { color: colors.text }]}>What kind of service do you need?</Text>
+          <Text style={[styles.sectionLabel, { color: colors.text }]}>Service Category</Text>
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
@@ -556,16 +554,17 @@ export default function PostRequestScreen({ route, navigation }: any) {
                   key={cat.id}
                   style={[
                     styles.catCard,
-                    { backgroundColor: isActive ? '#1565C0' : (isDark ? colors.cardBackground : '#F8FAFC') }
+                    { 
+                      backgroundColor: isActive ? colors.primary : (isDark ? colors.inputBackground : '#F8FAFC'),
+                      borderColor: isActive ? colors.primary : (isDark ? colors.border : '#E2E8F0'),
+                    }
                   ]}
                   onPress={() => handleCategorySelect(cat)}
-                  accessibilityRole="button"
-                  accessibilityState={{ selected: isActive }}
                   disabled={isSubmitting}
                 >
                   <View style={[
                     styles.catIconWrap,
-                    { backgroundColor: isActive ? '#1565C0' : (isDark ? colors.inputBackground : '#FFFFFF') }
+                    { backgroundColor: isActive ? 'rgba(255,255,255,0.2)' : (isDark ? colors.cardBackground : '#FFFFFF') }
                   ]}>
                     <Ionicons
                       name={cat.icon as any}
@@ -575,7 +574,7 @@ export default function PostRequestScreen({ route, navigation }: any) {
                   </View>
                   <Text style={[
                     styles.catLabel,
-                    { color: isActive ? '#FFFFFF' : (isDark ? colors.textMuted : '#334155') }
+                    { color: isActive ? '#FFFFFF' : colors.text }
                   ]} numberOfLines={1}>
                     {cat.name}
                   </Text>
@@ -586,292 +585,287 @@ export default function PostRequestScreen({ route, navigation }: any) {
           {errors.category && <Text style={styles.fieldError}>{errors.category}</Text>}
         </View>
 
-        {/* ── Request Title ── */}
-        <View style={styles.section}>
-          <Text style={[styles.sectionLabel, { color: colors.text }]}>Title</Text>
-          <TextInput
-            style={[styles.input, { backgroundColor: colors.inputBackground, color: colors.text, borderColor: colors.border }]}
-            placeholder="e.g. Need help with Calculus II assignment"
-            placeholderTextColor={colors.placeholderText}
-            maxLength={80}
-            value={title}
-            onChangeText={setTitle}
-            editable={!isSubmitting}
-            accessibilityLabel="Request title input"
-          />
-          <View style={styles.counterRow}>
-            {errors.title ? <Text style={styles.fieldError}>{errors.title}</Text> : <View />}
-            {title.length >= 60 && (
-              <Text style={[styles.counterText, { color: title.length === 80 ? colors.error : colors.textMuted }]}>
-                {title.length}/80
+        {/* ── Request Details Card ── */}
+        <View style={[styles.card, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
+          <Text style={[styles.sectionLabel, { color: colors.text, marginBottom: 16 }]}>Request Details</Text>
+          
+          <View style={styles.inputGroup}>
+            <Text style={[styles.inputLabel, { color: colors.textMuted }]}>Title</Text>
+            <View style={[styles.inputWrapper, { backgroundColor: colors.inputBackground, borderColor: colors.border }]}>
+              <TextInput
+                style={[styles.input, { color: colors.text }]}
+                placeholder="e.g. Need help with Calculus II assignment"
+                placeholderTextColor={colors.placeholderText}
+                maxLength={80}
+                value={title}
+                onChangeText={setTitle}
+                editable={!isSubmitting}
+              />
+            </View>
+            <View style={styles.counterRow}>
+              {errors.title ? <Text style={styles.fieldError}>{errors.title}</Text> : <View />}
+              {title.length >= 60 && (
+                <Text style={[styles.counterText, { color: title.length === 80 ? colors.error : colors.textMuted }]}>
+                  {title.length}/80
+                </Text>
+              )}
+            </View>
+          </View>
+
+          <View style={styles.inputGroup}>
+            <Text style={[styles.inputLabel, { color: colors.textMuted }]}>Description</Text>
+            <View style={[styles.textAreaWrapper, { backgroundColor: colors.inputBackground, borderColor: colors.border }]}>
+              <TextInput
+                style={[styles.textArea, { color: colors.text }]}
+                placeholder="Include deadlines, requirements, materials needed..."
+                placeholderTextColor={colors.placeholderText}
+                multiline={true}
+                numberOfLines={5}
+                value={description}
+                onChangeText={setDescription}
+                editable={!isSubmitting}
+                textAlignVertical="top"
+              />
+            </View>
+            <View style={styles.counterRow}>
+              {errors.description ? <Text style={styles.fieldError}>{errors.description}</Text> : <View />}
+            </View>
+          </View>
+
+          {/* ── Photo Attachments ── */}
+          <View style={styles.inputGroup}>
+            <View style={styles.labelRow}>
+              <Text style={[styles.inputLabel, { color: colors.textMuted }]}>Photos</Text>
+              <Text style={[styles.subLabelText, { color: colors.textMuted }]}> (up to 3)</Text>
+            </View>
+            
+            <View style={styles.photoContainer}>
+              {photos.length === 0 ? (
+                <TouchableOpacity 
+                  style={[styles.photoUploadArea, { backgroundColor: colors.inputBackground, borderColor: colors.border }]} 
+                  onPress={handlePickPhoto}
+                  disabled={isSubmitting}
+                >
+                  <View style={[styles.photoUploadIconWrap, { backgroundColor: colors.primary + '20' }]}>
+                    <Ionicons name="camera" size={24} color={colors.primary} />
+                  </View>
+                  <Text style={[styles.photoUploadText, { color: colors.text }]}>Tap to add photos</Text>
+                  <Text style={[styles.photoUploadSub, { color: colors.textMuted }]}>JPG, PNG up to 5MB</Text>
+                </TouchableOpacity>
+              ) : (
+                <View style={styles.photoRow}>
+                  {photos.map((photo, index) => (
+                    <TouchableOpacity
+                      key={index}
+                      style={[styles.photoSlot, { borderColor: colors.border }]}
+                      onPress={() => setPreviewPhotoIndex(index)}
+                      disabled={isSubmitting}
+                    >
+                      <Image source={{ uri: photo.uri }} style={styles.photoThumb} />
+                      <TouchableOpacity
+                        style={styles.photoDeleteBtn}
+                        onPress={() => setPhotos(prev => prev.filter((_, i) => i !== index))}
+                        disabled={isSubmitting}
+                      >
+                        <Ionicons name="close" size={16} color="#FFF" />
+                      </TouchableOpacity>
+                    </TouchableOpacity>
+                  ))}
+                  {photos.length < 3 && (
+                    <TouchableOpacity
+                      style={[styles.photoSlot, styles.photoPlaceholder, { borderColor: colors.border, backgroundColor: colors.inputBackground }]}
+                      onPress={handlePickPhoto}
+                      disabled={isSubmitting}
+                    >
+                      <Ionicons name="add" size={28} color={colors.primary} />
+                    </TouchableOpacity>
+                  )}
+                </View>
+              )}
+            </View>
+          </View>
+        </View>
+
+        {/* ── Budget & Location Card ── */}
+        <View style={[styles.card, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
+          
+          <View style={styles.inputGroup}>
+            <Text style={[styles.inputLabel, { color: colors.textMuted }]}>Base Price (₵)</Text>
+            <View style={[styles.budgetInputWrapper, { backgroundColor: colors.inputBackground, borderColor: colors.border }]}>
+              <Text style={[styles.currencySymbol, { color: colors.textMuted }]}>₵</Text>
+              <TextInput
+                style={[styles.budgetInput, { color: colors.text }]}
+                placeholder="0.00"
+                placeholderTextColor={colors.placeholderText}
+                keyboardType="numeric"
+                value={basePrice}
+                onChangeText={setBasePrice}
+                editable={!isSubmitting}
+              />
+            </View>
+            
+            {basePrice && !isNaN(parseFloat(basePrice)) && (
+              <Text style={[styles.budgetGuideText, { color: colors.primary }]}>
+                Providers can bid between ₵{(parseFloat(basePrice) * 0.5).toFixed(0)} and ₵{(parseFloat(basePrice) * 2).toFixed(0)}
               </Text>
             )}
-          </View>
-        </View>
-
-        {/* ── Description ── */}
-        <View style={styles.section}>
-          <Text style={[styles.sectionLabel, { color: colors.text }]}>Describe what you need</Text>
-          <TextInput
-            style={[styles.textArea, { backgroundColor: colors.inputBackground, color: colors.text, borderColor: colors.border }]}
-            placeholder="Give as much detail as possible — deadlines, specific requirements, materials needed, etc."
-            placeholderTextColor={colors.placeholderText}
-            multiline={true}
-            numberOfLines={5}
-            value={description}
-            onChangeText={setDescription}
-            editable={!isSubmitting}
-            textAlignVertical="top"
-            accessibilityLabel="Request description input"
-          />
-          <View style={styles.counterRow}>
-            {errors.description ? <Text style={styles.fieldError}>{errors.description}</Text> : <View />}
-          </View>
-        </View>
-
-        {/* ── Photo Attachments ── */}
-        <View style={styles.section}>
-          <View style={styles.labelRow}>
-            <Text style={[styles.sectionLabel, { color: colors.text }]}>Add photos</Text>
-            <Text style={[styles.subLabelText, { color: colors.textMuted }]}> (optional, up to 3)</Text>
-          </View>
-          <View style={styles.photoRow}>
-            {photos.map((photo, index) => (
-              <TouchableOpacity
-                key={index}
-                style={[styles.photoSlot, { borderColor: colors.border }]}
-                onPress={() => setPreviewPhotoIndex(index)}
-                disabled={isSubmitting}
-                accessibilityLabel={`Photo ${index + 1} added, tap to preview`}
-              >
-                <Image source={{ uri: photo.uri }} style={styles.photoThumb} />
+            {errors.budget && <Text style={styles.fieldError}>{errors.budget}</Text>}
+            
+            <View style={styles.suggestionsContainer}>
+              {BUDGET_SUGGESTIONS.map((item) => (
                 <TouchableOpacity
-                  style={styles.photoDeleteBtn}
-                  onPress={() => setPhotos(prev => prev.filter((_, i) => i !== index))}
+                  key={item.label}
+                  style={[styles.suggestionChip, { backgroundColor: colors.inputBackground, borderColor: colors.border }]}
+                  onPress={() => handleSuggestBudget(item.value)}
                   disabled={isSubmitting}
-                  accessibilityLabel={`Remove photo ${index + 1}`}
                 >
-                  <Ionicons name="close" size={14} color="#FFF" />
+                  <Text style={[styles.suggestionText, { color: colors.text }]}>{item.label}</Text>
                 </TouchableOpacity>
-              </TouchableOpacity>
-            ))}
-            {photos.length < 3 && (
-              <TouchableOpacity
-                style={[styles.photoSlot, styles.photoPlaceholder, { borderColor: colors.border, backgroundColor: colors.inputBackground }]}
-                onPress={handlePickPhoto}
-                disabled={isSubmitting}
-                accessibilityLabel={`Add photo, slot ${photos.length + 1} of 3`}
-              >
-                <Ionicons name="camera-outline" size={24} color={colors.textMuted} />
-                <Text style={[styles.photoPlaceholderText, { color: colors.textMuted }]}>Add Photo</Text>
-              </TouchableOpacity>
-            )}
+              ))}
+            </View>
           </View>
-        </View>
 
-        {/* ── Base Price ── */}
-        <View style={styles.section}>
-          <Text style={[styles.sectionLabel, { color: colors.text }]}>Base Price</Text>
-          {basePrice && !isNaN(parseFloat(basePrice)) ? (
-            <Text style={[styles.subLabelTextDesc, { color: colors.primary }]}>
-              Providers can bid between GHS {(parseFloat(basePrice) * 0.5).toFixed(0)} and GHS {(parseFloat(basePrice) * 2).toFixed(0)}
-            </Text>
-          ) : (
-            <Text style={[styles.subLabelTextDesc, { color: colors.textMuted }]}>
-              Set a base price to anchor provider bids.
-            </Text>
-          )}
-          <View style={styles.budgetRow}>
-            <TextInput
-              style={[styles.budgetInput, { backgroundColor: colors.inputBackground, color: colors.text, borderColor: colors.border }]}
-              placeholder="Base Price (₵)"
-              placeholderTextColor={colors.placeholderText}
-              keyboardType="numeric"
-              value={basePrice}
-              onChangeText={setBasePrice}
-              editable={!isSubmitting}
-            />
-          </View>
-          {errors.budget && <Text style={styles.fieldError}>{errors.budget}</Text>}
-          
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            style={styles.suggestionsScroll}
-            contentContainerStyle={styles.suggestionsContent}
-          >
-            {BUDGET_SUGGESTIONS.map((item) => (
-              <TouchableOpacity
-                key={item.label}
-                style={[styles.suggestionChip, { backgroundColor: colors.inputBackground, borderColor: colors.border }]}
-                onPress={() => handleSuggestBudget(item.value)}
-                disabled={isSubmitting}
-              >
-                <Text style={[styles.suggestionText, { color: colors.primary }]}>{item.label}</Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-        </View>
+          <View style={[styles.divider, { backgroundColor: colors.border }]} />
 
-        {/* ── Preferred Timing ── */}
-        <View style={styles.section}>
-          <Text style={[styles.sectionLabel, { color: colors.text }]}>Location</Text>
-          {errors.location && <Text style={styles.fieldError}>{errors.location}</Text>}
+          <View style={styles.inputGroup}>
+            <Text style={[styles.inputLabel, { color: colors.textMuted }]}>Location</Text>
+            {errors.location && <Text style={styles.fieldError}>{errors.location}</Text>}
 
-          <View style={styles.locationDetailContainer}>
             {locationAddress ? (
-              <View style={[{ backgroundColor: isDark ? colors.cardBackground : '#F8FAFC', borderColor: colors.border, padding: 12, borderRadius: 8, borderWidth: 1 }]}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 6 }}>
-                  <Ionicons name="location" size={20} color={colors.primary} style={{ marginRight: 6 }} />
-                  <Text style={{ color: colors.text, fontWeight: '600', flex: 1, fontSize: 14 }} numberOfLines={2}>
+              <View style={[styles.locationSelectedCard, { backgroundColor: colors.inputBackground, borderColor: colors.border }]}>
+                <View style={styles.locationIconWrap}>
+                  <Ionicons name="location" size={20} color={colors.primary} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.locationAddressText, { color: colors.text }]} numberOfLines={2}>
                     {locationAddress}
                   </Text>
+                  {locationLandmark ? (
+                    <Text style={[styles.locationLandmarkText, { color: colors.textMuted }]} numberOfLines={1}>
+                      {locationLandmark}
+                    </Text>
+                  ) : null}
                 </View>
-                {locationLandmark ? (
-                  <Text style={{ color: colors.textMuted, fontSize: 13, marginBottom: 8, fontStyle: 'italic' }}>
-                    Landmark hint: "{locationLandmark}"
-                  </Text>
-                ) : null}
-                <TouchableOpacity
-                  style={{ borderColor: colors.primary, borderWidth: 1, paddingVertical: 6, paddingHorizontal: 12, borderRadius: 4, alignSelf: 'flex-start' }}
-                  onPress={() => setShowLocationPicker(true)}
-                  disabled={isSubmitting}
-                >
-                  <Text style={{ color: colors.primary, fontSize: 13, fontWeight: '600' }}>Change Location</Text>
+                <TouchableOpacity onPress={() => setShowLocationPicker(true)} style={styles.locationEditBtn}>
+                  <Ionicons name="pencil" size={18} color={colors.primary} />
                 </TouchableOpacity>
               </View>
             ) : (
               <TouchableOpacity
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  borderWidth: 1,
-                  borderColor: colors.primary,
-                  borderStyle: 'dashed',
-                  backgroundColor: isDark ? colors.cardBackground : '#F0F7FF',
-                  padding: 16,
-                  borderRadius: 8,
-                }}
+                style={[styles.locationEmptyCard, { backgroundColor: colors.inputBackground, borderColor: colors.border }]}
                 onPress={() => setShowLocationPicker(true)}
                 disabled={isSubmitting}
               >
-                <Ionicons name="map-outline" size={20} color={colors.primary} style={{ marginRight: 8 }} />
-                <Text style={{ color: colors.primary, fontWeight: '700', fontSize: 14 }}>Set Location</Text>
+                <Ionicons name="map-outline" size={22} color={colors.primary} />
+                <Text style={[styles.locationEmptyText, { color: colors.primary }]}>Set meeting location</Text>
               </TouchableOpacity>
             )}
 
-            <TextInput
-              style={[styles.input, { backgroundColor: colors.inputBackground, color: colors.text, borderColor: colors.border, marginTop: 12 }]}
-              placeholder="e.g. Room number, building name details (Optional)"
-              placeholderTextColor={colors.placeholderText}
-              value={locationDetail}
-              onChangeText={setLocationDetail}
-              editable={!isSubmitting}
-            />
+            <View style={[styles.inputWrapper, { backgroundColor: colors.inputBackground, borderColor: colors.border, marginTop: 12 }]}>
+              <TextInput
+                style={[styles.input, { color: colors.text }]}
+                placeholder="Room number or specific details (Optional)"
+                placeholderTextColor={colors.placeholderText}
+                value={locationDetail}
+                onChangeText={setLocationDetail}
+                editable={!isSubmitting}
+              />
+            </View>
           </View>
         </View>
 
-        {/* ── Delivery Mode Toggle ── */}
+        {/* ── Audience / Visibility ── */}
         <View style={styles.section}>
-          <Text style={[styles.sectionLabel, { color: colors.text }]}>Who should see this request?</Text>
-          <View style={[styles.deliveryToggle, { backgroundColor: colors.inputBackground }]}>
+          <Text style={[styles.sectionLabel, { color: colors.text, marginBottom: 12 }]}>Visibility</Text>
+          <View style={[styles.segmentedControl, { backgroundColor: colors.inputBackground, borderColor: colors.border }]}>
             <TouchableOpacity
               style={[
-                styles.deliveryToggleOption,
-                deliveryMode === 'broadcast' && { backgroundColor: colors.primary },
+                styles.segmentBtn,
+                deliveryMode === 'broadcast' && [styles.segmentBtnActive, { backgroundColor: colors.cardBackground, shadowColor: isDark ? '#000' : '#000' }]
               ]}
               onPress={() => {
                 setDeliveryMode('broadcast');
                 setTargetProvider(null);
               }}
               disabled={isSubmitting}
-              accessibilityLabel="Post to all providers"
             >
-              <Ionicons
-                name="globe-outline"
-                size={15}
-                color={deliveryMode === 'broadcast' ? '#FFF' : colors.textMuted}
-                style={{ marginBottom: 2 }}
-              />
-              <Text style={[styles.deliveryToggleText, { color: deliveryMode === 'broadcast' ? '#FFF' : colors.textMuted }]}>
-                All Providers
-              </Text>
+              <Text style={[
+                styles.segmentText,
+                { color: deliveryMode === 'broadcast' ? colors.text : colors.textMuted }
+              ]}>All Providers</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[
-                styles.deliveryToggleOption,
-                deliveryMode === 'targeted' && { backgroundColor: colors.accent },
+                styles.segmentBtn,
+                deliveryMode === 'targeted' && [styles.segmentBtnActive, { backgroundColor: colors.cardBackground, shadowColor: isDark ? '#000' : '#000' }]
               ]}
               onPress={() => {
                 setDeliveryMode('targeted');
                 if (!targetProvider) handleOpenProviderPicker();
               }}
               disabled={isSubmitting}
-              accessibilityLabel="Direct hire a specific provider"
             >
-              <Ionicons
-                name="person-outline"
-                size={15}
-                color={deliveryMode === 'targeted' ? '#FFF' : colors.textMuted}
-                style={{ marginBottom: 2 }}
-              />
-              <Text style={[styles.deliveryToggleText, { color: deliveryMode === 'targeted' ? '#FFF' : colors.textMuted }]}>
-                Direct Hire
-              </Text>
+              <Text style={[
+                styles.segmentText,
+                { color: deliveryMode === 'targeted' ? colors.text : colors.textMuted }
+              ]}>Direct Hire</Text>
             </TouchableOpacity>
           </View>
 
           {deliveryMode === 'broadcast' && (
-            <View style={[styles.broadcastInfo, { marginTop: 10 }]}>
-              <Ionicons name="information-circle-outline" size={16} color={colors.primary} />
-              <Text style={[styles.broadcastText, { color: colors.textMuted, marginLeft: 8 }]}>
-                All {selectedCategory?.name || 'matching'} providers will see this. First to accept gets matched.
-              </Text>
-            </View>
+            <Text style={[styles.helperText, { color: colors.textMuted }]}>
+              Your request will be visible to all {selectedCategory?.name || 'matching'} providers. The first to accept will be matched with you.
+            </Text>
           )}
 
           {deliveryMode === 'targeted' && (
-            <View style={[styles.targetedContainer, { marginTop: 10 }]}>
+            <View style={{ marginTop: 16 }}>
               {targetProvider ? (
-                <View style={[styles.broadcastInfo, { backgroundColor: colors.cardBackground, borderRadius: 10, padding: 10, borderColor: colors.accent, borderWidth: 1 }]}>
-                  <Ionicons name="person-circle-outline" size={26} color={colors.accent} />
-                  <View style={{ flex: 1, marginLeft: 10 }}>
-                    <Text style={{ color: colors.text, fontWeight: '700', fontSize: 14 }}>{targetProvider.name}</Text>
-                    <Text style={{ color: colors.textMuted, fontSize: 12 }}>Only this provider will receive your request</Text>
+                <View style={[styles.targetProviderCard, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
+                  {targetProvider.avatarUrl ? (
+                    <Image source={{ uri: targetProvider.avatarUrl }} style={styles.targetProviderAvatar} />
+                  ) : (
+                    <View style={[styles.targetProviderAvatarPlaceholder, { backgroundColor: colors.primary + '20' }]}>
+                      <Ionicons name="person" size={24} color={colors.primary} />
+                    </View>
+                  )}
+                  <View style={{ flex: 1, marginLeft: 12 }}>
+                    <Text style={[styles.targetProviderName, { color: colors.text }]}>{targetProvider.name}</Text>
+                    <View style={styles.targetProviderRating}>
+                      <Ionicons name="star" size={14} color="#F59E0B" />
+                      <Text style={[styles.targetProviderRatingText, { color: colors.text }]}>{targetProvider.rating.toFixed(1)}</Text>
+                    </View>
                   </View>
                   <TouchableOpacity
                     onPress={() => { setTargetProvider(null); setDeliveryMode('broadcast'); }}
-                    accessibilityLabel="Remove selected provider"
-                    disabled={isSubmitting}
+                    style={styles.targetProviderRemove}
                   >
-                    <Ionicons name="close-circle" size={22} color={colors.error} />
+                    <Ionicons name="close-circle" size={24} color={colors.textMuted} />
                   </TouchableOpacity>
                 </View>
               ) : (
                 <TouchableOpacity
-                  style={[styles.broadcastInfo, { borderColor: colors.accent, borderWidth: 1, borderStyle: 'dashed', borderRadius: 10, padding: 14, justifyContent: 'center' }]}
+                  style={[styles.chooseProviderBtn, { backgroundColor: colors.inputBackground, borderColor: colors.border }]}
                   onPress={handleOpenProviderPicker}
                   disabled={isSubmitting}
                 >
-                  <Ionicons name="add-circle-outline" size={20} color={colors.accent} />
-                  <Text style={{ color: colors.accent, fontWeight: '700', marginLeft: 8 }}>Select a Provider</Text>
+                  <Ionicons name="search" size={20} color={colors.primary} />
+                  <Text style={[styles.chooseProviderText, { color: colors.primary }]}>Search for a Provider</Text>
                 </TouchableOpacity>
               )}
             </View>
           )}
         </View>
 
-        <View style={{ height: 100 }} />
+        <View style={{ height: 120 }} />
       </ScrollView>
 
       {/* ── Sticky Submit Button ── */}
-      <View style={[styles.footer, { backgroundColor: colors.background, borderTopColor: colors.border, paddingBottom: Math.max(insets.bottom, 20) }]}>
+      <View style={[styles.footer, { backgroundColor: colors.cardBackground, borderTopColor: colors.border, paddingBottom: Math.max(insets.bottom, 20) }]}>
         <TouchableOpacity
-          style={[styles.submitBtn, { backgroundColor: colors.accent }]}
+          style={[styles.submitBtn, { backgroundColor: colors.primary }]}
           onPress={handlePostRequest}
           disabled={isSubmitting}
-          accessibilityLabel="Post your request"
         >
           {isSubmitting ? (
             <ActivityIndicator color="#FFF" />
@@ -909,60 +903,6 @@ export default function PostRequestScreen({ route, navigation }: any) {
         onRequestClose={() => setShowLocationPicker(false)}
       >
         <View style={[styles.pickerModalContainer, { backgroundColor: colors.background }]}>
-          {/* Header search bar */}
-          <View style={[styles.pickerHeader, { borderBottomColor: colors.border }]}>
-            <TouchableOpacity
-              onPress={() => setShowLocationPicker(false)}
-              style={styles.pickerCloseBtn}
-              accessibilityLabel="Close location picker"
-            >
-              <Ionicons name="arrow-back" size={24} color={colors.text} />
-            </TouchableOpacity>
-            
-            <View style={[styles.pickerSearchContainer, { backgroundColor: colors.inputBackground }]}>
-              <Ionicons name="search-outline" size={20} color={colors.textMuted} style={{ marginRight: 8 }} />
-              <TextInput
-                style={[styles.pickerSearchInput, { color: colors.text }]}
-                placeholder="Search places or landmarks in Kumasi..."
-                placeholderTextColor={colors.placeholderText}
-                value={searchInput}
-                onChangeText={handleSearchChange}
-                clearButtonMode="while-editing"
-              />
-              {isSearching && <ActivityIndicator size="small" color={colors.primary} style={{ marginLeft: 8 }} />}
-            </View>
-          </View>
-
-          {/* Autocomplete suggestions dropdown overlay */}
-          {autocompleteResults.length > 0 && (
-            <View style={[styles.suggestionsDropdown, { backgroundColor: colors.cardBackground, borderBottomColor: colors.border }]}>
-              <FlatList
-                data={autocompleteResults}
-                keyExtractor={(item: any) => item.placeId}
-                keyboardShouldPersistTaps="handled"
-                renderItem={({ item }: any) => (
-                  <TouchableOpacity
-                    style={[styles.suggestionItem, { borderBottomColor: colors.border }]}
-                    onPress={() => handleSelectPlace(item)}
-                  >
-                    <Ionicons name="location-outline" size={18} color={colors.primary} style={{ marginRight: 10 }} />
-                    <Text style={[styles.suggestionItemText, { color: colors.text }]} numberOfLines={2}>
-                      {item.description}
-                    </Text>
-                  </TouchableOpacity>
-                )}
-              />
-            </View>
-          )}
-
-          {/* GPS Warning Banner */}
-          {gpsWarning && (
-            <View style={[styles.gpsWarningBanner, { backgroundColor: colors.warningLight }]}>
-              <Ionicons name="warning-outline" size={16} color={colors.warning} style={{ marginRight: 8 }} />
-              <Text style={[styles.gpsWarningText, { color: colors.warning }]}>{gpsWarning}</Text>
-            </View>
-          )}
-
           {/* Map Section */}
           <View style={styles.mapWrapper}>
             <MapView
@@ -975,21 +915,77 @@ export default function PostRequestScreen({ route, navigation }: any) {
             {/* Center Pin Crosshair (Uber-style) */}
             <View style={styles.centerPinContainer} pointerEvents="none">
               <View style={[styles.centerPinIconWrap]}>
-                <Ionicons name="location" size={40} color="#E53935" />
+                <View style={styles.pinGlow} />
+                <Ionicons name="location" size={48} color="#E53935" />
               </View>
               <View style={styles.centerPinDot} />
             </View>
           </View>
 
+          {/* Floating Header search bar */}
+          <View style={[styles.floatingPickerHeader, { paddingTop: Math.max(insets.top, 20) }]} pointerEvents="box-none">
+            <View style={[styles.pickerSearchContainer, { backgroundColor: colors.cardBackground }]}>
+              <TouchableOpacity
+                onPress={() => setShowLocationPicker(false)}
+                style={styles.pickerCloseBtn}
+                accessibilityLabel="Close location picker"
+              >
+                <Ionicons name="arrow-back" size={24} color={colors.text} />
+              </TouchableOpacity>
+              
+              <TextInput
+                style={[styles.pickerSearchInput, { color: colors.text }]}
+                placeholder="Search places or landmarks in Kumasi..."
+                placeholderTextColor={colors.placeholderText}
+                value={searchInput}
+                onChangeText={handleSearchChange}
+                clearButtonMode="while-editing"
+              />
+              {isSearching && <ActivityIndicator size="small" color={colors.primary} />}
+            </View>
+
+            {/* Autocomplete suggestions dropdown overlay */}
+            {autocompleteResults.length > 0 && (
+              <View style={[styles.suggestionsDropdown, { backgroundColor: colors.cardBackground }]}>
+                <FlatList
+                  data={autocompleteResults}
+                  keyExtractor={(item: any) => item.placeId}
+                  keyboardShouldPersistTaps="handled"
+                  renderItem={({ item }: any) => (
+                    <TouchableOpacity
+                      style={[styles.suggestionItem, { borderBottomColor: colors.border }]}
+                      onPress={() => handleSelectPlace(item)}
+                    >
+                      <Ionicons name="location-outline" size={18} color={colors.primary} style={{ marginRight: 12 }} />
+                      <Text style={[styles.suggestionItemText, { color: colors.text }]} numberOfLines={2}>
+                        {item.description}
+                      </Text>
+                    </TouchableOpacity>
+                  )}
+                />
+              </View>
+            )}
+
+            {/* GPS Warning Banner */}
+            {gpsWarning && (
+              <View style={[styles.gpsWarningBanner, { backgroundColor: colors.warningLight }]}>
+                <Ionicons name="warning" size={18} color={colors.warning} style={{ marginRight: 8 }} />
+                <Text style={[styles.gpsWarningText, { color: colors.warning }]}>{gpsWarning}</Text>
+              </View>
+            )}
+          </View>
+
           {/* Bottom Sheet Card */}
           <KeyboardAvoidingView
             behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-            style={[styles.pickerBottomSheet, { backgroundColor: colors.background, borderTopColor: colors.border }]}
+            style={[styles.pickerBottomSheet, { backgroundColor: colors.cardBackground }]}
           >
             <Text style={[styles.bottomSheetTitle, { color: colors.text }]}>Address Location</Text>
-            <View style={[styles.addressTextContainer, { backgroundColor: colors.inputBackground }]}>
+            <View style={[styles.addressTextContainer, { backgroundColor: 'rgba(59, 130, 246, 0.08)' }]}>
+              <View style={styles.addressLeftAccent} />
+              <Ionicons name="location" size={20} color={colors.primary} style={{ marginRight: 12 }} />
               {isGeocoding ? (
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flex: 1 }}>
                   <ActivityIndicator size="small" color={colors.primary} />
                   <Text style={[styles.addressText, { color: colors.textMuted }]}>Resolving address...</Text>
                 </View>
@@ -1000,7 +996,7 @@ export default function PostRequestScreen({ route, navigation }: any) {
               )}
             </View>
 
-            <Text style={[styles.bottomSheetSubtitle, { color: colors.text, marginTop: 12 }]}>
+            <Text style={[styles.bottomSheetSubtitle, { color: colors.text }]}>
               Add Landmark / Room Details
             </Text>
             <TextInput
@@ -1047,172 +1043,245 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 16,
     borderBottomWidth: 1,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+    zIndex: 10,
   },
-  closeBtn: {
-    width: 40,
-    height: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  headerTitle: {
-    fontSize: 17,
-    fontWeight: '700',
-  },
+  closeBtn: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
+  headerTitle: { fontSize: 18, fontWeight: '700' },
+  
   scroll: { flex: 1 },
-  scrollContent: { paddingHorizontal: 20, paddingTop: 20 },
+  scrollContent: { paddingHorizontal: 20, paddingTop: 24 },
   
   bannerError: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    borderRadius: 12,
-    borderWidth: 1,
-    padding: 12,
-    marginBottom: 20,
+    flexDirection: 'row', alignItems: 'center', gap: 10,
+    borderRadius: 16, borderWidth: 1, padding: 14, marginBottom: 24,
   },
-  bannerErrorText: {
-    flex: 1,
-    fontSize: 13,
-    fontWeight: '600',
-  },
+  bannerErrorText: { flex: 1, fontSize: 13, fontWeight: '600' },
 
   section: { marginBottom: 28 },
-  sectionLabel: { fontSize: 14, fontWeight: '600', marginBottom: 8 },
-  subLabelText: { fontSize: 12 },
-  labelRow: { flexDirection: 'row', alignItems: 'center' },
-  categoryScroll: { marginHorizontal: -20, marginBottom: 4 },
-  categoryScrollContent: { paddingHorizontal: 20, gap: 10, paddingVertical: 6 },
+  sectionLabel: { fontSize: 16, fontWeight: '700', marginBottom: 12, letterSpacing: -0.2 },
+  
+  categoryScroll: { marginHorizontal: -20 },
+  categoryScrollContent: { paddingHorizontal: 20, gap: 12, paddingBottom: 8 },
   catCard: {
-    width: 90,
-    borderRadius: 14,
-    padding: 12,
+    width: 110,
+    height: 110,
+    borderRadius: 20,
+    padding: 14,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 6,
+    borderWidth: 1,
+    gap: 12,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04,
-    shadowRadius: 2,
-    elevation: 1,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 6,
+    elevation: 2,
   },
   catIconWrap: {
-    width: 40, height: 40, borderRadius: 12,
+    width: 46, height: 46, borderRadius: 16,
     alignItems: 'center', justifyContent: 'center',
   },
-  catLabel: { fontSize: 10, fontWeight: '700', textAlign: 'center' },
-  
-  input: { height: 50, borderRadius: 12, borderWidth: 1, paddingHorizontal: 16, fontSize: 14 },
-  textArea: { height: 130, borderRadius: 12, borderWidth: 1, paddingHorizontal: 16, paddingTop: 14, fontSize: 14 },
-  counterRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 4, paddingHorizontal: 4 },
-  counterText: { fontSize: 11, fontWeight: '500' },
-  fieldError: { color: '#D32F2F', fontSize: 12, fontWeight: '600', marginTop: 4 },
+  catLabel: { fontSize: 12, fontWeight: '700', textAlign: 'center' },
 
-  photoRow: { flexDirection: 'row', gap: 12 },
+  card: {
+    borderRadius: 24,
+    borderWidth: 1,
+    padding: 20,
+    marginBottom: 28,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.03,
+    shadowRadius: 8,
+    elevation: 1,
+  },
+
+  inputGroup: { marginBottom: 16 },
+  inputLabel: { fontSize: 13, fontWeight: '600', marginBottom: 8 },
+  subLabelText: { fontSize: 13 },
+  labelRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
+  
+  inputWrapper: {
+    height: 52,
+    borderRadius: 14,
+    borderWidth: 1,
+    paddingHorizontal: 16,
+    justifyContent: 'center',
+  },
+  input: { flex: 1, fontSize: 15 },
+  
+  textAreaWrapper: {
+    height: 120,
+    borderRadius: 14,
+    borderWidth: 1,
+    paddingHorizontal: 16,
+    paddingTop: 14,
+  },
+  textArea: { flex: 1, fontSize: 15, textAlignVertical: 'top' },
+  
+  counterRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 6, paddingHorizontal: 4 },
+  counterText: { fontSize: 12, fontWeight: '500' },
+  fieldError: { color: '#E53935', fontSize: 13, fontWeight: '600', marginTop: 6, paddingHorizontal: 4 },
+
+  photoContainer: { marginTop: 4 },
+  photoUploadArea: {
+    borderWidth: 2,
+    borderStyle: 'dashed',
+    borderRadius: 16,
+    padding: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  photoUploadIconWrap: {
+    width: 48, height: 48, borderRadius: 24,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  photoUploadText: { fontSize: 15, fontWeight: '700' },
+  photoUploadSub: { fontSize: 13 },
+  
+  photoRow: { flexDirection: 'row', gap: 12, flexWrap: 'wrap' },
   photoSlot: {
-    width: 80,
-    height: 80,
-    borderRadius: 10,
-    borderWidth: 1.5,
+    width: (Dimensions.get('window').width - 80 - 24) / 3,
+    aspectRatio: 1,
+    borderRadius: 14,
+    borderWidth: 1,
     overflow: 'hidden',
     position: 'relative',
   },
   photoThumb: { width: '100%', height: '100%' },
   photoPlaceholder: {
-    borderStyle: 'dashed',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 4,
+    borderStyle: 'dashed', borderWidth: 2,
+    alignItems: 'center', justifyContent: 'center',
   },
-  photoPlaceholderText: { fontSize: 11, fontWeight: '700' },
   photoDeleteBtn: {
     position: 'absolute',
-    top: 4,
-    right: 4,
-    width: 20,
-    height: 20,
-    borderRadius: 10,
+    top: 6,
+    right: 6,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
     backgroundColor: 'rgba(0,0,0,0.6)',
     alignItems: 'center',
     justifyContent: 'center',
   },
 
-  subLabelTextDesc: { fontSize: 12, marginBottom: 12 },
-  budgetRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  budgetInput: { flex: 1, height: 50, borderRadius: 12, borderWidth: 1, paddingHorizontal: 16, fontSize: 14, textAlign: 'center' },
-  budgetDash: { fontSize: 16, fontWeight: '600' },
-  suggestionsScroll: { marginHorizontal: -20, marginTop: 10 },
-  suggestionsContent: { paddingHorizontal: 20, gap: 8 },
-  suggestionChip: { paddingHorizontal: 14, paddingVertical: 6, borderRadius: 20, borderWidth: 1 },
-  suggestionText: { fontSize: 12, fontWeight: '700' },
-
-  pillsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
-  pillOption: {
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 20,
+  budgetInputWrapper: {
+    flexDirection: 'row',
+    height: 56,
+    borderRadius: 16,
     borderWidth: 1,
-    borderColor: 'transparent',
+    alignItems: 'center',
+    paddingHorizontal: 16,
   },
-  pillText: { fontSize: 13, fontWeight: '600' },
-  datePickerContainer: {
-    marginTop: 12,
+  currencySymbol: { fontSize: 18, fontWeight: '600', marginRight: 8 },
+  budgetInput: { flex: 1, fontSize: 18, fontWeight: '700' },
+  budgetGuideText: { fontSize: 13, marginTop: 8, fontWeight: '500', paddingHorizontal: 4 },
+  
+  suggestionsContainer: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginTop: 14 },
+  suggestionChip: { paddingHorizontal: 16, paddingVertical: 10, borderRadius: 20, borderWidth: 1 },
+  suggestionText: { fontSize: 14, fontWeight: '600' },
+
+  divider: { height: 1, marginVertical: 20 },
+
+  locationSelectedCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 14,
+    borderRadius: 14,
+    borderWidth: 1,
+  },
+  locationIconWrap: { width: 36, height: 36, borderRadius: 18, backgroundColor: 'rgba(21, 101, 192, 0.1)', alignItems: 'center', justifyContent: 'center', marginRight: 12 },
+  locationAddressText: { fontSize: 14, fontWeight: '600', marginBottom: 2 },
+  locationLandmarkText: { fontSize: 12 },
+  locationEditBtn: { padding: 8 },
+  
+  locationEmptyCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 16,
+    borderRadius: 14,
+    borderWidth: 2,
+    borderStyle: 'dashed',
+    gap: 8,
+  },
+  locationEmptyText: { fontSize: 15, fontWeight: '700' },
+
+  segmentedControl: {
+    flexDirection: 'row',
     borderRadius: 12,
-    padding: 12,
+    borderWidth: 1,
+    padding: 4,
   },
-  datePickerTrigger: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  datePickerText: { fontSize: 14, fontWeight: '600' },
+  segmentBtn: {
+    flex: 1,
+    paddingVertical: 10,
+    alignItems: 'center',
+    borderRadius: 10,
+  },
+  segmentBtnActive: {
+    elevation: 2,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+  },
+  segmentText: { fontSize: 14, fontWeight: '700' },
+  helperText: { fontSize: 13, lineHeight: 18, marginTop: 12, paddingHorizontal: 4 },
 
-  locationDetailContainer: { marginTop: 12 },
-  inputHelperText: { fontSize: 12, marginTop: 4, paddingHorizontal: 4 },
-
-  deliveryToggle: { flexDirection: 'row', borderRadius: 12, padding: 4 },
-  deliveryToggleOption: { flex: 1, paddingVertical: 10, alignItems: 'center', borderRadius: 10 },
-  deliveryToggleText: { fontSize: 13, fontWeight: '700' },
-  broadcastInfo: { flexDirection: 'row', gap: 8, marginTop: 12, paddingHorizontal: 4 },
-  broadcastText: { flex: 1, fontSize: 12, lineHeight: 18 },
-  targetedContainer: { marginTop: 12 },
+  targetProviderCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    borderRadius: 16,
+    borderWidth: 1,
+  },
+  targetProviderAvatar: { width: 44, height: 44, borderRadius: 22 },
+  targetProviderAvatarPlaceholder: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
+  targetProviderName: { fontSize: 15, fontWeight: '700', marginBottom: 4 },
+  targetProviderRating: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  targetProviderRatingText: { fontSize: 13, fontWeight: '600' },
+  targetProviderRemove: { padding: 4 },
+  
   chooseProviderBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 14,
-    borderRadius: 14,
-    borderWidth: 1.5,
+    padding: 16,
+    borderRadius: 16,
+    borderWidth: 2,
     borderStyle: 'dashed',
-    gap: 6,
+    gap: 8,
   },
-  chooseProviderText: { fontSize: 14, fontWeight: '700' },
-  providerCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 12,
-    borderRadius: 14,
-    borderWidth: 1,
-    position: 'relative',
-  },
-  providerAvatar: { width: 36, height: 36, borderRadius: 18, marginRight: 10 },
-  providerAvatarPlaceholder: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', marginRight: 10 },
-  providerInfo: { flex: 1 },
-  providerName: { fontSize: 14, fontWeight: '700' },
-  providerRating: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 },
-  providerRatingText: { fontSize: 12, fontWeight: '600' },
-  providerRemoveBtn: { width: 32, height: 32, alignItems: 'center', justifyContent: 'center' },
+  chooseProviderText: { fontSize: 15, fontWeight: '700' },
 
   footer: {
     position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
+    bottom: 0, left: 0, right: 0,
     padding: 20,
     borderTopWidth: 1,
+    elevation: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
   },
   submitBtn: {
-    height: 52,
-    borderRadius: 12,
+    height: 56,
+    borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
+    elevation: 2,
+    shadowColor: '#1565C0',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
   },
-  submitBtnText: { color: '#FFF', fontSize: 16, fontWeight: '800' },
+  submitBtnText: { color: '#FFF', fontSize: 16, fontWeight: '700', letterSpacing: 0.5 },
 
   // Image Preview Modal
   modalContainer: { flex: 1, backgroundColor: 'rgba(0,0,0,0.9)', alignItems: 'center', justifyContent: 'center' },
@@ -1221,71 +1290,6 @@ const styles = StyleSheet.create({
 
   // Location Picker styles
   pickerModalContainer: { flex: 1 },
-  pickerHeader: {
-    height: 60,
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    borderBottomWidth: 1,
-    gap: 12,
-    zIndex: 10,
-  },
-  pickerCloseBtn: {
-    width: 40,
-    height: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  pickerSearchContainer: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    height: 44,
-    borderRadius: 22,
-    paddingHorizontal: 16,
-  },
-  pickerSearchInput: {
-    flex: 1,
-    fontSize: 14,
-    height: '100%',
-    padding: 0,
-  },
-  suggestionsDropdown: {
-    position: 'absolute',
-    top: 60,
-    left: 0,
-    right: 0,
-    maxHeight: 250,
-    borderBottomWidth: 1,
-    zIndex: 20,
-    elevation: 5,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 6,
-  },
-  suggestionItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-    borderBottomWidth: 1,
-  },
-  suggestionItemText: {
-    fontSize: 14,
-    flex: 1,
-  },
-  gpsWarningBanner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 10,
-    paddingHorizontal: 16,
-  },
-  gpsWarningText: {
-    fontSize: 12,
-    fontWeight: '600',
-    flex: 1,
-  },
   mapWrapper: {
     flex: 1,
     position: 'relative',
@@ -1301,63 +1305,165 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   centerPinIconWrap: {
-    transform: [{ translateY: -20 }],
-  },
-  centerPinDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: '#000',
-    opacity: 0.4,
-    transform: [{ scaleX: 2 }],
-  },
-  pickerBottomSheet: {
-    padding: 20,
-    borderTopWidth: 1,
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    elevation: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-  },
-  bottomSheetTitle: {
-    fontSize: 15,
-    fontWeight: '800',
-    marginBottom: 8,
-  },
-  bottomSheetSubtitle: {
-    fontSize: 13,
-    fontWeight: '700',
-    marginBottom: 6,
-  },
-  addressTextContainer: {
-    padding: 12,
-    borderRadius: 10,
-  },
-  addressText: {
-    fontSize: 13,
-    lineHeight: 18,
-    fontWeight: '600',
-  },
-  pickerLandmarkInput: {
-    height: 46,
-    borderRadius: 10,
-    borderWidth: 1,
-    paddingHorizontal: 12,
-    fontSize: 13,
-    marginBottom: 16,
-  },
-  pickerConfirmBtn: {
-    height: 48,
-    borderRadius: 10,
+    transform: [{ translateY: -24 }],
     alignItems: 'center',
     justifyContent: 'center',
   },
-  pickerConfirmBtnText: {
-    color: '#FFF',
+  pinGlow: {
+    position: 'absolute',
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: 'rgba(229, 57, 53, 0.2)',
+    top: 8,
+  },
+  centerPinDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: 'rgba(0,0,0,0.3)',
+    transform: [{ scaleX: 2.5 }],
+  },
+  floatingPickerHeader: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    paddingHorizontal: 20,
+    zIndex: 10,
+  },
+  pickerSearchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    height: 56,
+    borderRadius: 100,
+    paddingHorizontal: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.15,
+    shadowRadius: 16,
+    elevation: 8,
+  },
+  pickerCloseBtn: {
+    width: 44,
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 22,
+  },
+  pickerSearchInput: {
+    flex: 1,
+    fontSize: 16,
+    height: '100%',
+    paddingRight: 16,
+    fontWeight: '500',
+  },
+  suggestionsDropdown: {
+    marginTop: 12,
+    borderRadius: 24,
+    maxHeight: 280,
+    paddingVertical: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.15,
+    shadowRadius: 20,
+    elevation: 10,
+  },
+  suggestionItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    borderBottomWidth: 1,
+  },
+  suggestionItemText: {
+    fontSize: 15,
+    fontWeight: '500',
+    flex: 1,
+    lineHeight: 20,
+  },
+  gpsWarningBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 12,
+    padding: 14,
+    borderRadius: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 4,
+  },
+  gpsWarningText: {
+    fontSize: 13,
+    fontWeight: '700',
+    flex: 1,
+  },
+  pickerBottomSheet: {
+    padding: 24,
+    borderTopLeftRadius: 32,
+    borderTopRightRadius: 32,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -8 },
+    shadowOpacity: 0.1,
+    shadowRadius: 24,
+    elevation: 20,
+    paddingBottom: Platform.OS === 'ios' ? 40 : 24,
+  },
+  bottomSheetTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+    marginBottom: 12,
+    letterSpacing: -0.3,
+  },
+  addressTextContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    borderRadius: 16,
+    marginBottom: 20,
+    overflow: 'hidden',
+  },
+  addressLeftAccent: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    bottom: 0,
+    width: 4,
+    backgroundColor: '#3b82f6',
+  },
+  addressText: {
+    fontSize: 15,
+    lineHeight: 22,
+    fontWeight: '600',
+    flex: 1,
+  },
+  bottomSheetSubtitle: {
     fontSize: 15,
     fontWeight: '700',
+    marginBottom: 10,
+  },
+  pickerLandmarkInput: {
+    height: 56,
+    borderRadius: 16,
+    borderWidth: 1,
+    paddingHorizontal: 16,
+    fontSize: 15,
+    marginBottom: 24,
+  },
+  pickerConfirmBtn: {
+    height: 56,
+    borderRadius: 100,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.25,
+    shadowRadius: 12,
+    elevation: 6,
+  },
+  pickerConfirmBtnText: {
+    color: '#FFF',
+    fontSize: 16,
+    fontWeight: '800',
   },
 });

@@ -84,6 +84,7 @@ export default function RequestDetailForProviderScreen({ navigation, route }: an
 
   useFocusEffect(
     useCallback(() => {
+      navigation.setOptions({ headerShown: false });
       setLoading(true);
       fetchDetail();
     }, [fetchDetail])
@@ -479,13 +480,14 @@ const styles = StyleSheet.create({
   title: { fontSize: 20, fontWeight: '800', marginBottom: 8 },
   description: { fontSize: 15, lineHeight: 22, marginBottom: 20 },
 
-  metaRow: { flexDirection: 'row', gap: 12, marginBottom: 16 },
+  metaRow: { flexDirection: 'row', gap: 16, marginBottom: 24 },
   metaCard: {
-    flex: 1, borderRadius: 16, padding: 14, borderWidth: 1,
-    alignItems: 'center', gap: 4,
+    flex: 1, borderRadius: 20, padding: 18, borderWidth: 0,
+    alignItems: 'center', gap: 6,
+    shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.08, shadowRadius: 12, elevation: 4,
   },
-  metaLabel: { fontSize: 11, fontWeight: '600', textTransform: 'uppercase', marginTop: 4 },
-  metaValue: { fontSize: 14, fontWeight: '700', textAlign: 'center' },
+  metaLabel: { fontSize: 11, fontWeight: '700', textTransform: 'uppercase', marginTop: 4, letterSpacing: 0.5 },
+  metaValue: { fontSize: 15, fontWeight: '800', textAlign: 'center' },
 
   infoRow: {
     flexDirection: 'row', alignItems: 'center', gap: 8,
@@ -536,25 +538,28 @@ const styles = StyleSheet.create({
   historyStatus: { fontSize: 12, fontWeight: '600' },
   historyDate: { fontSize: 12 },
 
-  bidForm: { borderRadius: 20, borderWidth: 1, padding: 20, marginBottom: 16 },
-  bidFormTitle: { fontSize: 17, fontWeight: '800', marginBottom: 16 },
-  fieldLabel: { fontSize: 12, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8 },
-  input: { height: 52, borderRadius: 14, borderWidth: 1, paddingHorizontal: 16, fontSize: 15, marginBottom: 16 },
+  bidForm: { 
+    borderRadius: 28, borderWidth: 0, padding: 24, marginBottom: 24,
+    shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.12, shadowRadius: 20, elevation: 12,
+  },
+  bidFormTitle: { fontSize: 20, fontWeight: '800', marginBottom: 20, letterSpacing: -0.3 },
+  fieldLabel: { fontSize: 12, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 10 },
+  input: { height: 56, borderRadius: 16, borderWidth: 1, paddingHorizontal: 16, fontSize: 16, marginBottom: 20 },
   etaSelector: {
-    height: 52, borderRadius: 14, borderWidth: 1, paddingHorizontal: 16,
+    height: 56, borderRadius: 16, borderWidth: 1, paddingHorizontal: 16,
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8,
   },
-  etaSelectorText: { fontSize: 15 },
-  etaOptions: { borderRadius: 14, borderWidth: 1, overflow: 'hidden', marginBottom: 16 },
-  etaOption: { paddingHorizontal: 16, paddingVertical: 12 },
-  etaOptionText: { fontSize: 14 },
-  textArea: { borderRadius: 14, borderWidth: 1, paddingHorizontal: 16, paddingTop: 14, fontSize: 15, minHeight: 90, marginBottom: 20 },
+  etaSelectorText: { fontSize: 16 },
+  etaOptions: { borderRadius: 16, borderWidth: 1, overflow: 'hidden', marginBottom: 20 },
+  etaOption: { paddingHorizontal: 16, paddingVertical: 14 },
+  etaOptionText: { fontSize: 15, fontWeight: '500' },
+  textArea: { borderRadius: 16, borderWidth: 1, paddingHorizontal: 16, paddingTop: 16, fontSize: 16, minHeight: 100, marginBottom: 24 },
   submitBtn: {
-    height: 52, borderRadius: 16, alignItems: 'center', justifyContent: 'center',
+    height: 56, borderRadius: 100, alignItems: 'center', justifyContent: 'center',
     flexDirection: 'row', gap: 8,
-    shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 8, elevation: 4,
+    shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.25, shadowRadius: 16, elevation: 8,
   },
-  submitBtnText: { color: '#FFF', fontSize: 15, fontWeight: '700' },
+  submitBtnText: { color: '#FFF', fontSize: 16, fontWeight: '800' },
 
   closedBanner: {
     flexDirection: 'row', alignItems: 'center', gap: 10,

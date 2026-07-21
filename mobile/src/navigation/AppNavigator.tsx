@@ -57,9 +57,11 @@ const Tab = createBottomTabNavigator();
 // ── Tab Bar Icon Helper ───────────────────────────────────────────────────
 function TabIcon({ name, focused, colors }: { name: string; focused: boolean; colors: any }) {
   return (
-    <View style={styles.tabIconWrap}>
-      <Ionicons name={name as any} size={22} color={focused ? colors.primary : colors.textMuted} />
-      {focused && <View style={[styles.tabDot, { backgroundColor: colors.primary }]} />}
+    <View style={{ alignItems: 'center', justifyContent: 'center' }}>
+      <Ionicons name={name as any} size={24} color={focused ? colors.primary : colors.textMuted} />
+      {focused && (
+        <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: colors.primary, marginTop: 2 }} />
+      )}
     </View>
   );
 }
@@ -75,17 +77,21 @@ function ProviderNavigator() {
           headerShown: false,
           tabBarStyle: {
             backgroundColor: colors.cardBackground,
-            borderTopColor: colors.border,
             borderTopWidth: 1,
-            height: 60,
-            paddingBottom: 8,
-            paddingTop: 8,
+            borderTopColor: colors.border,
+            elevation: 8,
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: -2 },
+            shadowOpacity: 0.05,
+            shadowRadius: 4,
+            paddingTop: 4,
           },
           tabBarActiveTintColor: colors.primary,
           tabBarInactiveTintColor: colors.textMuted,
           tabBarLabelStyle: {
             fontSize: 11,
-            fontWeight: '600',
+            fontWeight: '500',
+            paddingBottom: 4,
           },
         }}
       >
@@ -155,17 +161,21 @@ function AppTabs() {
           headerShown: false,
           tabBarStyle: {
             backgroundColor: colors.cardBackground,
-            borderTopColor: colors.border,
             borderTopWidth: 1,
-            height: 60,
-            paddingBottom: 8,
-            paddingTop: 8,
+            borderTopColor: colors.border,
+            elevation: 8,
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: -2 },
+            shadowOpacity: 0.05,
+            shadowRadius: 4,
+            paddingTop: 4,
           },
           tabBarActiveTintColor: colors.primary,
           tabBarInactiveTintColor: colors.textMuted,
           tabBarLabelStyle: {
             fontSize: 11,
-            fontWeight: '600',
+            fontWeight: '500',
+            paddingBottom: 4,
           },
         }}
       >
@@ -514,12 +524,8 @@ const styles = StyleSheet.create({
   tabIconWrap: {
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 4,
-    paddingVertical: 4,
-  },
-  tabDot: {
-    width: 5,
-    height: 5,
-    borderRadius: 3,
+    width: 48,
+    height: 32,
+    borderRadius: 16,
   },
 });

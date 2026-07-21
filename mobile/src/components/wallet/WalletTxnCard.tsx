@@ -31,26 +31,27 @@ export default function WalletTxnCard({ transaction, onPress }: WalletTxnCardPro
 
   return (
     <TouchableOpacity
-      style={styles.card}
+      style={[styles.card, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}
       onPress={() => onPress(transaction.walletTxnId)}
       activeOpacity={0.85}
     >
-      {/* Accent strip */}
-      <View style={[styles.leftAccent, { backgroundColor: leftAccentColor }]} />
-
       <View style={styles.content}>
         <View style={styles.row}>
           <View style={styles.iconTitleRow}>
             <View style={[styles.directionWrap, { backgroundColor: leftAccentColor + '20' }]}>
-              <Text style={[styles.directionIcon, { color: leftAccentColor }]}>
-                {txnTypeIcon(transaction.type)}
-              </Text>
+              {isDeposit ? (
+                <Text style={[styles.directionIcon, { color: leftAccentColor }]}>↓</Text>
+              ) : (
+                <Text style={[styles.directionIcon, { color: leftAccentColor }]}>↑</Text>
+              )}
             </View>
             <View style={styles.titleCol}>
-              <Text style={[styles.titleText, { color: colors.text }]}>
+              <Text style={[styles.titleText, { color: colors.text }]} numberOfLines={1}>
                 {formatNarration(transaction.narration) || (isDeposit ? 'Wallet Top-Up' : 'Earnings Withdrawal')}
               </Text>
-              <Text style={[styles.subtext, { color: colors.textMuted }]}>{transaction.paymentMethod}</Text>
+              <Text style={[styles.subtext, { color: colors.textMuted }]}>
+                {transaction.paymentMethod} • {formatShortTxnDate(transaction.initiatedAt || transaction.createdAt)}
+              </Text>
             </View>
           </View>
           <View style={styles.amountCol}>
@@ -58,16 +59,13 @@ export default function WalletTxnCard({ transaction, onPress }: WalletTxnCardPro
               {formatSignedGHS(transaction.amount, transaction.type)}
             </Text>
             {/* Status Badge */}
-            <View style={[styles.statusBadge, { backgroundColor: statusColor + '1A', borderColor: statusColor + '33' }]}>
+            <View style={[styles.statusBadge, { backgroundColor: statusColor + '20' }]}>
               <Text style={[styles.statusBadgeText, { color: statusColor }]}>
                 {transaction.status}
               </Text>
             </View>
           </View>
         </View>
-        <Text style={[styles.dateText, { color: colors.textMuted }]}>
-          {formatShortTxnDate(transaction.initiatedAt || transaction.createdAt)}
-        </Text>
       </View>
     </TouchableOpacity>
   );
@@ -75,26 +73,21 @@ export default function WalletTxnCard({ transaction, onPress }: WalletTxnCardPro
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: 'rgba(255, 255, 255, 0.07)',
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.12)',
-    padding: 14,
-    marginBottom: 10,
+    borderRadius: 24,
+    borderWidth: 0,
+    padding: 20,
+    marginBottom: 16,
     flexDirection: 'row',
     alignItems: 'center',
-    marginHorizontal: 24,
-    overflow: 'hidden',
-  },
-  leftAccent: {
-    width: 4,
-    borderRadius: 4,
-    height: '100%',
-    marginRight: 12,
+    marginHorizontal: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.06,
+    shadowRadius: 16,
+    elevation: 4,
   },
   content: {
     flex: 1,
-    gap: 8,
   },
   row: {
     flexDirection: 'row',
@@ -104,13 +97,13 @@ const styles = StyleSheet.create({
   iconTitleRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
+    gap: 16,
     flex: 1,
   },
   directionWrap: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -119,40 +112,38 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   directionIcon: {
-    fontSize: 16,
-    fontWeight: '800',
+    fontSize: 22,
+    fontWeight: '900',
   },
   titleText: {
-    fontSize: 13,
-    fontWeight: '700',
+    fontSize: 16,
+    fontWeight: '800',
+    marginBottom: 6,
+    letterSpacing: -0.2,
   },
   subtext: {
-    fontSize: 11,
-    marginTop: 2,
+    fontSize: 13,
+    fontWeight: '600',
   },
   amountCol: {
     alignItems: 'flex-end',
-    alignSelf: 'center',
-    gap: 4,
+    justifyContent: 'center',
+    gap: 8,
   },
   amountText: {
-    fontSize: 14,
-    fontWeight: '800',
+    fontSize: 18,
+    fontWeight: '900',
+    letterSpacing: -0.5,
   },
   statusBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 8,
-    borderWidth: 0.5,
-    alignSelf: 'flex-end',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 100,
   },
   statusBadgeText: {
-    fontSize: 9,
-    fontWeight: '700',
-    textTransform: 'uppercase',
-  },
-  dateText: {
     fontSize: 10,
-    paddingLeft: 42,
+    fontWeight: '900',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
 });

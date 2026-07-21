@@ -317,13 +317,13 @@ export default function ActiveJobScreen({ navigation, route }: any) {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
-      <SafeAreaView edges={['top']} style={{ backgroundColor: colors.background }}>
-        <View style={[styles.header, { borderBottomColor: colors.border }]}>
+      <SafeAreaView edges={['top']} style={{ backgroundColor: colors.cardBackground, zIndex: 10, ...styles.headerShadow }}>
+        <View style={styles.header}>
           <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
-            <Ionicons name="arrow-back" size={22} color={colors.text} />
+            <Ionicons name="arrow-back" size={24} color={colors.text} />
           </TouchableOpacity>
           <Text style={[styles.headerTitle, { color: colors.text }]}>Active Job</Text>
-          <View style={{ width: 40 }} />
+          <View style={{ width: 44 }} />
         </View>
       </SafeAreaView>
 
@@ -331,6 +331,7 @@ export default function ActiveJobScreen({ navigation, route }: any) {
         style={{ flex: 1 }} 
         contentContainerStyle={styles.topSection} 
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}
+        showsVerticalScrollIndicator={false}
       >
         {/* Linear Status Strip */}
         <View style={styles.statusStrip}>
@@ -341,14 +342,21 @@ export default function ActiveJobScreen({ navigation, route }: any) {
               <View key={step} style={styles.stepContainer}>
                 <View style={[
                   styles.stepNode,
-                  { backgroundColor: isActive ? colors.primary : colors.inputBackground, borderColor: isActive ? colors.primary : colors.border }
+                  { backgroundColor: isActive ? colors.primary : colors.inputBackground },
+                  isActive && { shadowColor: colors.primary, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8, elevation: 4 }
                 ]}>
-                  {isActive && <Ionicons name="checkmark" size={12} color="#FFF" />}
+                  {isActive && <Ionicons name="checkmark" size={16} color="#FFF" />}
                 </View>
                 {idx < STATUS_STEPS.length - 1 && (
-                  <View style={[styles.stepLine, { backgroundColor: currentStepIndex > idx ? colors.primary : colors.border }]} />
+                  <View style={[
+                    styles.stepLine,
+                    { backgroundColor: currentStepIndex > idx ? colors.primary : colors.border }
+                  ]} />
                 )}
-                <Text style={[styles.stepText, { color: isCurrent ? colors.primary : colors.textMuted, fontWeight: isCurrent ? '800' : '500' }]} numberOfLines={1}>
+                <Text style={[
+                  styles.stepText,
+                  { color: isCurrent ? colors.primary : colors.textMuted, fontWeight: isCurrent ? '800' : '600' }
+                ]} numberOfLines={1}>
                   {step.replace('_', ' ')}
                 </Text>
               </View>
@@ -359,12 +367,12 @@ export default function ActiveJobScreen({ navigation, route }: any) {
         {/* Action Buttons */}
         <View style={styles.actionsContainer}>
           {canStart && (
-            <TouchableOpacity style={[styles.actionBtn, { backgroundColor: colors.primary }]} onPress={handleStartJob} disabled={startingJob}>
+            <TouchableOpacity style={[styles.actionBtn, styles.primaryBtnShadow, { backgroundColor: colors.primary }]} onPress={handleStartJob} disabled={startingJob}>
               {startingJob ? <ActivityIndicator color="#FFF" /> : <Text style={styles.actionBtnText}>{job.serviceMode === 'REMOTE' ? 'Start Working (Remote)' : 'Start Job (En Route)'}</Text>}
             </TouchableOpacity>
           )}
           {canMarkFinished && (
-            <TouchableOpacity style={[styles.actionBtn, { backgroundColor: colors.success }]} onPress={handleMarkFinished} disabled={markingFinished}>
+            <TouchableOpacity style={[styles.actionBtn, styles.primaryBtnShadow, { backgroundColor: '#10B981' }]} onPress={handleMarkFinished} disabled={markingFinished}>
               {markingFinished ? <ActivityIndicator color="#FFF" /> : (
                 <Text style={styles.actionBtnText}>
                   {isRemote ? 'Submit Proof of Completion' : 'Mark as Complete'}
@@ -374,71 +382,82 @@ export default function ActiveJobScreen({ navigation, route }: any) {
           )}
           {/* ON-SITE: client shows their code; provider enters it */}
           {isAwaitingCode && !isProvider && (
-            <TouchableOpacity style={[styles.actionBtn, { backgroundColor: colors.primary }]} onPress={() => setShowClientModal(true)}>
+            <TouchableOpacity style={[styles.actionBtn, styles.primaryBtnShadow, { backgroundColor: colors.primary }]} onPress={() => setShowClientModal(true)}>
               <Text style={styles.actionBtnText}>Show Completion Code</Text>
             </TouchableOpacity>
           )}
           {isAwaitingCode && isProvider && (
-            <TouchableOpacity style={[styles.actionBtn, { backgroundColor: colors.primary }]} onPress={() => setShowProviderModal(true)}>
+            <TouchableOpacity style={[styles.actionBtn, styles.primaryBtnShadow, { backgroundColor: colors.primary }]} onPress={() => setShowProviderModal(true)}>
               <Text style={styles.actionBtnText}>Enter Completion Code</Text>
             </TouchableOpacity>
           )}
           {/* REMOTE: client reviews proof and releases payment */}
           {isProofSubmitted && !isProvider && (
-            <TouchableOpacity style={[styles.actionBtn, { backgroundColor: '#10B981' }]} onPress={handleReleasePayment} disabled={confirmingJob}>
+            <TouchableOpacity style={[styles.actionBtn, styles.primaryBtnShadow, { backgroundColor: '#10B981' }]} onPress={handleReleasePayment} disabled={confirmingJob}>
               {confirmingJob ? <ActivityIndicator color="#FFF" /> : <Text style={styles.actionBtnText}>✓ Review & Release Payment</Text>}
             </TouchableOpacity>
           )}
           {isProofSubmitted && !isProvider && (
-            <TouchableOpacity style={[styles.actionBtn, { backgroundColor: '#EF4444', marginTop: 6 }]} onPress={() => navigation.navigate('RaiseDispute', { jobId: job.id })}>
-              <Text style={styles.actionBtnText}>Raise Dispute</Text>
+            <TouchableOpacity style={[styles.actionBtn, { backgroundColor: 'rgba(239, 68, 68, 0.1)', marginTop: 8 }]} onPress={() => navigation.navigate('RaiseDispute', { jobId: job.id })}>
+              <Text style={[styles.actionBtnText, { color: '#EF4444' }]}>Raise Dispute</Text>
             </TouchableOpacity>
           )}
         </View>
 
         {/* Job Details Section */}
         {isProvider && (
-          <View style={[styles.jobDetailsCard, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
-            <Text style={[styles.sectionTitle, { color: colors.text, marginBottom: 8 }]}>Job Details</Text>
+          <View style={[styles.jobDetailsCard, { backgroundColor: colors.cardBackground }]}>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>Job Details</Text>
 
             {job.requestTitle && (
-              <Text style={{ fontSize: 18, fontWeight: 'bold', color: colors.text, marginBottom: 4 }}>
+              <Text style={{ fontSize: 20, fontWeight: '800', color: colors.text, marginBottom: 8, letterSpacing: -0.3 }}>
                 {job.requestTitle}
               </Text>
             )}
 
             {job.requestDescription && (
-              <Text style={{ fontSize: 14, color: colors.textMuted, marginBottom: 12, lineHeight: 20 }}>
+              <Text style={{ fontSize: 15, color: colors.textMuted, marginBottom: 16, lineHeight: 22 }}>
                 {job.requestDescription}
               </Text>
             )}
 
-            {job.requesterName && (
-              <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 6 }}>
-                <Ionicons name="person-outline" size={16} color={colors.textMuted} style={{ marginRight: 6 }} />
-                <Text style={{ fontSize: 14, color: colors.text, fontWeight: '500' }}>
-                  Client: {job.requesterName}
-                </Text>
-              </View>
-            )}
+            <View style={styles.detailsGrid}>
+              {job.requesterName && (
+                <View style={styles.detailRow}>
+                  <View style={[styles.detailIconWrap, { backgroundColor: 'rgba(107, 114, 128, 0.1)' }]}>
+                    <Ionicons name="person" size={16} color={colors.textMuted} />
+                  </View>
+                  <View>
+                    <Text style={styles.detailLabel}>Client</Text>
+                    <Text style={[styles.detailValue, { color: colors.text }]}>{job.requesterName}</Text>
+                  </View>
+                </View>
+              )}
 
-            {job.categoryName && (
-              <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
-                <Ionicons name="grid-outline" size={16} color={colors.textMuted} style={{ marginRight: 6 }} />
-                <Text style={{ fontSize: 14, color: colors.text, fontWeight: '500' }}>
-                  Category: {job.categoryName}
-                </Text>
-              </View>
-            )}
+              {job.categoryName && (
+                <View style={styles.detailRow}>
+                  <View style={[styles.detailIconWrap, { backgroundColor: 'rgba(107, 114, 128, 0.1)' }]}>
+                    <Ionicons name="grid" size={16} color={colors.textMuted} />
+                  </View>
+                  <View>
+                    <Text style={styles.detailLabel}>Category</Text>
+                    <Text style={[styles.detailValue, { color: colors.text }]}>{job.categoryName}</Text>
+                  </View>
+                </View>
+              )}
 
-            {job.agreedPrice !== undefined && (
-              <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16 }}>
-                <Ionicons name="pricetag-outline" size={16} color={colors.primary} style={{ marginRight: 6 }} />
-                <Text style={{ fontSize: 16, fontWeight: '600', color: colors.primary }}>
-                  {Number(job.agreedPrice).toFixed(2)} GHS
-                </Text>
-              </View>
-            )}
+              {job.agreedPrice !== undefined && (
+                <View style={styles.detailRow}>
+                  <View style={[styles.detailIconWrap, { backgroundColor: `${colors.primary}1A` }]}>
+                    <Ionicons name="pricetag" size={16} color={colors.primary} />
+                  </View>
+                  <View>
+                    <Text style={styles.detailLabel}>Agreed Price</Text>
+                    <Text style={[styles.detailValue, { color: colors.primary }]}>{Number(job.agreedPrice).toFixed(2)} GHS</Text>
+                  </View>
+                </View>
+              )}
+            </View>
             
             {job.attachmentUrls && job.attachmentUrls.length > 0 && (
               <ScrollView horizontal style={styles.photosContainer} showsHorizontalScrollIndicator={false}>
@@ -454,9 +473,12 @@ export default function ActiveJobScreen({ navigation, route }: any) {
             )}
 
             {job.serviceMode === 'REMOTE' ? (
-              <View style={[styles.remoteNoteCard, { backgroundColor: colors.inputBackground }]}>
-                <Text style={[styles.remoteNoteTitle, { color: colors.text }]}>Client's Instructions:</Text>
-                <Text style={[styles.remoteNoteText, { color: colors.text }]}>{job.remoteInfo || 'No additional instructions provided.'}</Text>
+              <View style={[styles.remoteNoteCard, { backgroundColor: 'rgba(59, 130, 246, 0.08)' }]}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 6, gap: 6 }}>
+                  <Ionicons name="information-circle" size={18} color="#3B82F6" />
+                  <Text style={[styles.remoteNoteTitle, { color: '#1E3A8A' }]}>Client's Instructions:</Text>
+                </View>
+                <Text style={[styles.remoteNoteText, { color: '#1E3A8A' }]}>{job.remoteInfo || 'No additional instructions provided.'}</Text>
               </View>
             ) : (
               <View>
@@ -466,7 +488,8 @@ export default function ActiveJobScreen({ navigation, route }: any) {
                     onPress={isProvider ? handleOpenGoogleMaps : undefined}
                     activeOpacity={isProvider ? 0.8 : 1}
                   >
-                    <Text style={[styles.hintText, { color: colors.text }]}>📍 {job.locationHint}</Text>
+                    <Ionicons name="location" size={20} color={colors.primary} />
+                    <Text style={[styles.hintText, { color: colors.text }]}>{job.locationHint}</Text>
                   </TouchableOpacity>
                 )}
 
@@ -476,7 +499,7 @@ export default function ActiveJobScreen({ navigation, route }: any) {
                     onPress={handleOpenGoogleMaps}
                     activeOpacity={0.7}
                   >
-                    <Ionicons name="map-outline" size={18} color={colors.primary} />
+                    <Ionicons name="map" size={18} color={colors.primary} />
                     <Text style={[styles.mapsBtnText, { color: colors.primary }]}>Get Directions (Google Maps)</Text>
                   </TouchableOpacity>
                 )}
@@ -550,33 +573,61 @@ export default function ActiveJobScreen({ navigation, route }: any) {
 const styles = StyleSheet.create({
   loadingContainer: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   emptyTitle: { fontSize: 18, fontWeight: '700', marginTop: 12 },
-  header: { height: 56, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, borderBottomWidth: 1 },
-  headerTitle: { fontSize: 18, fontWeight: '800' },
-  backBtn: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
   
-  topSection: { padding: 16, paddingBottom: 8 },
-  statusStrip: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 20 },
+  header: { height: 60, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16 },
+  headerShadow: {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.05,
+    shadowRadius: 12,
+    elevation: 4,
+  },
+  headerTitle: { fontSize: 18, fontWeight: '800', letterSpacing: -0.3 },
+  backBtn: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
+  
+  topSection: { padding: 20, paddingBottom: 16 },
+  statusStrip: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 24 },
   stepContainer: { flex: 1, alignItems: 'center' },
-  stepNode: { width: 24, height: 24, borderRadius: 12, borderWidth: 2, alignItems: 'center', justifyContent: 'center', zIndex: 2 },
-  stepLine: { position: 'absolute', top: 11, left: '50%', right: '-50%', height: 2, zIndex: 1 },
-  stepText: { fontSize: 10, marginTop: 6, textAlign: 'center', textTransform: 'uppercase' },
+  stepNode: { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center', zIndex: 2 },
+  stepLine: { position: 'absolute', top: 14, left: '50%', right: '-50%', height: 4, borderRadius: 2, zIndex: 1 },
+  stepText: { fontSize: 9, marginTop: 8, textAlign: 'center', textTransform: 'uppercase', letterSpacing: 0.5 },
 
-  actionsContainer: { marginBottom: 8 },
-  actionBtn: { height: 50, borderRadius: 12, alignItems: 'center', justifyContent: 'center', marginVertical: 4 },
-  actionBtnText: { color: '#FFF', fontSize: 15, fontWeight: '700' },
+  actionsContainer: { marginBottom: 16, gap: 12 },
+  actionBtn: { height: 56, borderRadius: 100, alignItems: 'center', justifyContent: 'center' },
+  primaryBtnShadow: {
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.25,
+    shadowRadius: 12,
+    elevation: 6,
+  },
+  actionBtnText: { color: '#FFF', fontSize: 16, fontWeight: '800' },
 
-  jobDetailsCard: { borderWidth: 1, borderRadius: 12, padding: 12, marginTop: 8 },
-  sectionTitle: { fontSize: 16, fontWeight: '700', marginBottom: 8 },
-  photosContainer: { flexDirection: 'row', marginBottom: 12 },
-  thumbnail: { width: 80, height: 80, borderRadius: 8, marginRight: 8, backgroundColor: '#EEE' },
-  remoteNoteCard: { padding: 12, borderRadius: 8 },
-  remoteNoteTitle: { fontWeight: '700', fontSize: 14, marginBottom: 4 },
-  remoteNoteText: { fontSize: 14, lineHeight: 20 },
-  hintCard: { padding: 12, borderRadius: 8, marginBottom: 12 },
-  hintText: { fontSize: 14, fontWeight: '600' },
-  mapsBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', padding: 12, borderRadius: 8, borderWidth: 1, marginBottom: 12 },
+  jobDetailsCard: { 
+    borderRadius: 24, padding: 20, marginTop: 8, marginBottom: 8,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.06, shadowRadius: 20, elevation: 4
+  },
+  sectionTitle: { fontSize: 14, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 12 },
+  
+  detailsGrid: { gap: 16, marginBottom: 20 },
+  detailRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  detailIconWrap: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
+  detailLabel: { fontSize: 12, color: '#6B7280', fontWeight: '500', marginBottom: 2 },
+  detailValue: { fontSize: 15, fontWeight: '700' },
+  
+  photosContainer: { flexDirection: 'row', marginBottom: 20 },
+  thumbnail: { width: 100, height: 100, borderRadius: 16, marginRight: 12, backgroundColor: '#EEE' },
+  
+  remoteNoteCard: { padding: 16, borderRadius: 16, marginBottom: 8 },
+  remoteNoteTitle: { fontWeight: '800', fontSize: 14 },
+  remoteNoteText: { fontSize: 14, lineHeight: 22, fontWeight: '500' },
+  
+  hintCard: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 16, borderRadius: 16, marginBottom: 16 },
+  hintText: { fontSize: 15, fontWeight: '600', flex: 1 },
+  
+  mapsBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', padding: 16, borderRadius: 100, borderWidth: 1, marginBottom: 16 },
   mapsBtnText: { fontSize: 15, fontWeight: '700', marginLeft: 8 },
-  mapContainer: { height: 180, borderRadius: 12, overflow: 'hidden' },
+  
+  mapContainer: { height: 200, borderRadius: 20, overflow: 'hidden' },
   map: { width: '100%', height: '100%' },
 
   chatContainer: { flex: 1, borderTopWidth: 1 },

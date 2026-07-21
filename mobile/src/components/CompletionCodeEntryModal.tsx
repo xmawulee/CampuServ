@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { View, Text, StyleSheet, Modal, TouchableOpacity, ActivityIndicator, TextInput, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, StyleSheet, Modal, TouchableOpacity, ActivityIndicator, TextInput, KeyboardAvoidingView, Platform, Animated } from 'react-native';
 import { CustomIonicons as Ionicons } from './CustomIcons';
 import { useTheme } from '../styles/ThemeContext';
 
@@ -18,10 +18,10 @@ interface Props {
 export default function CompletionCodeEntryModal({ visible, clientName, agreedPrice, onClose, onSubmit, submitting, isSuccess, error, serviceMode }: Props) {
   const { colors } = useTheme();
   const [code, setCode] = useState(['', '', '', '', '', '']);
+  const [focusedIndex, setFocusedIndex] = useState<number | null>(null);
   const inputs = useRef<Array<TextInput | null>>([]);
 
   const handleChange = (text: string, index: number) => {
-    // Handle paste
     if (text.length > 1) {
       const pasted = text.replace(/[^0-9]/g, '').slice(0, 6).split('');
       const newCode = [...code];
@@ -34,7 +34,6 @@ export default function CompletionCodeEntryModal({ visible, clientName, agreedPr
       return;
     }
 
-    // Handle single digit
     const newCode = [...code];
     newCode[index] = text.replace(/[^0-9]/g, '');
     setCode(newCode);
@@ -62,30 +61,32 @@ export default function CompletionCodeEntryModal({ visible, clientName, agreedPr
     <Modal visible={visible} animationType="slide" transparent={true} onRequestClose={onClose}>
       <KeyboardAvoidingView style={styles.backdrop} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <TouchableOpacity style={styles.dismissArea} onPress={onClose} activeOpacity={1} />
-        <View style={[styles.sheetContainer, { backgroundColor: colors.background }]}>
-          <View style={styles.dragHandle} />
+        <View style={[styles.sheetContainer, { backgroundColor: colors.cardBackground, shadowColor: colors.text }]}>
+          <View style={[styles.dragHandle, { backgroundColor: colors.border }]} />
           
           <View style={styles.header}>
-            <View style={{ flex: 1 }}>
-              <Text style={[styles.headerLabel, { color: colors.text }]}>Confirm completion</Text>
+            <View style={{ flex: 1, paddingRight: 16 }}>
+              <Text style={[styles.headerLabel, { color: colors.text }]}>Confirm Completion</Text>
               {clientName && (
                 <Text style={[styles.headerSub, { color: colors.textMuted }]}>with {clientName}</Text>
               )}
             </View>
-            <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
-              <Ionicons name="chevron-down" size={28} color={colors.text} />
+            <TouchableOpacity onPress={onClose} style={[styles.closeBtnCircle, { backgroundColor: colors.inputBackground }]}>
+              <Ionicons name="close" size={22} color={colors.text} />
             </TouchableOpacity>
           </View>
 
           {isSuccess ? (
             <View style={styles.successContent}>
-              <Ionicons name="checkmark-circle" size={80} color={colors.success} style={{ marginBottom: 16 }} />
+              <View style={[styles.iconWrapper, { backgroundColor: colors.success + '15' }]}>
+                <Ionicons name="checkmark-circle" size={80} color={colors.success} />
+              </View>
               <Text style={[styles.successTitle, { color: colors.text }]}>Job Complete!</Text>
               <Text style={[styles.successSub, { color: colors.textMuted }]}>
                 Funds have been released to your wallet.
               </Text>
               {agreedPrice !== undefined && (
-                <View style={[styles.payoutBox, { backgroundColor: colors.inputBackground }]}>
+                <View style={[styles.payoutBox, { backgroundColor: colors.background, borderColor: colors.border }]}>
                   <Text style={[styles.payoutLabel, { color: colors.textMuted }]}>Payout Amount</Text>
                   <Text style={[styles.payoutAmount, { color: colors.success }]}>
                     +{(agreedPrice * 0.88).toFixed(2)} GHS
@@ -95,48 +96,75 @@ export default function CompletionCodeEntryModal({ visible, clientName, agreedPr
             </View>
           ) : (
             <View style={styles.content}>
-              <Text style={[styles.instruction, { color: colors.textMuted }]}>
-                {serviceMode === 'REMOTE'
-                  ? `Enter the 6-digit code provided by ${clientName || 'the client'} over chat or a call.`
-                  : `Ask ${clientName || 'the client'} to read you the code, or check chat if they sent it there.`}
-              </Text>
+              <View style={[styles.instructionBox, { backgroundColor: colors.primary + '10' }]}>
+                <Ionicons name="information-circle-outline" size={20} color={colors.primary} style={{ marginRight: 8, marginTop: 2 }} />
+                <Text style={[styles.instructionText, { color: colors.text }]}>
+                  {serviceMode === 'REMOTE'
+                    ? `Enter the 6-digit code provided by ${clientName || 'the client'} over chat.`
+                    : `Ask ${clientName || 'the client'} to read you the code, or check chat if they sent it.`}
+                </Text>
+              </View>
 
-          <View style={styles.codeContainer}>
-            {code.map((digit, idx) => (
-              <TextInput
-                key={idx}
-                ref={(ref) => { inputs.current[idx] = ref; }}
+              <View style={styles.codeContainer}>
+                {code.map((digit, idx) => {
+                  const isFocused = focusedIndex === idx;
+                  const hasValue = digit !== '';
+                  const borderColor = error ? '#FF3B30' : (isFocused ? colors.primary : (hasValue ? colors.border : 'transparent'));
+                  const bgColor = isFocused ? colors.cardBackground : colors.background;
+
+                  return (
+                    <TextInput
+                      key={idx}
+                      ref={(ref) => { inputs.current[idx] = ref; }}
+                      style={[
+                        styles.codeInput,
+                        { 
+                          borderColor: borderColor, 
+                          backgroundColor: bgColor,
+                          color: colors.text,
+                          elevation: isFocused ? 2 : 0,
+                          shadowColor: colors.primary,
+                          shadowOffset: { width: 0, height: 2 },
+                          shadowOpacity: isFocused ? 0.2 : 0,
+                          shadowRadius: 4,
+                        }
+                      ]}
+                      keyboardType="number-pad"
+                      maxLength={6} 
+                      value={digit}
+                      onChangeText={(text) => handleChange(text, idx)}
+                      onKeyPress={(e) => handleKeyPress(e, idx)}
+                      onFocus={() => setFocusedIndex(idx)}
+                      onBlur={() => setFocusedIndex(null)}
+                      selectTextOnFocus
+                    />
+                  );
+                })}
+              </View>
+
+              {error && (
+                <View style={styles.errorBox}>
+                  <Ionicons name="warning" size={16} color="#FF3B30" />
+                  <Text style={styles.errorText}>{error}</Text>
+                </View>
+              )}
+
+              <TouchableOpacity 
                 style={[
-                  styles.codeInput,
+                  styles.submitBtn, 
                   { 
-                    borderColor: error ? '#FF3B30' : (digit ? colors.primary : colors.border), 
-                    backgroundColor: colors.inputBackground,
-                    color: colors.text
+                    backgroundColor: submitting ? colors.textMuted : colors.primary, 
+                    opacity: isComplete ? 1 : 0.5,
+                    shadowColor: colors.primary 
                   }
-                ]}
-                keyboardType="number-pad"
-                maxLength={6} // Allow longer for paste, but handle in onChangeText
-                value={digit}
-                onChangeText={(text) => handleChange(text, idx)}
-                onKeyPress={(e) => handleKeyPress(e, idx)}
-                selectTextOnFocus
-              />
-            ))}
-          </View>
-
-          {error && <Text style={styles.errorText}>{error}</Text>}
-
-          <TouchableOpacity 
-            style={[
-              styles.submitBtn, 
-              { backgroundColor: submitting ? colors.textMuted : colors.primary, opacity: isComplete ? 1 : 0.6 }
-            ]} 
-            onPress={handleSubmit} 
-            disabled={!isComplete || submitting}
-          >
-            {submitting ? <ActivityIndicator color="#FFF" /> : <Text style={styles.submitText}>Submit Code</Text>}
-          </TouchableOpacity>
-        </View>
+                ]} 
+                onPress={handleSubmit} 
+                activeOpacity={0.8}
+                disabled={!isComplete || submitting}
+              >
+                {submitting ? <ActivityIndicator color="#FFF" /> : <Text style={styles.submitText}>Submit Code</Text>}
+              </TouchableOpacity>
+            </View>
           )}
         </View>
       </KeyboardAvoidingView>
@@ -145,25 +173,63 @@ export default function CompletionCodeEntryModal({ visible, clientName, agreedPr
 }
 
 const styles = StyleSheet.create({
-  backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'flex-end' },
+  backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
   dismissArea: { flex: 1 },
-  sheetContainer: { height: '60%', borderTopLeftRadius: 24, borderTopRightRadius: 24, paddingHorizontal: 20, paddingTop: 12 },
-  dragHandle: { width: 40, height: 5, borderRadius: 3, backgroundColor: 'rgba(150,150,150,0.3)', alignSelf: 'center', marginBottom: 16 },
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 },
-  headerLabel: { fontSize: 18, fontWeight: '700' },
-  headerSub: { fontSize: 13, fontWeight: '500', marginTop: 2 },
-  closeBtn: { padding: 4 },
-  content: { flex: 1, alignItems: 'center' },
-  instruction: { fontSize: 15, textAlign: 'center', marginBottom: 24, paddingHorizontal: 10 },
-  codeContainer: { flexDirection: 'row', gap: 8, marginBottom: 30 },
-  codeInput: { width: 45, height: 55, borderWidth: 2, borderRadius: 12, textAlign: 'center', fontSize: 24, fontWeight: '800' },
-  errorText: { color: '#FF3B30', marginBottom: 20, textAlign: 'center' },
-  submitBtn: { paddingVertical: 14, paddingHorizontal: 40, borderRadius: 24, width: '100%', alignItems: 'center', marginTop: 'auto', marginBottom: 30 },
-  submitText: { color: '#FFF', fontSize: 16, fontWeight: '700' },
-  successContent: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingBottom: 40 },
-  successTitle: { fontSize: 28, fontWeight: '800', marginBottom: 8 },
-  successSub: { fontSize: 16, marginBottom: 24, textAlign: 'center' },
-  payoutBox: { padding: 20, borderRadius: 16, alignItems: 'center', minWidth: 200 },
-  payoutLabel: { fontSize: 13, fontWeight: '600', marginBottom: 4, textTransform: 'uppercase' },
-  payoutAmount: { fontSize: 28, fontWeight: '800' },
+  sheetContainer: { 
+    borderTopLeftRadius: 32, 
+    borderTopRightRadius: 32, 
+    paddingHorizontal: 24, 
+    paddingTop: 12, 
+    paddingBottom: Platform.OS === 'ios' ? 40 : 24,
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 16,
+    elevation: 20
+  },
+  dragHandle: { width: 48, height: 5, borderRadius: 3, alignSelf: 'center', marginBottom: 24 },
+  header: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 28 },
+  headerLabel: { fontSize: 24, fontWeight: '800', letterSpacing: -0.5, marginBottom: 4 },
+  headerSub: { fontSize: 15, fontWeight: '500' },
+  closeBtnCircle: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
+  content: { alignItems: 'center' },
+  instructionBox: { 
+    flexDirection: 'row', 
+    padding: 16, 
+    borderRadius: 16, 
+    marginBottom: 32,
+    alignItems: 'flex-start',
+    width: '100%'
+  },
+  instructionText: { fontSize: 15, lineHeight: 22, fontWeight: '500', flex: 1 },
+  codeContainer: { flexDirection: 'row', justifyContent: 'center', gap: 10, marginBottom: 32, width: '100%' },
+  codeInput: { 
+    width: 48, 
+    height: 56, 
+    borderWidth: 1.5, 
+    borderRadius: 14, 
+    textAlign: 'center', 
+    fontSize: 24, 
+    fontWeight: '700' 
+  },
+  errorBox: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#FF3B3015', paddingHorizontal: 16, paddingVertical: 10, borderRadius: 12, marginBottom: 24 },
+  errorText: { color: '#FF3B30', marginLeft: 8, fontSize: 14, fontWeight: '600' },
+  submitBtn: { 
+    paddingVertical: 16, 
+    borderRadius: 16, 
+    width: '100%', 
+    alignItems: 'center', 
+    justifyContent: 'center',
+    shadowOffset: { width: 0, height: 4 }, 
+    shadowOpacity: 0.3, 
+    shadowRadius: 8, 
+    elevation: 4
+  },
+  submitText: { color: '#FFF', fontSize: 17, fontWeight: '700', letterSpacing: 0.5 },
+  successContent: { alignItems: 'center', justifyContent: 'center', paddingBottom: 20, paddingTop: 10 },
+  iconWrapper: { width: 120, height: 120, borderRadius: 60, alignItems: 'center', justifyContent: 'center', marginBottom: 24 },
+  successTitle: { fontSize: 28, fontWeight: '800', marginBottom: 8, letterSpacing: -0.5 },
+  successSub: { fontSize: 16, marginBottom: 32, textAlign: 'center' },
+  payoutBox: { paddingVertical: 20, paddingHorizontal: 32, borderRadius: 20, alignItems: 'center', width: '100%', borderWidth: 1 },
+  payoutLabel: { fontSize: 13, fontWeight: '600', marginBottom: 6, textTransform: 'uppercase', letterSpacing: 1 },
+  payoutAmount: { fontSize: 32, fontWeight: '800', letterSpacing: -1 },
 });

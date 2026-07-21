@@ -53,8 +53,8 @@ export default function SettingsScreen({ navigation }: any) {
     if (!fullName.trim()) { showToast({ status: 'error', title: 'Error', subtitle: 'Full Name is required.' }); return; }
     setSaving(true);
     try {
-      await api.put(`/users/${user?.id}/profile`, { 
-        fullName: fullName.trim(), 
+      await api.put(`/users/${user?.id}/profile`, {
+        fullName: fullName.trim(),
         bio: bio.trim(),
         serviceCategory: serviceCategory,
       });
@@ -78,130 +78,130 @@ export default function SettingsScreen({ navigation }: any) {
 
   return (
     <View style={{ flex: 1 }}>
-      <ScrollView 
-        style={[styles.container, { backgroundColor: colors.background }]} 
+      <ScrollView
+        style={[styles.container, { backgroundColor: colors.background }]}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: insets.bottom }}
       >
-      {/* ── Profile Hero Section ── */}
-      <View style={[styles.profileHero, { backgroundColor: colors.primary }]}>
-        <AvatarUploader
-          currentAvatarUrl={profilePictureUrl}
-          userId={user?.id || ''}
-          displayName={fullName}
-          onUploadSuccess={async (newUrl) => {
-            setProfilePictureUrl(newUrl);
-            if (user) {
-              const { accessToken, refreshToken } = useAuthStore.getState();
-              if (accessToken && refreshToken) {
-                await setAuth(accessToken, refreshToken, { ...user, profilePictureUrl: newUrl || undefined });
+        {/* ── Profile Hero Section ── */}
+        <View style={[styles.profileHero, { backgroundColor: colors.primary }]}>
+          <AvatarUploader
+            currentAvatarUrl={profilePictureUrl}
+            userId={user?.id || ''}
+            displayName={fullName}
+            onUploadSuccess={async (newUrl) => {
+              setProfilePictureUrl(newUrl);
+              if (user) {
+                const { accessToken, refreshToken } = useAuthStore.getState();
+                if (accessToken && refreshToken) {
+                  await setAuth(accessToken, refreshToken, { ...user, profilePictureUrl: newUrl || undefined });
+                }
               }
-            }
-          }}
-          onToast={(t) => showToast({ status: t.type === 'error' ? 'error' : 'success', title: t.message })}
-        />
+            }}
+            onToast={(t) => showToast({ status: t.type === 'error' ? 'error' : 'success', title: t.message })}
+          />
 
-        <Text style={styles.heroName}>{fullName}</Text>
-        <Text style={styles.heroEmail}>{user?.email}</Text>
+          <Text style={styles.heroName}>{fullName}</Text>
+          <Text style={styles.heroEmail}>{user?.email}</Text>
 
-        {/* Verification badge */}
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 8 }}>
-          {profile?.isVerified && (
-            <View style={[styles.verificationBadge, { backgroundColor: 'rgba(255,255,255,0.25)' }]}>
-              <Ionicons name="shield-checkmark" size={14} color="#FFF" />
-              <Text style={styles.verificationText}>Verified Student</Text>
+          {/* Verification badge */}
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 8 }}>
+            {profile?.isVerified && (
+              <View style={[styles.verificationBadge, { backgroundColor: 'rgba(255,255,255,0.25)' }]}>
+                <Ionicons name="shield-checkmark" size={14} color="#FFF" />
+                <Text style={styles.verificationText}>Verified Student</Text>
+              </View>
+            )}
+            <View style={[styles.verificationBadge, { backgroundColor: 'rgba(255,255,255,0.2)' }]}>
+              <Ionicons name={user?.role === 'PROVIDER' ? "briefcase-outline" : "school-outline"} size={14} color="#FFF" />
+              <Text style={styles.verificationText}>Role: {user?.role === 'PROVIDER' ? "Provider" : "Student"}</Text>
             </View>
-          )}
-          <View style={[styles.verificationBadge, { backgroundColor: 'rgba(255,255,255,0.2)' }]}>
-            <Ionicons name={user?.role === 'PROVIDER' ? "briefcase-outline" : "school-outline"} size={14} color="#FFF" />
-            <Text style={styles.verificationText}>Role: {user?.role === 'PROVIDER' ? "Provider" : "Student"}</Text>
           </View>
         </View>
-      </View>
 
-      <View style={styles.content}>
-        {/* ── Stats row ── */}
-        <View style={[styles.statsRow, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
-          <View style={styles.statItem}>
-            <Text style={[styles.statValue, { color: colors.primary }]}>KNUST</Text>
-            <Text style={[styles.statLabel, { color: colors.textMuted }]}>University</Text>
+        <View style={styles.content}>
+          {/* ── Stats row ── */}
+          <View style={[styles.statsRow, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
+            <View style={styles.statItem}>
+              <Text style={[styles.statValue, { color: colors.primary }]}>KNUST</Text>
+              <Text style={[styles.statLabel, { color: colors.textMuted }]}>University</Text>
+            </View>
+            <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
+            <View style={styles.statItem}>
+              <Text style={[styles.statValue, { color: colors.primary }]}>{user?.role === 'PROVIDER' ? 'Provider' : 'Student'}</Text>
+              <Text style={[styles.statLabel, { color: colors.textMuted }]}>Account Role</Text>
+            </View>
+            {user?.role === 'PROVIDER' && (
+              <>
+                <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
+                <View style={styles.statItem}>
+                  <Text style={[styles.statValue, { color: colors.primary }]}>5.0 ⭐</Text>
+                  <Text style={[styles.statLabel, { color: colors.textMuted }]}>Rating</Text>
+                </View>
+              </>
+            )}
           </View>
-          <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
-          <View style={styles.statItem}>
-            <Text style={[styles.statValue, { color: colors.primary }]}>{user?.role === 'PROVIDER' ? 'Provider' : 'Student'}</Text>
-            <Text style={[styles.statLabel, { color: colors.textMuted }]}>Account Role</Text>
+
+          {/* ── Settings Menu Items ── */}
+          <View style={[styles.card, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
+            {[
+              {
+                icon: 'shield-outline',
+                label: 'Privacy & Security',
+                sub: 'Manage account security',
+                onPress: () => { }
+              },
+              {
+                icon: 'help-circle-outline',
+                label: 'Help & Support',
+                sub: 'Get assistance',
+                onPress: () => {
+                  Alert.alert(
+                    "Help & Support",
+                    "Email: allenhodoameda@gmail.com\nPhone: +233 20 535 2535"
+                  );
+                }
+              },
+            ].map((item, idx, arr) => (
+              <TouchableOpacity
+                key={item.label}
+                onPress={item.onPress}
+                style={[
+                  styles.menuRow,
+                  idx !== arr.length - 1 && { borderBottomWidth: 1, borderBottomColor: colors.border }
+                ]}
+              >
+                <View style={[styles.menuIconWrap, { backgroundColor: colors.primaryLight }]}>
+                  <Ionicons name={item.icon as any} size={18} color={colors.primary} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.menuLabel, { color: colors.text }]}>{item.label}</Text>
+                  <Text style={[styles.menuSub, { color: colors.textMuted }]}>{item.sub}</Text>
+                </View>
+                <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
+              </TouchableOpacity>
+            ))}
           </View>
-          {user?.role === 'PROVIDER' && (
-            <>
-              <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
-              <View style={styles.statItem}>
-                <Text style={[styles.statValue, { color: colors.primary }]}>5.0 ⭐</Text>
-                <Text style={[styles.statLabel, { color: colors.textMuted }]}>Rating</Text>
-              </View>
-            </>
-          )}
+
+          {/* ── Logout ── */}
+          <TouchableOpacity
+            style={[styles.logoutBtn, { backgroundColor: colors.errorLight, borderColor: colors.error }]}
+            onPress={handleLogout}
+          >
+            <Ionicons name="log-out-outline" size={18} color={colors.error} style={{ marginRight: 8 }} />
+            <Text style={[styles.logoutBtnText, { color: colors.error }]}>Log Out</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.logoutBtn, { backgroundColor: 'transparent', borderColor: colors.error, marginTop: 12 }]}
+            onPress={() => navigation.navigate('DeleteAccount')}
+          >
+            <Ionicons name="trash-outline" size={18} color={colors.error} style={{ marginRight: 8 }} />
+            <Text style={[styles.logoutBtnText, { color: colors.error }]}>Delete Account</Text>
+          </TouchableOpacity>
+
+          <View style={{ height: 40 }} />
         </View>
-
-        {/* ── Settings Menu Items ── */}
-        <View style={[styles.card, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
-          {[
-            { 
-              icon: 'shield-outline', 
-              label: 'Privacy & Security', 
-              sub: 'Manage account security',
-              onPress: () => {}
-            },
-            { 
-              icon: 'help-circle-outline', 
-              label: 'Help & Support', 
-              sub: 'Get assistance',
-              onPress: () => {
-                Alert.alert(
-                  "Help & Support",
-                  "Email: allenhodoameda@gmail.com\nPhone: +233 20 535 2535"
-                );
-              }
-            },
-          ].map((item, idx, arr) => (
-            <TouchableOpacity
-              key={item.label}
-              onPress={item.onPress}
-              style={[
-                styles.menuRow,
-                idx !== arr.length - 1 && { borderBottomWidth: 1, borderBottomColor: colors.border }
-              ]}
-            >
-              <View style={[styles.menuIconWrap, { backgroundColor: colors.primaryLight }]}>
-                <Ionicons name={item.icon as any} size={18} color={colors.primary} />
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={[styles.menuLabel, { color: colors.text }]}>{item.label}</Text>
-                <Text style={[styles.menuSub, { color: colors.textMuted }]}>{item.sub}</Text>
-              </View>
-              <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
-            </TouchableOpacity>
-          ))}
-        </View>
-
-        {/* ── Logout ── */}
-        <TouchableOpacity
-          style={[styles.logoutBtn, { backgroundColor: colors.errorLight, borderColor: colors.error }]}
-          onPress={handleLogout}
-        >
-          <Ionicons name="log-out-outline" size={18} color={colors.error} style={{ marginRight: 8 }} />
-          <Text style={[styles.logoutBtnText, { color: colors.error }]}>Log Out</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[styles.logoutBtn, { backgroundColor: 'transparent', borderColor: colors.error, marginTop: 12 }]}
-          onPress={() => navigation.navigate('DeleteAccount')}
-        >
-          <Ionicons name="trash-outline" size={18} color={colors.error} style={{ marginRight: 8 }} />
-          <Text style={[styles.logoutBtnText, { color: colors.error }]}>Delete Account</Text>
-        </TouchableOpacity>
-
-        <View style={{ height: 40 }} />
-      </View>
       </ScrollView>
     </View>
   );
