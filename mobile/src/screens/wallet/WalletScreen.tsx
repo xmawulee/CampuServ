@@ -1,0 +1,176 @@
+import React, { useState, useEffect, useCallback } from 'react';
+import {
+  StyleSheet, Text, View, ScrollView,
+  TouchableOpacity, ActivityIndicator, RefreshControl
+} from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import { api } from '../../services/api';
+import { useAuthStore } from '../../store/authStore';
+import { useTheme } from '../../styles/ThemeContext';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { CustomIonicons as Ionicons } from '../../components/CustomIcons';
+import WalletTxnCard from '../../components/wallet/WalletTxnCard';
+import WalletEmptyState from '../../components/wallet/WalletEmptyState';
+
+export default function WalletScreen() {
+  const { user } = useAuthStore();
+  const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
+  const navigation = useNavigation<any>();
+
+  const [wallet, setWallet] = useState<any>(null);
+  const [transactions, setTransactions] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const isViewingAsProvider = user?.role === 'PROVIDER';
+
+  const fetchWalletData = useCallback(async () => {
+    try {
+      const walletEndpoint = isViewingAsProvider ? '/payments/provider/wallet' : '/payments/student/wallet';
+      const txEndpoint = isViewingAsProvider ? '/payments/provider/wallet/transactions' : '/payments/student/wallet/transactions';
+
+      const response = await api.get(walletEndpoint);
+      setWallet(response.data);
+      
+      const txResponse = await api.get(txEndpoint);
+      setTransactions(txResponse.data || []);
+    } catch (e) {
+      console.warn("Wallet fetch error details:", e);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }, [isViewingAsProvider]);
+
+  useEffect(() => { fetchWalletData(); }, [fetchWalletData]);
+  const onRefresh = () => { setRefreshing(true); fetchWalletData(); };
+
+  const handleWithdrawal = () => {
+    navigation.navigate('Withdrawal');
+  };
+
+  const handleDeposit = () => {
+    navigation.navigate('Deposit');
+  };
+
+  if (loading) {
+    return (
+      <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
+        <ActivityIndicator size="large" color={colors.primary} />
+      </View>
+    );
+  }
+
+  const txnList = Array.isArray(transactions) ? transactions : [];
+
+  return (
+    <ScrollView
+      style={[styles.container, { backgroundColor: colors.background }]}
+      contentContainerStyle={{ paddingBottom: 40 + insets.bottom }}
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}
+      showsVerticalScrollIndicator={false}
+    >
+      {/* ── Balance Card ── */}
+      <View style={[styles.balanceCard, { backgroundColor: '#0B132B' }]}>
+        <Text style={styles.balanceCardLabel}>
+          {isViewingAsProvider ? 'Provider Earnings Balance' : 'Escrow Spending Balance'}
+        </Text>
+        <Text style={styles.balanceCardAmount}>
+          GHS {wallet ? Number(wallet.balance).toFixed(2) : '0.00'}
+        </Text>
+        <Text style={styles.balanceCardSub}>
+          {isViewingAsProvider ? 'Available for bank withdrawal & payout' : 'Available for booking campus service providers'}
+        </Text>
+
+        {/* Quick actions row */}
+        <View style={styles.quickActionsRow}>
+          {!isViewingAsProvider ? (
+            <>
+              <TouchableOpacity style={[styles.quickAction, { backgroundColor: colors.primary }]} onPress={handleDeposit}>
+                <Ionicons name="add-circle-outline" size={20} color="#FFF" />
+                <Text style={styles.quickActionLabel}>Add Funds</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[styles.quickAction, { backgroundColor: 'rgba(255,255,255,0.12)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.2)' }]} onPress={handleWithdrawal}>
+                <Ionicons name="arrow-up-circle-outline" size={20} color="#FFF" />
+                <Text style={styles.quickActionLabel}>Withdraw</Text>
+              </TouchableOpacity>
+            </>
+          ) : (
+            <TouchableOpacity style={[styles.quickAction, { backgroundColor: colors.primary }]} onPress={handleWithdrawal}>
+              <Ionicons name="arrow-up-circle-outline" size={20} color="#FFF" />
+              <Text style={styles.quickActionLabel}>Request Payout</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+      </View>
+
+      {/* ── Escrow Card ── */}
+      {!isViewingAsProvider && (
+        <View style={[styles.escrowCard, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 8 }}>
+            <View style={[styles.escrowIcon, { backgroundColor: colors.warningLight }]}>
+              <Ionicons name="lock-closed-outline" size={20} color={colors.warning} />
+            </View>
+            <View>
+              <Text style={[styles.escrowLabel, { color: colors.textMuted }]}>
+                Pending Escrow Payments
+              </Text>
+              <Text style={[styles.escrowAmount, { color: colors.text }]}>
+                GHS {wallet ? Number(wallet.heldBalance || wallet.pendingEscrow || 0).toFixed(2) : '0.00'}
+              </Text>
+            </View>
+          </View>
+          <Text style={[styles.escrowSub, { color: colors.textMuted }]}>
+            These funds are locked securely in active service contracts and will be released upon job completion.
+          </Text>
+        </View>
+      )}
+
+      {/* ── Transaction History ── */}
+      <Text style={[styles.sectionTitle, { color: colors.text, marginTop: 24 }]}>Recent Transactions</Text>
+
+      {(!txnList || txnList.length === 0) ? (
+        <WalletEmptyState onDepositPress={handleDeposit} />
+      ) : (
+        txnList.map((tx: any) => (
+          <WalletTxnCard
+            key={tx.walletTxnId}
+            transaction={tx}
+            onPress={(id) => navigation.navigate('WalletReceiptScreen', { walletTxnId: id })}
+          />
+        ))
+      )}
+
+      <View style={{ height: 40 }} />
+    </ScrollView>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: { flex: 1 },
+  loadingContainer: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+
+  balanceCard: {
+    margin: 20, borderRadius: 24, padding: 24,
+    shadowColor: '#1A1A1A', shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.25, shadowRadius: 20, elevation: 8,
+  },
+  balanceCardLabel: { color: 'rgba(255,255,255,0.65)', fontSize: 13, fontWeight: '600' },
+  balanceCardAmount: { color: '#FFFFFF', fontSize: 40, fontWeight: '900', marginVertical: 6, letterSpacing: -1 },
+  balanceCardSub: { color: 'rgba(255,255,255,0.55)', fontSize: 12, marginBottom: 24 },
+  quickActionsRow: { flexDirection: 'row', gap: 12 },
+  quickAction: { flex: 1, height: 52, borderRadius: 16, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8 },
+  quickActionLabel: { color: '#FFFFFF', fontSize: 14, fontWeight: '700' },
+
+  escrowCard: {
+    marginHorizontal: 24, borderRadius: 20, padding: 18, borderWidth: 1,
+    marginBottom: 24,
+  },
+  escrowIcon: { width: 42, height: 42, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
+  escrowLabel: { fontSize: 12, fontWeight: '600' },
+  escrowAmount: { fontSize: 20, fontWeight: '800', marginTop: 2 },
+  escrowSub: { fontSize: 11, lineHeight: 16 },
+
+  sectionTitle: { fontSize: 16, fontWeight: '800', paddingHorizontal: 24, marginBottom: 12 },
+});
