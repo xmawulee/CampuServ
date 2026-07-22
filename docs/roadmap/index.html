@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CampusServ — Project Roadmap (Group 88 · KNUST)</title>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- FontAwesome Icons for modern aesthetic -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Canvas for Confetti -->
+  <canvas id="confetti-canvas"></canvas>
+
+  <div class="app-container">
+    <!-- Background glow elements -->
+    <div class="glow-orb orb-1"></div>
+    <div class="glow-orb orb-2"></div>
+    <div class="glow-orb orb-3"></div>
+
+    <!-- Header Section -->
+    <header class="main-header">
+      <div class="header-left">
+        <div class="logo-wrapper">
+          <div class="logo-icon">CS</div>
+          <div>
+            <h1 class="project-title">CampusServ</h1>
+            <p class="project-subtitle">Project Roadmap &bull; Group 88 &bull; KNUST</p>
+          </div>
+        </div>
+        <div class="tech-stack-badges">
+          <span class="tech-badge react-native"><i class="fab fa-react"></i> React Native</span>
+          <span class="tech-badge spring-boot"><i class="fas fa-leaf"></i> Spring Boot</span>
+          <span class="tech-badge postgresql"><i class="fas fa-database"></i> PostgreSQL</span>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button id="export-btn" class="btn btn-secondary" title="Export progress as JSON file (Alt+E)">
+          <i class="fas fa-download"></i> Export Progress
+        </button>
+        <button id="import-btn-trigger" class="btn btn-secondary" title="Import progress from JSON file">
+          <i class="fas fa-upload"></i> Import Progress
+        </button>
+        <input type="file" id="import-file-input" accept=".json" style="display: none;">
+        <button id="reset-btn" class="btn btn-danger" title="Reset all progress (Alt+R)">
+          <i class="fas fa-redo-alt"></i> Reset
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Dashboard Metrics -->
+    <section class="dashboard-overview">
+      <!-- Overall Circular Progress Card -->
+      <div class="metric-card overall-progress-card">
+        <div class="radial-progress-wrapper">
+          <svg class="radial-progress" viewBox="0 0 120 120">
+            <circle class="radial-bg" cx="60" cy="60" r="50"></circle>
+            <circle id="overall-progress-circle" class="radial-bar" cx="60" cy="60" r="50" stroke-dasharray="314.15" stroke-dashoffset="314.15"></circle>
+          </svg>
+          <div class="radial-progress-text">
+            <span id="overall-progress-percentage" class="percentage-value">0%</span>
+            <span id="overall-progress-fraction" class="fraction-value">0 / 151 tasks</span>
+          </div>
+        </div>
+        <div class="overall-progress-meta">
+          <h3>Overall Completion</h3>
+          <p>Total project roadmap status</p>
+        </div>
+      </div>
+
+      <!-- Category Stats Grid -->
+      <div class="category-metrics-grid">
+        <div class="metric-card category-card" data-category="Backend">
+          <div class="category-card-header">
+            <div class="category-icon bg-backend"><i class="fas fa-server"></i></div>
+            <div class="category-info">
+              <h4>Backend</h4>
+              <span id="stat-backend" class="category-count">0 / 0</span>
+            </div>
+          </div>
+          <div class="progress-bar-wrapper">
+            <div id="bar-backend" class="progress-bar-fill bg-backend" style="width: 0%"></div>
+          </div>
+        </div>
+
+        <div class="metric-card category-card" data-category="Frontend">
+          <div class="category-card-header">
+            <div class="category-icon bg-frontend"><i class="fas fa-mobile-alt"></i></div>
+            <div class="category-info">
+              <h4>Frontend</h4>
+              <span id="stat-frontend" class="category-count">0 / 0</span>
+            </div>
+          </div>
+          <div class="progress-bar-wrapper">
+            <div id="bar-frontend" class="progress-bar-fill bg-frontend" style="width: 0%"></div>
+          </div>
+        </div>
+
+        <div class="metric-card category-card" data-category="Database">
+          <div class="category-card-header">
+            <div class="category-icon bg-database"><i class="fas fa-table"></i></div>
+            <div class="category-info">
+              <h4>Database</h4>
+              <span id="stat-database" class="category-count">0 / 0</span>
+            </div>
+          </div>
+          <div class="progress-bar-wrapper">
+            <div id="bar-database" class="progress-bar-fill bg-database" style="width: 0%"></div>
+          </div>
+        </div>
+
+        <div class="metric-card category-card" data-category="DevOps">
+          <div class="category-card-header">
+            <div class="category-icon bg-devops"><i class="fas fa-infinity"></i></div>
+            <div class="category-info">
+              <h4>DevOps</h4>
+              <span id="stat-devops" class="category-count">0 / 0</span>
+            </div>
+          </div>
+          <div class="progress-bar-wrapper">
+            <div id="bar-devops" class="progress-bar-fill bg-devops" style="width: 0%"></div>
+          </div>
+        </div>
+
+        <div class="metric-card category-card" data-category="Design">
+          <div class="category-card-header">
+            <div class="category-icon bg-design"><i class="fas fa-palette"></i></div>
+            <div class="category-info">
+              <h4>Design</h4>
+              <span id="stat-design" class="category-count">0 / 0</span>
+            </div>
+          </div>
+          <div class="progress-bar-wrapper">
+            <div id="bar-design" class="progress-bar-fill bg-design" style="width: 0%"></div>
+          </div>
+        </div>
+
+        <div class="metric-card category-card" data-category="Business">
+          <div class="category-card-header">
+            <div class="category-icon bg-business"><i class="fas fa-briefcase"></i></div>
+            <div class="category-info">
+              <h4>Business</h4>
+              <span id="stat-business" class="category-count">0 / 0</span>
+            </div>
+          </div>
+          <div class="progress-bar-wrapper">
+            <div id="bar-business" class="progress-bar-fill bg-business" style="width: 0%"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Filters, Search and Team summary controls -->
+    <section class="controls-section glass-panel">
+      <div class="search-box-wrapper">
+        <i class="fas fa-search search-icon"></i>
+        <input type="text" id="search-input" placeholder="Search tasks by name, subcategory or description... (Press '/' to focus)">
+      </div>
+      <div class="filter-controls-group">
+        <div class="filter-group">
+          <span class="filter-label">Role Filter:</span>
+          <div class="filter-buttons">
+            <button class="filter-btn active" data-discipline="all">All</button>
+            <button class="filter-btn" data-discipline="Backend">Backend</button>
+            <button class="filter-btn" data-discipline="Frontend">Frontend</button>
+            <button class="filter-btn" data-discipline="Database">Database</button>
+            <button class="filter-btn" data-discipline="DevOps">DevOps</button>
+            <button class="filter-btn" data-discipline="Design">Design</button>
+            <button class="filter-btn" data-discipline="Business">Business</button>
+          </div>
+        </div>
+        <div class="filter-group">
+          <span class="filter-label">Status Filter:</span>
+          <div class="filter-buttons">
+            <button class="status-filter-btn active" data-status="all">All</button>
+            <button class="status-filter-btn" data-status="pending">Pending</button>
+            <button class="status-filter-btn" data-status="completed">Completed</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Content Workspace Layout -->
+    <div class="main-content-layout">
+      <!-- Left side: Roadmap task accordion -->
+      <main class="roadmap-main-area">
+        <div id="phases-accordion-container">
+          <div class="loading-state">
+            <i class="fas fa-spinner fa-spin"></i> Initializing Project Roadmap...
+          </div>
+        </div>
+      </main>
+
+      <!-- Right side: Team roster & statistics panel -->
+      <aside class="sidebar-panel glass-panel">
+        <div class="sidebar-header">
+          <h3><i class="fas fa-users"></i> Group 88 KNUST</h3>
+        </div>
+        <div class="team-roster-list" id="team-roster-list">
+          <!-- Dynamically populated from JS -->
+        </div>
+
+        <div class="sidebar-divider"></div>
+
+        <div class="sidebar-section">
+          <h3><i class="fas fa-chart-pie"></i> Phase Breakdown</h3>
+          <div class="phase-timeline-widget" id="phase-timeline-widget">
+            <!-- Dynamically populated -->
+          </div>
+        </div>
+
+        <div class="sidebar-divider"></div>
+
+        <!-- User Manual Steps & Actions -->
+        <div class="sidebar-section">
+          <h3><i class="fas fa-clipboard-list"></i> Your Manual Steps</h3>
+          <ul class="manual-steps-list">
+            <li>
+              <span class="step-check"><i class="fas fa-user-edit"></i></span>
+              <div class="step-details">
+                <strong>Customize Team</strong>
+                <p>Click any task to assign members in the edit drawer.</p>
+              </div>
+            </li>
+            <li>
+              <span class="step-check"><i class="fas fa-file-export"></i></span>
+              <div class="step-details">
+                <strong>Export Backups</strong>
+                <p>Export JSON files to back up progress before cleaning cache.</p>
+              </div>
+            </li>
+            <li>
+              <span class="step-check"><i class="fas fa-users-cog"></i></span>
+              <div class="step-details">
+                <strong>Share Progress</strong>
+                <p>Distribute JSON exports to team members for import sync.</p>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <div class="sidebar-divider"></div>
+
+        <!-- Keyboard Shortcuts Legend -->
+        <div class="sidebar-section">
+          <h3><i class="fas fa-keyboard"></i> Quick Shortcuts</h3>
+          <div class="shortcuts-legend">
+            <div class="shortcut-item"><kbd>/</kbd> or <kbd>S</kbd> <span>Focus Search</span></div>
+            <div class="shortcut-item"><kbd>Esc</kbd> <span>Close Panels</span></div>
+            <div class="shortcut-item"><kbd>Alt</kbd> + <kbd>E</kbd> <span>Export JSON</span></div>
+            <div class="shortcut-item"><kbd>Alt</kbd> + <kbd>R</kbd> <span>Reset Data</span></div>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </div>
+
+  <!-- Detail Drawer -->
+  <div id="task-drawer" class="task-drawer glass-panel">
+    <button id="close-drawer-btn" class="close-drawer-btn"><i class="fas fa-times"></i></button>
+    <div class="drawer-content">
+      <div id="drawer-discipline-badge" class="badge">Backend</div>
+      <h2 id="drawer-task-title" class="drawer-task-title">Task Title</h2>
+      <p id="drawer-task-phase" class="drawer-task-phase">Phase 1: Lay the groundwork</p>
+      
+      <hr class="drawer-divider">
+
+      <div class="drawer-field">
+        <label for="drawer-status-select"><i class="fas fa-tasks"></i> Status</label>
+        <select id="drawer-status-select" class="form-control">
+          <option value="Not Started">Not Started</option>
+          <option value="In Progress">In Progress</option>
+          <option value="Completed">Completed</option>
+        </select>
+      </div>
+
+      <div class="drawer-field">
+        <label for="drawer-assignee-select"><i class="fas fa-user-plus"></i> Assignee</label>
+        <select id="drawer-assignee-select" class="form-control">
+          <option value="">Unassigned</option>
+          <option value="Allen">Allen (Backend Lead)</option>
+          <option value="Kwame">Kwame (Frontend Lead)</option>
+          <option value="Abena">Abena (Database Lead)</option>
+          <option value="Kofi">Kofi (DevOps Lead)</option>
+          <option value="Ama">Ama (UI/UX Designer)</option>
+          <option value="Yao">Yao (Business Analyst)</option>
+        </select>
+      </div>
+
+      <div class="drawer-field">
+        <label for="drawer-due-date"><i class="fas fa-calendar-alt"></i> Due Date</label>
+        <input type="date" id="drawer-due-date" class="form-control">
+      </div>
+
+      <div class="drawer-field">
+        <label for="drawer-notes"><i class="fas fa-sticky-note"></i> Progress Notes & Logs</label>
+        <textarea id="drawer-notes" class="form-control notes-textarea" placeholder="Add status updates, roadblocks, links, or notes for this task..."></textarea>
+      </div>
+
+      <div class="drawer-actions">
+        <button id="save-drawer-btn" class="btn btn-primary">Save changes</button>
+      </div>
+    </div>
+  </div>
+  <div id="drawer-overlay" class="drawer-overlay"></div>
+
+  <!-- Custom Confirmation Dialog -->
+  <div id="confirm-modal" class="confirm-modal glass-panel">
+    <h3><i class="fas fa-exclamation-triangle warning-color"></i> Reset Progress?</h3>
+    <p>Are you sure you want to reset all 151 tasks, notes, and team assignments? This action cannot be undone.</p>
+    <div class="confirm-modal-actions">
+      <button id="confirm-cancel" class="btn btn-secondary">Cancel</button>
+      <button id="confirm-ok" class="btn btn-danger">Yes, Reset All</button>
+    </div>
+  </div>
+  <div id="confirm-overlay" class="confirm-overlay"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
