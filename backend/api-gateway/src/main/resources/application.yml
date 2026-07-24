@@ -1,0 +1,112 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: api-gateway
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+  cloud:
+    gateway:
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            allowedOrigins: "*"
+            allowedMethods: "*"
+            allowedHeaders: "*"
+      default-filters:
+        - JwtValidation
+        - RemoveRequestHeader=X-Internal-Auth
+        - AddRequestHeader=X-Internal-Auth, ${internal.auth.secret}
+      routes:
+        - id: auth-service
+          uri: lb://auth-service
+          predicates:
+            - Path=/auth/**, /admin/providers/**, /admin/verification/**, /admin/users/**, /admin/counts
+
+        - id: user-service
+          uri: lb://user-service
+          predicates:
+            - Path=/users/**, /providers/**
+
+        - id: user-files
+          uri: lb://user-service
+          predicates:
+            - Path=/users/files/**
+          filters: []
+          # Profile picture files are served publicly — no auth required to view them
+
+        - id: request-service
+          uri: lb://request-service
+          predicates:
+            - Path=/requests/**, /admin/requests/**, /categories/**, /admin/categories/**
+
+        - id: job-service
+          uri: lb://job-service
+          predicates:
+            - Path=/jobs/**, /admin/jobs/**
+
+        - id: payment-service
+          uri: lb://payment-service
+          predicates:
+            - Path=/payments/**, /admin/finance/**
+
+        - id: wallet-service
+          uri: lb://payment-service
+          predicates:
+            - Path=/wallet/**
+
+        - id: supporting-service-ws
+          uri: lb:ws://supporting-service
+          predicates:
+            - Path=/ws/chats, /ws/chats/**
+          filters: []
+          # WebSocket auth is handled inside supporting-service's STOMP ChannelInterceptor
+          # (WebSocketConfig.java). Running the default JwtValidation gateway filter here
+          # interferes with the WebSocket upgrade handshake, so we explicitly opt out.
+          metadata:
+            skipDefaultFilters: true
+
+        - id: supporting-service
+          uri: lb://supporting-service
+          predicates:
+            - Path=/chats/**, /reviews/**, /disputes/**, /notifications/**, /location/**, /admin/notifications/**, /admin/chats/**, /announcements/**, /admin/announcements/**, /admin/audit/**, /admin/dashboard/**, /admin/reviews/**
+
+        - id: gateway-internal
+          uri: lb://auth-service
+          predicates:
+            - Path=/internal/revoke-token/**, /internal/unrevoke-token/**
+
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: http://127.0.0.1:8761/eureka/
+    registry-fetch-interval-seconds: 2
+  instance:
+    preferIpAddress: true
+    ip-address: 127.0.0.1
+    lease-renewal-interval-in-seconds: 2
+    lease-expiration-duration-in-seconds: 4
+
+jwt:
+  secret: ${JWT_SECRET}
+
+internal:
+  auth:
+    secret: ${INTERNAL_SERVICE_SECRET}
+
+---
+spring:
+  config:
+    activate:
+      on-profile: local-dev
+
+# INSECURE FALLBACK — override via JWT_SECRET and INTERNAL_SERVICE_SECRET env vars in all non-local environments
+jwt:
+  secret: dGhlLXN1cGVyLXNlY3JldC1jb25mZGVudGlhbC1qd3Qta2V5LWZvci1jYW1wdXNzZXJ2LWtudXN0LWdyb3VwLTg4
+
+internal:
+  auth:
+    secret: default_internal_service_secret_knust_campusserv_2026

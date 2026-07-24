@@ -1,0 +1,55 @@
+server:
+  port: 8087
+
+spring:
+  application:
+    name: auth-service
+  datasource:
+    url: jdbc:postgresql://127.0.0.1:5433/campusserv
+    username: postgres
+    password: ${POSTGRES_PASSWORD:postgres}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: validate
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+    validate-on-migrate: false
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
+
+
+app:
+  upload-dir: ${UPLOAD_DIR:c:/Users/allen/Desktop/CampuServ/backend/uploads/}
+
+
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: http://127.0.0.1:8761/eureka/
+    registry-fetch-interval-seconds: 2
+  instance:
+    preferIpAddress: true
+    ip-address: 127.0.0.1
+    lease-renewal-interval-in-seconds: 2
+    lease-expiration-duration-in-seconds: 4
+
+jwt:
+  secret: ${JWT_SECRET}
+
+---
+spring:
+  config:
+    activate:
+      on-profile: local-dev
+  jpa:
+    hibernate:
+      ddl-auto: update
+
+# INSECURE FALLBACK — override via JWT_SECRET and INTERNAL_SERVICE_SECRET env vars in all non-local environments
+jwt:
+  secret: dGhlLXN1cGVyLXNlY3JldC1jb25mZGVudGlhbC1qd3Qta2V5LWZvci1jYW1wdXNzZXJ2LWtudXN0LWdyb3VwLTg4

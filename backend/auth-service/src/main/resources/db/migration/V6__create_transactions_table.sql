@@ -1,0 +1,30 @@
+CREATE TABLE transactions (
+    id VARCHAR(50) PRIMARY KEY,
+    job_id VARCHAR(50) NOT NULL REFERENCES jobs(id),
+    amount DECIMAL(10, 2) NOT NULL,
+    status VARCHAR(20) NOT NULL DEFAULT 'HELD', -- 'HELD', 'RELEASED', 'REFUNDED'
+    paystack_reference VARCHAR(100) UNIQUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE wallets (
+    id VARCHAR(50) PRIMARY KEY,
+    user_id VARCHAR(50) UNIQUE NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    balance DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
+    pending_escrow DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE wallet_transactions (
+    id VARCHAR(50) PRIMARY KEY,
+    wallet_id VARCHAR(50) NOT NULL REFERENCES wallets(id) ON DELETE CASCADE,
+    type VARCHAR(30) NOT NULL, -- 'DEPOSIT', 'WITHDRAWAL', 'ESCROW_HOLD', 'ESCROW_RELEASE', 'ESCROW_REFUND'
+    amount DECIMAL(10, 2) NOT NULL,
+    reference VARCHAR(100),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX idx_transactions_job ON transactions(job_id);
+CREATE INDEX idx_wallets_user ON wallets(user_id);

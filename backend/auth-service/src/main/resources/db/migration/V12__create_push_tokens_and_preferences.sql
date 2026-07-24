@@ -1,0 +1,20 @@
+CREATE TABLE IF NOT EXISTS push_tokens (
+    id VARCHAR(50) PRIMARY KEY,
+    user_id VARCHAR(50) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    device_id VARCHAR(255) NOT NULL,
+    push_token VARCHAR(255) NOT NULL,
+    platform VARCHAR(50),
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT uq_user_device UNIQUE (user_id, device_id)
+);
+
+CREATE TABLE IF NOT EXISTS notification_preferences (
+    user_id VARCHAR(50) PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+    push_enabled BOOLEAN NOT NULL DEFAULT TRUE,
+    request_status_updates BOOLEAN NOT NULL DEFAULT TRUE,
+    offers_and_negotiations BOOLEAN NOT NULL DEFAULT TRUE,
+    new_requests BOOLEAN NOT NULL DEFAULT TRUE,
+    client_responses BOOLEAN NOT NULL DEFAULT TRUE,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);

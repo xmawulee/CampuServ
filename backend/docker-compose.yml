@@ -1,0 +1,46 @@
+
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: campusserv-postgres
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_DB: campusserv
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - campusserv-net
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: campusserv-rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - campusserv-net
+
+  redis:
+    image: redis:7-alpine
+    container_name: campusserv-redis
+    ports:
+      - "6379:6379"
+    networks:
+      - campusserv-net
+
+volumes:
+  postgres_data:
+  rabbitmq_data:
+
+networks:
+  campusserv-net:
+    driver: bridge
