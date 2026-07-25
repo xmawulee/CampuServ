@@ -1,5 +1,5 @@
 $env:SPRING_PROFILES_ACTIVE = "local-dev"
-if (-not $env:BREVO_API_KEY) { $env:BREVO_API_KEY = $env:SENDINBLUE_API_KEY }
+$env:BREVO_API_KEY = "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"
 $env:BREVO_SENDER_EMAIL = "marshalldalton435@gmail.com"
 $env:BREVO_SENDER_NAME = "CampusServ"
 $env:EMAIL_VERIFICATION_URL = "http://localhost:8080/auth/verify-email"
