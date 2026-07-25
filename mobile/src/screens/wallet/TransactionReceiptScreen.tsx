@@ -254,10 +254,17 @@ export default function TransactionReceiptScreen({ route, navigation }: any) {
               <Text style={styles.breakdownLabel}>Agreed Bid Amount</Text>
               <Text style={styles.breakdownValue}>{formatGHS(receipt.agreedBidAmount)}</Text>
             </View>
+            <Text style={{ fontSize: 11, color: '#6B7280', marginBottom: 8, paddingHorizontal: 2 }}>
+              Student pays the exact bid price — no platform fee is charged to the student.
+            </Text>
+
             <View style={styles.breakdownRow}>
               <Text style={styles.breakdownLabel}>Platform Commission (5%)</Text>
               <Text style={[styles.breakdownValue, { color: '#EF4444' }]}>- {formatGHS(receipt.platformCommission || 0)}</Text>
             </View>
+            <Text style={{ fontSize: 11, color: '#6B7280', marginBottom: 8, paddingHorizontal: 2 }}>
+              Deducted from provider earnings.
+            </Text>
             
             <View style={styles.breakdownDivider} />
             

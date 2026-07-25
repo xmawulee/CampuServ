@@ -72,14 +72,14 @@ export default function WalletScreen() {
       showsVerticalScrollIndicator={false}
     >
       {/* ── Balance Card ── */}
-      <View style={[styles.balanceCard, { backgroundColor: '#0B132B' }]}>
-        <Text style={styles.balanceCardLabel}>
+      <View style={[styles.balanceCard, { backgroundColor: colors.primary }]}>
+        <Text style={[styles.balanceCardLabel, { color: 'rgba(255,255,255,0.75)' }]}>
           {isViewingAsProvider ? 'Provider Earnings Balance' : 'Escrow Spending Balance'}
         </Text>
-        <Text style={styles.balanceCardAmount}>
+        <Text style={[styles.balanceCardAmount, { color: '#FFFFFF' }]}>
           GHS {wallet ? Number(wallet.balance).toFixed(2) : '0.00'}
         </Text>
-        <Text style={styles.balanceCardSub}>
+        <Text style={[styles.balanceCardSub, { color: 'rgba(255,255,255,0.65)' }]}>
           {isViewingAsProvider ? 'Available for bank withdrawal & payout' : 'Available for booking campus service providers'}
         </Text>
 
@@ -87,19 +87,19 @@ export default function WalletScreen() {
         <View style={styles.quickActionsRow}>
           {!isViewingAsProvider ? (
             <>
-              <TouchableOpacity style={[styles.quickAction, { backgroundColor: colors.primary }]} onPress={handleDeposit}>
-                <Ionicons name="add-circle-outline" size={20} color="#FFF" />
-                <Text style={styles.quickActionLabel}>Add Funds</Text>
+              <TouchableOpacity style={[styles.quickAction, { backgroundColor: '#FFFFFF' }]} onPress={handleDeposit}>
+                <Ionicons name="add-circle-outline" size={20} color={colors.primary} />
+                <Text style={[styles.quickActionLabel, { color: colors.primary }]}>Add Funds</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={[styles.quickAction, { backgroundColor: 'rgba(255,255,255,0.12)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.2)' }]} onPress={handleWithdrawal}>
+              <TouchableOpacity style={[styles.quickAction, { backgroundColor: 'rgba(255,255,255,0.15)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.25)' }]} onPress={handleWithdrawal}>
                 <Ionicons name="arrow-up-circle-outline" size={20} color="#FFF" />
-                <Text style={styles.quickActionLabel}>Withdraw</Text>
+                <Text style={[styles.quickActionLabel, { color: '#FFF' }]}>Withdraw</Text>
               </TouchableOpacity>
             </>
           ) : (
-            <TouchableOpacity style={[styles.quickAction, { backgroundColor: colors.primary }]} onPress={handleWithdrawal}>
-              <Ionicons name="arrow-up-circle-outline" size={20} color="#FFF" />
-              <Text style={styles.quickActionLabel}>Request Payout</Text>
+            <TouchableOpacity style={[styles.quickAction, { backgroundColor: '#FFFFFF' }]} onPress={handleWithdrawal}>
+              <Ionicons name="arrow-up-circle-outline" size={20} color={colors.primary} />
+              <Text style={[styles.quickActionLabel, { color: colors.primary }]}>Request Payout</Text>
             </TouchableOpacity>
           )}
         </View>

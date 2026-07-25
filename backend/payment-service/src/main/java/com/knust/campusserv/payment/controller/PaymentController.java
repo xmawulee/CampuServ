@@ -378,17 +378,14 @@ public class PaymentController {
         tx.setEscrowStatus("RELEASED_TO_PROVIDER");
         tx.setUpdatedAt(LocalDateTime.now());
 
-        // The escrow holds (basePrice + 5% service fee). Recover the base price and fee:
-        // totalEscrow = basePrice * 1.05  =>  basePrice = totalEscrow / 1.05
-        // platformFee = totalEscrow - basePrice (the service fee already charged to student)
+        // Escrow = exact bid price. Platform fee (5%) is deducted from provider payout.
         BigDecimal totalEscrow = tx.getAmount();
-        BigDecimal divisor = new BigDecimal("1.05");
-        BigDecimal basePrice = totalEscrow.divide(divisor, 10, java.math.RoundingMode.HALF_UP)
-                                         .setScale(2, java.math.RoundingMode.HALF_UP);
-        BigDecimal platformFee = totalEscrow.subtract(basePrice).setScale(2, java.math.RoundingMode.HALF_UP);
-        // Provider receives 100% of the agreed bid price
-        BigDecimal netPayout = basePrice;
+        BigDecimal platformFee = CommissionUtils.calculateCommission(totalEscrow);
+        // Provider receives 95% of the agreed bid price
+        BigDecimal netPayout = totalEscrow.subtract(platformFee).setScale(2, java.math.RoundingMode.HALF_UP);
         
+        // agreedBidAmount = totalEscrow because escrow now holds exactly the bid price (no student surcharge)
+        tx.setAgreedBidAmount(totalEscrow);
         tx.setPlatformCommission(platformFee);
         tx.setProviderPayout(netPayout);
         transactionRepository.save(tx);
@@ -471,7 +468,7 @@ public class PaymentController {
             pwTx2.setBalanceAfter(provBalanceAfter);
             pwTx2.setCurrency("GHS");
             pwTx2.setRelatedJobId(jobId);
-            pwTx2.setNarration("5% Platform Service Fee (charged to student, not deducted from provider)");
+            pwTx2.setNarration("5% Platform Service Fee (deducted from provider earnings for Job " + jobId + ")");
             pwTx2.setCreatedAt(LocalDateTime.now());
             providerWalletTransactionRepository.save(pwTx2);
 
@@ -596,17 +593,19 @@ public class PaymentController {
         tx.setEscrowStatus("PARTIALLY_RELEASED");
         tx.setUpdatedAt(LocalDateTime.now());
 
+        // Escrow = exact bid price. Platform fee (5%) is deducted from provider's proportional share.
         BigDecimal totalAmount = tx.getAmount();
-        BigDecimal divisor = new BigDecimal("1.05");
-        BigDecimal basePrice = totalAmount.divide(divisor, 10, java.math.RoundingMode.HALF_UP)
-                                         .setScale(2, java.math.RoundingMode.HALF_UP);
-        BigDecimal totalPlatformFee = totalAmount.subtract(basePrice).setScale(2, java.math.RoundingMode.HALF_UP);
+        BigDecimal totalPlatformFee = CommissionUtils.calculateCommission(totalAmount);
+        BigDecimal providerBaseAmount = totalAmount.subtract(totalPlatformFee);
 
         BigDecimal providerPercentageDec = new BigDecimal(providerPercentage).divide(new BigDecimal(100), 10, java.math.RoundingMode.HALF_UP);
 
-        BigDecimal netPayout = basePrice.multiply(providerPercentageDec).setScale(2, java.math.RoundingMode.HALF_UP);
+        // Provider's net share = (bidPrice - totalFee) * providerPercentage
+        BigDecimal netPayout = providerBaseAmount.multiply(providerPercentageDec).setScale(2, java.math.RoundingMode.HALF_UP);
+        // Platform fee allocated to provider's portion
         BigDecimal platformFee = totalPlatformFee.multiply(providerPercentageDec).setScale(2, java.math.RoundingMode.HALF_UP);
-        BigDecimal requesterRefund = totalAmount.subtract(netPayout).subtract(platformFee);
+        // Student refund = total escrow - provider net share - provider fee portion
+        BigDecimal requesterRefund = totalAmount.subtract(netPayout).subtract(platformFee).setScale(2, java.math.RoundingMode.HALF_UP);
 
         tx.setPlatformCommission(platformFee);
         tx.setProviderPayout(netPayout);

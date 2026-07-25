@@ -23,8 +23,9 @@ import "yet-another-react-lightbox/styles.css";
 
 export interface PendingProvider {
   id: string;
-  email: string;
   fullName: string;
+  email: string;
+  whatsappNumber?: string;
   role: string;
   serviceCategory: string | null;
   isVerified: boolean;
@@ -371,8 +372,13 @@ export default function PendingProviders() {
                   <h2 className="text-2xl font-bold text-slate-900 font-bold mb-1">
                     {selectedProvider.fullName}
                   </h2>
-                  <p className="text-slate-500 font-medium">
-                    {selectedProvider.email}
+                  <p className="text-slate-500 font-medium flex flex-col gap-1">
+                    <span>{selectedProvider.email}</span>
+                    {selectedProvider.whatsappNumber && (
+                      <span className="text-slate-700 font-semibold text-sm">
+                        WhatsApp: {selectedProvider.whatsappNumber}
+                      </span>
+                    )}
                   </p>
                   {selectedProvider.serviceCategory && (
                     <span className="inline-block mt-2 px-2 py-1 bg-indigo-600/20 text-indigo-600 text-xs font-semibold rounded-md border border-accent-default/30">

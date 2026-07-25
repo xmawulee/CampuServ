@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import {
   StyleSheet,
   Text,
@@ -12,7 +12,7 @@ import {
   Platform,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useFocusEffect } from '@react-navigation/native';
+import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '../../store/authStore';
 import { useTheme } from '../../styles/ThemeContext';
 import { CustomIonicons as Ionicons } from '../../components/CustomIcons';
@@ -23,7 +23,6 @@ import {
   acceptCounterOffer,
   declineCounterOffer,
 } from '../../services/requestService';
-import { stompClient } from '../../services/socket';
 import RequestCard from '../../components/RequestCard';
 import RequestCardSkeleton from '../../components/RequestCardSkeleton';
 import { useToast } from '../../styles/ToastContext';
@@ -50,42 +49,43 @@ export default function MyRequestsScreen({ navigation }: any) {
   const { colors, isDark } = useTheme();
   const { user, accessToken } = useAuthStore();
   const insets = useSafeAreaInsets();
+  const queryClient = useQueryClient();
+  const { showToast } = useToast();
 
   // Tab State
   const [activeTab, setActiveTab] = useState<'active' | 'completed' | 'cancelled'>('active');
-  const [requestsByTab, setRequestsByTab] = useState<{
-    active: any[];
-    completed: any[];
-    cancelled: any[];
-  }>({
-    active: [],
-    completed: [],
-    cancelled: [],
+
+  // React Query: Fetch requests for the active tab
+  const {
+    data,
+    isLoading,
+    isRefetching,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    refetch,
+  } = useInfiniteQuery({
+    queryKey: ['myRequests', activeTab],
+    queryFn: async ({ pageParam = 0 }) => {
+      if (!accessToken) throw new Error('No access token');
+      return getMyRequests(activeTab, pageParam as number, accessToken);
+    },
+    initialPageParam: 0,
+    getNextPageParam: (lastPage: any) => (lastPage.hasMore ? lastPage.nextPage : undefined),
+    enabled: !!accessToken,
   });
 
-  const [counts, setCounts] = useState({ active: 0, completed: 0, cancelled: 0 });
-  const [isLoading, setIsLoading] = useState(true);
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  const [isFetchingNextPage, setIsFetchingNextPage] = useState(false);
-  const [hasMore, setHasMore] = useState({
-    active: false,
-    completed: false,
-    cancelled: false,
-  });
-  const [pageByTab, setPageByTab] = useState({
-    active: 0,
-    completed: 0,
-    cancelled: 0,
-  });
+  const requests = useMemo(() => {
+    return data?.pages.flatMap(page => page.requests) || [];
+  }, [data]);
 
-  // Per-card loading states using Sets of Request IDs
+  const counts = (data?.pages[0] as any)?.counts || { active: 0, completed: 0, cancelled: 0 };
+
+  // Per-card loading states using Sets of Request IDs (managed by mutations)
   const [cancellingRequestIds, setCancellingRequestIds] = useState<Set<string>>(new Set());
   const [respondingToOfferRequestIds, setRespondingToOfferRequestIds] = useState<Set<string>>(new Set());
 
-  // Toast
-  const { showToast } = useToast();
-
-  // Dialog state — one dialog at a time
+  // Dialog state
   type DialogConfig = {
     visible: boolean;
     status: 'warning' | 'error' | 'info' | 'success' | 'cta';
@@ -108,112 +108,15 @@ export default function MyRequestsScreen({ navigation }: any) {
   });
   const closeDialog = () => setDialog(prev => ({ ...prev, visible: false }));
 
-  // API load function
-  const loadRequests = useCallback(
-    async (tab: 'active' | 'completed' | 'cancelled', isInitialOrRefresh = false) => {
-      if (!accessToken) return;
-
-      const targetPage = isInitialOrRefresh ? 0 : pageByTab[tab];
-
-      if (isInitialOrRefresh) {
-        if (!isRefreshing) setIsLoading(true);
-      } else {
-        if (isFetchingNextPage || !hasMore[tab]) return;
-        setIsFetchingNextPage(true);
-      }
-
-      try {
-        const data = await getMyRequests(tab, targetPage, accessToken);
-
-        setRequestsByTab(prev => {
-          const currentList = prev[tab];
-          const newList = isInitialOrRefresh ? data.requests : [...currentList, ...data.requests];
-          return {
-            ...prev,
-            [tab]: newList,
-          };
-        });
-
-        setCounts(data.counts);
-        setHasMore(prev => ({
-          ...prev,
-          [tab]: data.hasMore,
-        }));
-        setPageByTab(prev => ({
-          ...prev,
-          [tab]: data.nextPage !== null ? data.nextPage : prev[tab],
-        }));
-      } catch (error: any) {
-        console.warn('Error fetching requests:', error);
-        showToast({ status: 'error', title: 'Load Failed', subtitle: error.message || 'Failed to fetch requests.' });
-      } finally {
-        setIsLoading(false);
-        setIsRefreshing(false);
-        setIsFetchingNextPage(false);
-      }
-    },
-    [accessToken, pageByTab, hasMore, isFetchingNextPage, isRefreshing]
-  );
-
-  // Trigger load when activeTab changes
-  useEffect(() => {
-    loadRequests(activeTab, true);
-  }, [activeTab]);
-
-  const loadRequestsRef = useRef(loadRequests);
-  const activeTabRef = useRef(activeTab);
-
-  useEffect(() => {
-    loadRequestsRef.current = loadRequests;
-  }, [loadRequests]);
-
-  useEffect(() => {
-    activeTabRef.current = activeTab;
-  }, [activeTab]);
-
-  // Focus re-fetch & WebSocket connection hook
-  useFocusEffect(
-    useCallback(() => {
-      if (!accessToken) return;
-      loadRequestsRef.current(activeTabRef.current, true);
-
-      // WebSocket live subscription
-      let subId = '';
-      try {
-        stompClient.connect(accessToken);
-        const destination = `/topic/client/${user?.id}/requests`;
-        subId = stompClient.subscribe(destination, (message: any) => {
-          console.log('WS Live Update: Received request status change:', message);
-          // Refresh current tab data
-          loadRequestsRef.current(activeTabRef.current, true);
-        });
-      } catch (wsError) {
-        // Fallback to focus fetch without crashing
-        console.warn('WS: Failed to connect or subscribe', wsError);
-      }
-
-      return () => {
-        if (subId) {
-          try {
-            stompClient.unsubscribe(subId);
-          } catch (e) {
-            console.warn('WS: Failed to unsubscribe', e);
-          }
-        }
-      };
-    }, [user?.id, accessToken])
-  );
-
   // Pull-to-refresh
   const handleRefresh = () => {
-    setIsRefreshing(true);
-    loadRequests(activeTab, true);
+    refetch();
   };
 
   // Pagination trigger
   const handleLoadMore = () => {
-    if (hasMore[activeTab] && !isFetchingNextPage && !isLoading) {
-      loadRequests(activeTab, false);
+    if (hasNextPage && !isFetchingNextPage && !isLoading) {
+      fetchNextPage();
     }
   };
 
@@ -244,7 +147,7 @@ export default function MyRequestsScreen({ navigation }: any) {
         try {
           await cancelRequest(requestId, accessToken);
           showToast({ status: 'info', title: 'Request cancelled.' });
-          loadRequests(activeTab, true);
+          queryClient.invalidateQueries({ queryKey: ['myRequests'] });
         } catch (error: any) {
           console.warn('Cancel Request Failed:', error);
           if (error.status === 409) {
@@ -255,7 +158,7 @@ export default function MyRequestsScreen({ navigation }: any) {
               title: "Can't Cancel",
               description: 'This request has already been completed and can no longer be cancelled.',
               confirmLabel: 'OK',
-              onConfirm: () => { closeDialog(); loadRequests(activeTab, true); },
+              onConfirm: () => { closeDialog(); queryClient.invalidateQueries({ queryKey: ['myRequests'] }); },
             });
           } else if (error.status === 401) {
             setDialog({
@@ -302,7 +205,7 @@ export default function MyRequestsScreen({ navigation }: any) {
     try {
       await acceptCounterOffer(requestId, accessToken);
       showToast({ status: 'success', title: `Offer accepted!`, subtitle: `${providerName} will be in touch.` });
-      loadRequests(activeTab, true);
+      queryClient.invalidateQueries({ queryKey: ['myRequests'] });
     } catch (error: any) {
       console.warn('Accept Offer Failed:', error);
       if (error.status === 409) {
@@ -313,7 +216,7 @@ export default function MyRequestsScreen({ navigation }: any) {
           title: 'Offer No Longer Available',
           description: 'This offer is no longer valid. Refreshing your request.',
           confirmLabel: 'OK',
-          onConfirm: () => { closeDialog(); loadRequests(activeTab, true); },
+          onConfirm: () => { closeDialog(); queryClient.invalidateQueries({ queryKey: ['myRequests'] }); },
         });
       } else if (error.status === 401) {
         setDialog({
@@ -370,7 +273,7 @@ export default function MyRequestsScreen({ navigation }: any) {
         try {
           await declineCounterOffer(requestId, accessToken);
           showToast({ status: 'info', title: 'Offer declined.' });
-          loadRequests(activeTab, true);
+          queryClient.invalidateQueries({ queryKey: ['myRequests'] });
         } catch (error: any) {
           console.warn('Decline Offer Failed:', error);
           if (error.status === 409) {
@@ -381,7 +284,7 @@ export default function MyRequestsScreen({ navigation }: any) {
               title: 'Offer No Longer Available',
               description: 'This offer is no longer valid. Refreshing your request.',
               confirmLabel: 'OK',
-              onConfirm: () => { closeDialog(); loadRequests(activeTab, true); },
+              onConfirm: () => { closeDialog(); queryClient.invalidateQueries({ queryKey: ['myRequests'] }); },
             });
           } else if (error.status === 401) {
             setDialog({
@@ -537,7 +440,7 @@ export default function MyRequestsScreen({ navigation }: any) {
         </View>
       </View>
 
-      {isLoading && !isRefreshing ? (
+      {isLoading && !isRefetching ? (
         <View style={styles.listContainer}>
           <RequestCardSkeleton />
           <RequestCardSkeleton />
@@ -546,7 +449,7 @@ export default function MyRequestsScreen({ navigation }: any) {
         </View>
       ) : (
         <FlatList
-          data={requestsByTab[activeTab]}
+          data={requests}
           renderItem={renderItem}
           keyExtractor={item => item.id}
           contentContainerStyle={styles.listContainer}
@@ -554,7 +457,7 @@ export default function MyRequestsScreen({ navigation }: any) {
           ListFooterComponent={renderFooter}
           refreshControl={
             <RefreshControl
-              refreshing={isRefreshing}
+              refreshing={isRefetching && !isFetchingNextPage}
               onRefresh={handleRefresh}
               colors={[colors.primary]}
               tintColor={colors.primary}

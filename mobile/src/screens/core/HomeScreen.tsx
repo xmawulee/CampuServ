@@ -578,18 +578,18 @@ export default function HomeScreen({ route, navigation }: any) {
             {/* Wallet Banner */}
             {!isSearchMode && (
               <TouchableOpacity
-                style={[styles.walletBanner, { backgroundColor: colors.text }]}
+                style={[styles.walletBanner, { backgroundColor: colors.primary }]}
                 onPress={() => navigation.navigate('Wallet')}
                 activeOpacity={0.9}
               >
                 <View>
-                  <Text style={styles.walletLabel}>Escrow Wallet</Text>
-                  <Text style={styles.walletBalance}>GHS {balance}</Text>
-                  <Text style={styles.walletSub}>Tap to manage funds</Text>
+                  <Text style={[styles.walletLabel, { color: 'rgba(255,255,255,0.75)' }]}>Escrow Wallet</Text>
+                  <Text style={[styles.walletBalance, { color: '#FFFFFF' }]}>GHS {balance}</Text>
+                  <Text style={[styles.walletSub, { color: 'rgba(255,255,255,0.65)' }]}>Tap to manage funds</Text>
                 </View>
                 <View style={styles.walletRight}>
-                  <View style={[styles.walletIconWrap, { backgroundColor: colors.primary }]}>
-                    <CustomIonicons name="wallet-outline" size={26} color="#FFF" />
+                  <View style={[styles.walletIconWrap, { backgroundColor: '#FFFFFF' }]}>
+                    <CustomIonicons name="wallet-outline" size={26} color={colors.primary} />
                   </View>
                 </View>
               </TouchableOpacity>

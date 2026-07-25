@@ -14,6 +14,7 @@ import type { ProviderJob, ProviderWallet } from '../../types/provider';
 import { getProviderJobSummary, JobSummary } from '../../services/jobService';
 import { stompClient } from '../../services/socket';
 import { RoleSwitcher } from '../../components/RoleSwitcher';
+import { useQuery } from '@tanstack/react-query';
 
 type DashboardStats = {
   balance: number;
@@ -34,86 +35,36 @@ export default function ProviderDashboardHomeScreen({ navigation }: any) {
     return "Good evening";
   };
 
-  const [stats, setStats] = useState<DashboardStats>({
-    balance: 0,
-    pendingEscrow: 0,
-    jobSummary: null,
-    pendingBidsCount: 0,
+  const { data: wallet, refetch: refetchWallet, isLoading: loadingWallet, isRefetching: refetchingWallet } = useQuery({
+    queryKey: ['wallet'],
+    queryFn: async () => {
+      const res = await api.get('/payments/provider/wallet');
+      return res.data;
+    },
+    enabled: !!user,
   });
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
 
-  const fetchDashboardData = useCallback(async () => {
-    if (!user) return;
-    try {
-      const [walletRes, summaryRes] = await Promise.allSettled([
-        api.get('/payments/provider/wallet'),
-        getProviderJobSummary(user.id),
-      ]);
+  const { data: jobSummary, refetch: refetchJobSummary, isLoading: loadingSummary, isRefetching: refetchingSummary } = useQuery({
+    queryKey: ['providerJobSummary'],
+    queryFn: async () => {
+      return getProviderJobSummary(user!.id);
+    },
+    enabled: !!user,
+  });
 
-      const wallet: ProviderWallet | null =
-        walletRes.status === 'fulfilled' ? walletRes.value.data : null;
-      const summary: JobSummary | null =
-        summaryRes.status === 'fulfilled' ? summaryRes.value : null;
+  const stats = {
+    balance: wallet?.balance ?? 0,
+    pendingEscrow: wallet?.escrowHeld ?? 0,
+    jobSummary: jobSummary ?? null,
+    pendingBidsCount: 0,
+  };
 
-      setStats({
-        balance: wallet?.balance ?? 0,
-        pendingEscrow: wallet?.escrowHeld ?? 0,
-        jobSummary: summary,
-        pendingBidsCount: 0,
-      });
-    } catch (e) {
-      // Keep existing state on error
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  }, [user]);
-
-  useFocusEffect(
-    useCallback(() => {
-      setLoading(true);
-      fetchDashboardData();
-    }, [fetchDashboardData])
-  );
-
-  React.useEffect(() => {
-    let subId: string | null = null;
-    let debounceTimer: NodeJS.Timeout;
-
-    const setupStomp = async () => {
-      if (!user) return;
-      try {
-        const token = useAuthStore.getState().accessToken;
-        if (!token) return;
-
-        stompClient.connect(token);
-        const topic = `/topic/provider/${user.id}/job-updates`;
-
-        subId = stompClient.subscribe(topic, (msg: any) => {
-          console.log('STOMP WS: Job update for provider:', msg);
-          // Debounce the re-fetch to avoid spamming the backend
-          clearTimeout(debounceTimer);
-          debounceTimer = setTimeout(() => {
-            fetchDashboardData();
-          }, 300);
-        });
-      } catch (err) {
-        console.warn('Failed to setup STOMP in Provider Dashboard:', err);
-      }
-    };
-
-    setupStomp();
-
-    return () => {
-      clearTimeout(debounceTimer);
-      if (subId) stompClient.unsubscribe(subId);
-    };
-  }, [user, fetchDashboardData]);
+  const loading = loadingWallet || loadingSummary;
+  const refreshing = refetchingWallet || refetchingSummary;
 
   const onRefresh = () => {
-    setRefreshing(true);
-    fetchDashboardData();
+    refetchWallet();
+    refetchJobSummary();
   };
 
   const getStatusColor = (status: string) => {

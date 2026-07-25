@@ -524,14 +524,13 @@ public class RequestController {
                     .body(Map.of("error", "NO_PENDING_OFFER", "message", "No pending offer found to accept."));
         }
 
-        // Lock escrow funds in payment-service (amount includes 5% service fee = bidPrice * 1.05)
+        // Lock escrow funds in payment-service (exact bid price; 5% platform fee is deducted from provider payout on release)
         try {
             Map<String, Object> escrowPayload = new HashMap<>();
             escrowPayload.put("userId", request.getRequesterId());
             escrowPayload.put("jobId", requestId);
-            // Total escrow = base price + 5% platform service fee
+            // Escrow = exact bid price; fee is charged to the provider, not the student
             java.math.BigDecimal escrowTotal = latestPending.getPrice()
-                .multiply(new java.math.BigDecimal("1.05"))
                 .setScale(2, java.math.RoundingMode.HALF_UP);
             escrowPayload.put("amount", escrowTotal);
 
@@ -706,14 +705,13 @@ public class RequestController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Offer is not pending. Current status: " + offer.getStatus());
         }
 
-        // Lock escrow funds in payment-service (amount includes 5% service fee = bidPrice * 1.05)
+        // Lock escrow funds in payment-service (exact bid price; 5% platform fee is deducted from provider payout on release)
         try {
             Map<String, Object> escrowPayload = new HashMap<>();
             escrowPayload.put("userId", request.getRequesterId());
             escrowPayload.put("jobId", requestId);
-            // Total escrow = base price + 5% platform service fee
+            // Escrow = exact bid price; fee is charged to the provider, not the student
             java.math.BigDecimal escrowTotal = offer.getPrice()
-                .multiply(new java.math.BigDecimal("1.05"))
                 .setScale(2, java.math.RoundingMode.HALF_UP);
             escrowPayload.put("amount", escrowTotal);
 

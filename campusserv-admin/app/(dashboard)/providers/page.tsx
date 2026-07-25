@@ -18,6 +18,7 @@ interface Provider {
   id: string;
   email: string;
   fullName: string;
+  whatsappNumber?: string;
   role: string;
   primaryRole?: string;
   secondaryRole?: string;
@@ -378,8 +379,15 @@ export default function ProvidersPage() {
                   {selectedProvider.fullName?.charAt(0) || 'P'}
                 </div>
                 <div>
-                  <h3 className="font-bold text-slate-900 text-base">{selectedProvider.fullName}</h3>
-                  <p className="text-xs text-slate-500">{selectedProvider.email}</p>
+                  <h3 className="text-xl font-bold text-slate-900 mb-1">{selectedProvider.fullName}</h3>
+                  <p className="text-slate-500 font-medium flex flex-col gap-1">
+                    <span>{selectedProvider.email}</span>
+                    {selectedProvider.whatsappNumber && (
+                      <span className="text-slate-700 font-semibold text-sm">
+                        WhatsApp: {selectedProvider.whatsappNumber}
+                      </span>
+                    )}
+                  </p>
                   <div className="mt-2 flex items-center gap-2">
                     <span className={`text-[10px] uppercase px-2.5 py-0.5 rounded-full font-bold tracking-wider ${
                       selectedProvider.providerRoleType === 'PRIMARY'

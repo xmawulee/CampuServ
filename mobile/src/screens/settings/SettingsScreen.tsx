@@ -146,12 +146,6 @@ export default function SettingsScreen({ navigation }: any) {
           <View style={[styles.card, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
             {[
               {
-                icon: 'shield-outline',
-                label: 'Privacy & Security',
-                sub: 'Manage account security',
-                onPress: () => { }
-              },
-              {
                 icon: 'help-circle-outline',
                 label: 'Help & Support',
                 sub: 'Get assistance',

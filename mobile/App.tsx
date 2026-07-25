@@ -24,7 +24,10 @@ const queryClient = new QueryClient({
   },
 });
 
+import { useGlobalStompListener } from './src/hooks/useGlobalStompListener';
+
 function AppContent() {
+  useGlobalStompListener();
   const loadStoredAuth = useAuthStore((state) => state.loadStoredAuth);
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const user = useAuthStore((state) => state.user);

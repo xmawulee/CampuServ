@@ -12,6 +12,7 @@ import {
 import { useAuthStore } from '../../store/authStore';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { CustomIonicons as Ionicons } from '../../components/CustomIcons';
 import { api } from '../../services/api';
 import { useTheme } from '../../styles/ThemeContext';
@@ -186,14 +187,11 @@ export default function NotificationCenterScreen({ navigation }: any) {
   const { user } = useAuthStore();
   const isViewingAsProvider = user?.role === 'PROVIDER';
 
-  const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
+  const queryClient = useQueryClient();
 
-  const fetchNotifications = useCallback(async (isRefresh = false) => {
-    if (isRefresh) setRefreshing(true);
-    else setLoading(true);
-    try {
+  const { data: notificationsData, isLoading: loading, isRefetching: refreshing, refetch } = useQuery({
+    queryKey: ['notifications'],
+    queryFn: async () => {
       const [notifRes, annRes] = await Promise.all([
         api.get('/notifications').catch(() => ({ data: [] })),
         api.get('/announcements/active').catch(() => ({ data: [] }))
@@ -224,20 +222,11 @@ export default function NotificationCenterScreen({ navigation }: any) {
       }));
 
       const combined = [...mapped, ...mappedAnn].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-      setNotifications(combined as any);
-    } catch {
-      setNotifications([]);
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  }, []);
+      return combined as Notification[];
+    },
+  });
 
-  useFocusEffect(
-    useCallback(() => {
-      fetchNotifications();
-    }, [fetchNotifications]),
-  );
+  const notifications = notificationsData || [];
 
   const filteredNotifications = (notifications ?? []).filter((item) => {
     if (item.isAnnouncement) return true; // Show announcements to everyone
@@ -258,7 +247,7 @@ export default function NotificationCenterScreen({ navigation }: any) {
     if (!notification.read) {
       try {
         await api.put(`/notifications/${notification.id}/read`);
-        setNotifications((prev) =>
+        queryClient.setQueryData(['notifications'], (prev: Notification[] | undefined) =>
           (prev ?? []).map((n) => (n.id === notification.id ? { ...n, read: true } : n)),
         );
       } catch (error: any) {
@@ -294,7 +283,7 @@ export default function NotificationCenterScreen({ navigation }: any) {
   const handleMarkAllRead = async () => {
     try {
       await api.put('/notifications/read-all');
-      setNotifications((prev) => (prev ?? []).map((n) => n.isAnnouncement ? n : { ...n, read: true }));
+      queryClient.setQueryData(['notifications'], (prev: Notification[] | undefined) => (prev ?? []).map((n) => n.isAnnouncement ? n : { ...n, read: true }));
       showToast({ status: 'success', title: 'All notifications marked as read.' });
     } catch {
       showToast({ status: 'error', title: 'Failed to mark all as read.' });
@@ -313,7 +302,7 @@ export default function NotificationCenterScreen({ navigation }: any) {
           onPress: async () => {
             try {
               await api.delete('/notifications');
-              setNotifications((prev) => (prev ?? []).filter(n => n.isAnnouncement));
+              queryClient.setQueryData(['notifications'], (prev: Notification[] | undefined) => (prev ?? []).filter(n => n.isAnnouncement));
               showToast({ status: 'success', title: 'All notifications cleared.' });
             } catch {
               showToast({ status: 'error', title: 'Failed to clear notifications.' });
@@ -327,7 +316,7 @@ export default function NotificationCenterScreen({ navigation }: any) {
   const handleDeleteNotification = async (id: string) => {
     try {
       await api.delete(`/notifications/${id}`);
-      setNotifications((prev) => (prev ?? []).filter((n) => n.id !== id));
+      queryClient.setQueryData(['notifications'], (prev: Notification[] | undefined) => (prev ?? []).filter((n) => n.id !== id));
       showToast({ status: 'success', title: 'Notification deleted.' });
     } catch {
       showToast({ status: 'error', title: 'Failed to delete notification.' });
@@ -385,7 +374,7 @@ export default function NotificationCenterScreen({ navigation }: any) {
           refreshControl={
             <RefreshControl
               refreshing={refreshing}
-              onRefresh={() => fetchNotifications(true)}
+              onRefresh={() => refetch()}
               tintColor={colors.primary}
             />
           }

@@ -267,8 +267,9 @@ export default function RequestDetailsScreen({ route, navigation }: any) {
   const userOffer = isProvider ? (request.offers || []).find((o: any) => o.providerId === user?.id) : null;
   const selectedOffer = request.offers?.find((o: any) => o.id === selectedOfferId);
   const offerPrice = selectedOffer ? Number(selectedOffer.price) : 0;
-  const commission = offerPrice * 0.05;
-  const totalCharge = offerPrice + commission;
+  // Platform fee is charged to the provider — student pays exact bid price
+  const providerFee = parseFloat((offerPrice * 0.05).toFixed(2));
+  const providerReceives = parseFloat((offerPrice - providerFee).toFixed(2));
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
@@ -701,7 +702,6 @@ export default function RequestDetailsScreen({ route, navigation }: any) {
         </View>
       )}
 
-      {/* Acceptance Confirmation Sheet */}
       <Modal visible={acceptDialogVisible} transparent animationType="slide" onRequestClose={() => setAcceptDialogVisible(false)}>
         <View style={styles.sheetOverlay}>
           <View style={[styles.sheetContent, { backgroundColor: colors.cardBackground }]}>
@@ -712,15 +712,18 @@ export default function RequestDetailsScreen({ route, navigation }: any) {
                 <Text style={[styles.sheetRowLabel, { color: colors.textMuted }]}>Bid Price</Text>
                 <Text style={[styles.sheetRowValue, { color: colors.text }]}>{offerPrice.toFixed(2)} GHS</Text>
               </View>
-              <View style={styles.sheetRow}>
-                <Text style={[styles.sheetRowLabel, { color: colors.textMuted }]}>Platform Fee (5%)</Text>
-                <Text style={[styles.sheetRowValue, { color: colors.text }]}>{commission.toFixed(2)} GHS</Text>
-              </View>
               <View style={[styles.sheetDivider, { backgroundColor: colors.border }]} />
               <View style={styles.sheetRow}>
-                <Text style={[styles.sheetTotalLabel, { color: colors.text }]}>Total Charge</Text>
-                <Text style={[styles.sheetTotalValue, { color: colors.primary }]}>{totalCharge.toFixed(2)} GHS</Text>
+                <Text style={[styles.sheetTotalLabel, { color: colors.text }]}>You Pay</Text>
+                <Text style={[styles.sheetTotalValue, { color: colors.primary }]}>{offerPrice.toFixed(2)} GHS</Text>
               </View>
+            </View>
+
+            <View style={[styles.feeInfoBox, { backgroundColor: 'rgba(34, 197, 94, 0.08)', borderColor: 'rgba(34, 197, 94, 0.25)', borderWidth: 1, borderRadius: 14, padding: 14, marginBottom: 16, flexDirection: 'row', alignItems: 'flex-start', gap: 10 }]}>
+              <Ionicons name="information-circle" size={20} color="#16A34A" style={{ marginTop: 1 }} />
+              <Text style={{ color: '#16A34A', fontSize: 13, fontWeight: '500', flex: 1, lineHeight: 19 }}>
+                No platform fee is charged to you. A 5% service fee is deducted from the provider's payout. Provider receives {providerReceives.toFixed(2)} GHS upon completion.
+              </Text>
             </View>
 
             <View style={[styles.escrowInfo, { backgroundColor: 'rgba(21, 101, 192, 0.1)' }]}>

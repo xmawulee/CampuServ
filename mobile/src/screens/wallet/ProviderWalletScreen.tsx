@@ -63,26 +63,26 @@ export default function ProviderWalletScreen() {
       showsVerticalScrollIndicator={false}
     >
       {/* ── Balance Card ── */}
-      <View style={[styles.balanceCard, { backgroundColor: '#0B132B' }]}>
-        <Text style={styles.balanceCardLabel}>
+      <View style={[styles.balanceCard, { backgroundColor: colors.primary }]}>
+        <Text style={[styles.balanceCardLabel, { color: 'rgba(255,255,255,0.75)' }]}>
           Provider Earnings Balance
         </Text>
-        <Text style={styles.balanceCardAmount}>
+        <Text style={[styles.balanceCardAmount, { color: '#FFFFFF' }]}>
           GHS {wallet ? Number(wallet.balance).toFixed(2) : '0.00'}
         </Text>
-        <Text style={styles.balanceCardSub}>
+        <Text style={[styles.balanceCardSub, { color: 'rgba(255,255,255,0.65)' }]}>
           Available for bank withdrawal & payout
         </Text>
 
         {/* Quick actions row */}
         <View style={styles.quickActionsRow}>
           <TouchableOpacity 
-            style={[styles.quickAction, { backgroundColor: colors.primary }]} 
+            style={[styles.quickAction, { backgroundColor: '#FFFFFF' }]} 
             onPress={handleWithdrawal}
             activeOpacity={0.88}
           >
-            <Ionicons name="arrow-up-circle-outline" size={20} color="#FFF" />
-            <Text style={styles.quickActionLabel}>Request Payout</Text>
+            <Ionicons name="arrow-up-circle-outline" size={20} color={colors.primary} />
+            <Text style={[styles.quickActionLabel, { color: colors.primary }]}>Request Payout</Text>
           </TouchableOpacity>
         </View>
       </View>

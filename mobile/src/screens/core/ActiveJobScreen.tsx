@@ -12,6 +12,7 @@ import ImageViewerModal from '../../components/ImageViewerModal';
 import { api, BASE_URL } from '../../services/api';
 import type { ProviderJob } from '../../types/provider';
 import { useFocusEffect } from '@react-navigation/native';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTheme } from '../../styles/ThemeContext';
 import { useAuthStore } from '../../store/authStore';
 import { useToast } from '../../styles/ToastContext';
@@ -32,8 +33,29 @@ export default function ActiveJobScreen({ navigation, route }: any) {
   const { user, accessToken } = useAuthStore();
   const { showToast } = useToast();
 
-  const [job, setJob] = useState<ProviderJob | null>(null);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
+
+  const { data: job, isLoading: isJobLoading, refetch } = useQuery<ProviderJob>({
+    queryKey: ['job', jobId],
+    queryFn: async () => {
+      const res = await api.get(`/jobs/${jobId}`);
+      return res.data;
+    },
+    enabled: !!jobId,
+  });
+
+  const { data: reviews, isLoading: isCheckingReview } = useQuery({
+    queryKey: ['job', jobId, 'reviews'],
+    queryFn: async () => {
+      const revs = await api.get(`/reviews/job/${jobId}`);
+      return revs.data || [];
+    },
+    enabled: !!jobId && !!user?.id && job?.status === 'COMPLETED' && user?.id === job?.requesterId,
+  });
+
+  const hasReviewed = reviews?.some((r: any) => r.direction === 'REQUESTER_TO_PROVIDER') || false;
+  const loading = isJobLoading;
+  const checkingReview = isCheckingReview;
 
   const [startingJob, setStartingJob] = useState(false);
   const [markingFinished, setMarkingFinished] = useState(false);
@@ -46,48 +68,21 @@ export default function ActiveJobScreen({ navigation, route }: any) {
   const [isSuccess, setIsSuccess] = useState(false);
   const [regenerating, setRegenerating] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
-  const [hasReviewed, setHasReviewed] = useState(false);
-  const [checkingReview, setCheckingReview] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [providerLocation, setProviderLocation] = useState<Location.LocationObject | null>(null);
   const [routeCoordinates, setRouteCoordinates] = useState<{ latitude: number, longitude: number }[]>([]);
 
-  const fetchJob = useCallback(async () => {
-    setCheckingReview(true);
-    try {
-      const res = await api.get(`/jobs/${jobId}`);
-      setJob(res.data);
-      if (res.data && res.data.completionCode) {
-        setCompletionCode(res.data.completionCode);
-      }
-      if (res.data && res.data.status === 'COMPLETED' && user?.id === res.data.requesterId) {
-        try {
-          const revs = await api.get(`/reviews/job/${jobId}`);
-          const reviewed = (revs.data || []).some((r: any) => r.direction === 'REQUESTER_TO_PROVIDER');
-          setHasReviewed(reviewed);
-        } catch (err) {
-          console.warn("Failed to check if job is reviewed:", err);
-        }
-      }
-    } catch {
-    } finally {
-      setCheckingReview(false);
-      setLoading(false);
+  useEffect(() => {
+    if ((job as any)?.completionCode) {
+      setCompletionCode((job as any).completionCode);
     }
-  }, [jobId, user?.id]);
+  }, [(job as any)?.completionCode]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await fetchJob();
+    await refetch();
     setRefreshing(false);
-  }, [fetchJob]);
-
-  useFocusEffect(
-    useCallback(() => {
-      setLoading(true);
-      fetchJob();
-    }, [fetchJob])
-  );
+  }, [refetch]);
 
   useEffect(() => {
     (async () => {
@@ -144,7 +139,7 @@ export default function ActiveJobScreen({ navigation, route }: any) {
       stompClient.connect(accessToken);
       
       subStatusId = stompClient.subscribe(`/topic/job.${job.id}.status`, () => {
-        fetchJob();
+        queryClient.invalidateQueries({ queryKey: ['job', jobId] });
       });
 
       if (user?.id === job.requesterId) {
@@ -161,14 +156,14 @@ export default function ActiveJobScreen({ navigation, route }: any) {
       if (subStatusId) stompClient.unsubscribe(subStatusId);
       if (subCodeId) stompClient.unsubscribe(subCodeId);
     };
-  }, [job?.id, accessToken, user?.id, fetchJob]);
+  }, [job?.id, accessToken, user?.id, queryClient, jobId]);
 
   const handleStartJob = async () => {
     setStartingJob(true);
     try {
       await api.put(`/jobs/${jobId}/start`);
       showToast({ status: 'success', title: 'Job started!', subtitle: "Client notified you're on your way." });
-      fetchJob();
+      queryClient.invalidateQueries({ queryKey: ['job', jobId] });
     } catch (e: any) {
       showToast({ status: 'error', title: e.response?.data || 'Failed to start job.' });
     } finally {
@@ -182,10 +177,10 @@ export default function ActiveJobScreen({ navigation, route }: any) {
       await api.post(`/jobs/${jobId}/mark-complete`);
       if (job?.serviceMode === 'REMOTE') {
         showToast({ status: 'success', title: 'Proof Submitted!', subtitle: 'Waiting for the client to review and release payment.' });
-        fetchJob();
+        queryClient.invalidateQueries({ queryKey: ['job', jobId] });
       } else {
         showToast({ status: 'success', title: 'Awaiting Code!', subtitle: 'Ask the client for their 6-digit code.' });
-        fetchJob();
+        queryClient.invalidateQueries({ queryKey: ['job', jobId] });
         setShowProviderModal(true);
       }
     } catch (e: any) {
@@ -202,7 +197,7 @@ export default function ActiveJobScreen({ navigation, route }: any) {
       // For remote jobs, client directly confirms completion (no code needed)
       await api.put(`/jobs/${jobId}/complete`);
       showToast({ status: 'success', title: 'Payment Released!', subtitle: 'The provider has been paid. Thank you!' });
-      fetchJob();
+      queryClient.invalidateQueries({ queryKey: ['job', jobId] });
     } catch (e: any) {
       showToast({ status: 'error', title: e.response?.data || 'Failed to release payment.' });
     } finally {
@@ -220,7 +215,7 @@ export default function ActiveJobScreen({ navigation, route }: any) {
       setTimeout(() => {
         setShowProviderModal(false);
         setIsSuccess(false);
-        fetchJob();
+        queryClient.invalidateQueries({ queryKey: ['job', jobId] });
       }, 2500);
     } catch (e: any) {
       setCodeError(e.response?.data || 'Failed to confirm completion.');
@@ -234,7 +229,7 @@ export default function ActiveJobScreen({ navigation, route }: any) {
     try {
       await api.post(`/jobs/${jobId}/regenerate-code`);
       // Fetch the job again so the new plaintext code is loaded into state
-      await fetchJob();
+      await refetch();
       showToast({ status: 'success', title: 'Code Regenerated', subtitle: 'Your new code is ready.' });
     } catch (e: any) {
       showToast({ status: 'error', title: e.response?.data || 'Failed to regenerate code.' });
@@ -248,7 +243,7 @@ export default function ActiveJobScreen({ navigation, route }: any) {
       await api.put(`/jobs/${jobId}/dispute`, { description: 'Dispute during completion' });
       showToast({ status: 'success', title: 'Disputed', subtitle: 'Support team will review.' });
       setShowClientModal(false);
-      fetchJob();
+      queryClient.invalidateQueries({ queryKey: ['job', jobId] });
     } catch (e: any) {
       showToast({ status: 'error', title: e.response?.data || 'Failed to dispute.' });
     }
