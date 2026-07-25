@@ -1,4 +1,21 @@
-﻿target/
+target/
 *.log
-.env*
 uploads/
+
+# Environment variables (NEVER commit secrets)
+.env
+.env.local
+.env.*.local
+.env*.local
+!.env.example
+!.env.local.example
+!*.env.example
+
+# Security / Key files
+*.pem
+*.key
+*.p12
+*.jks
+*.keystore
+*.pkcs8
+*.secret
