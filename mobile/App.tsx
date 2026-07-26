@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { NavigationContainer } from '@react-navigation/native';
+import { NavigationContainer, DefaultTheme, DarkTheme } from '@react-navigation/native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { StatusBar } from 'expo-status-bar';
 import * as SplashScreen from 'expo-splash-screen';
@@ -11,6 +11,7 @@ import AppNavigator from './src/navigation/AppNavigator';
 import { useAuthStore } from './src/store/authStore';
 import { ThemeProvider, useTheme } from './src/styles/ThemeContext';
 import { navigationRef } from './src/navigation/navigationRef';
+import AnimatedBackground from './src/components/AnimatedBackground';
 
 // Keep the splash screen visible while we fetch resources
 SplashScreen.preventAutoHideAsync().catch(() => {});
@@ -82,11 +83,22 @@ function AppContent() {
     },
   };
 
+  const navTheme = isDark ? DarkTheme : DefaultTheme;
+  const transparentTheme = {
+    ...navTheme,
+    colors: {
+      ...navTheme.colors,
+      background: 'transparent',
+    },
+  };
+
   return (
-    <NavigationContainer key={navKey} ref={navigationRef} linking={linking}>
-      <AppNavigator />
-      <StatusBar style={isDark ? 'light' : 'dark'} />
-    </NavigationContainer>
+    <AnimatedBackground>
+      <NavigationContainer key={navKey} ref={navigationRef} linking={linking} theme={transparentTheme}>
+        <AppNavigator />
+        <StatusBar style={isDark ? 'light' : 'dark'} />
+      </NavigationContainer>
+    </AnimatedBackground>
   );
 }
 

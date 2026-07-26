@@ -63,30 +63,29 @@ export default function PostRequestScreen({ route, navigation }: any) {
 
   const categoriesList = serverCategories.length > 0
     ? serverCategories.map((c) => {
+        const normalizedName = c.name.toLowerCase();
         let mappedIcon = 'briefcase-outline';
-        if (c.iconKey) {
-          const baseKey = c.iconKey.replace('-outline', '').toLowerCase().trim();
-          const ioniconMap: Record<string, string> = {
-            'wrench': 'construct-outline',
-            'printer': 'print-outline',
-            'truck': 'car-outline',
-            'scissors': 'cut-outline',
-            'sparkles': 'sparkles-outline',
-            'calendar': 'calendar-outline',
-            'camera': 'camera-outline',
-            'video': 'videocam-outline',
-            'food-fork-drink': 'restaurant-outline',
-          };
-          mappedIcon = ioniconMap[baseKey] || (c.iconKey.endsWith('-outline') ? c.iconKey : `${c.iconKey}-outline`);
-        }
+        let iconColor = '#1565C0';
+        let bg = '#F8FAFC';
+        
+        if (normalizedName.includes('laundry')) { mappedIcon = 'shirt-outline'; bg = '#FFF0E6'; iconColor = '#FF6B35'; }
+        else if (normalizedName.includes('clean')) { mappedIcon = 'sparkles-outline'; bg = '#E8F8F0'; iconColor = '#27AE60'; }
+        else if (normalizedName.includes('tutor')) { mappedIcon = 'school-outline'; bg = '#EEF0FF'; iconColor = '#5C6BC0'; }
+        else if (normalizedName.includes('errand')) { mappedIcon = 'bicycle-outline'; bg = '#FFF9E6'; iconColor = '#F39C12'; }
+        else if (normalizedName.includes('tech') || normalizedName.includes('repair')) { mappedIcon = 'construct-outline'; bg = '#E6F4FF'; iconColor = '#1E88E5'; }
+        else if (normalizedName.includes('design') || normalizedName.includes('print')) { mappedIcon = 'print-outline'; bg = '#FCE4EC'; iconColor = '#E91E63'; }
+        else if (normalizedName.includes('style') || normalizedName.includes('groom')) { mappedIcon = 'cut-outline'; bg = '#F3E5F5'; iconColor = '#9C27B0'; }
+        else if (normalizedName.includes('photo') || normalizedName.includes('video')) { mappedIcon = 'camera-outline'; bg = '#FFF3E0'; iconColor = '#FF9800'; }
+        else if (normalizedName.includes('food') || normalizedName.includes('cater')) { mappedIcon = 'restaurant-outline'; bg = '#EFEBE9'; iconColor = '#795548'; }
+
         return {
           id: c.id,
           name: c.name,
           icon: mappedIcon,
-          iconColor: c.iconColor || '#1565C0',
-          bg: c.bg || '#F8FAFC',
+          iconColor: iconColor,
+          bg: bg,
         };
-      })
+      }).filter((item, index, self) => index === self.findIndex((t) => t.icon === item.icon))
     : FALLBACK_CATEGORIES;
 
   // Form states

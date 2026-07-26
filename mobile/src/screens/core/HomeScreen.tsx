@@ -35,18 +35,20 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const LOCAL_IMAGES = {
   food: require('../../../assets/images/home/food.jpg'),
   fashion: require('../../../assets/images/home/fashion.jpg'),
-  electronic: require('../../../assets/images/home/electronic.jpg'),
+  electronic: require('../../../assets/images/home/electronic2.jpg'),
   beauty: require('../../../assets/images/home/beauty.jpg'),
-  repair: require('../../../assets/images/home/repair.jpg'),
+  repair: require('../../../assets/images/home/repair2.jpg'),
   errand: require('../../../assets/images/home/errand.jpg'),
   tutor: require('../../../assets/images/home/tutor.jpg'),
   laundry: require('../../../assets/images/home/laundry.jpg'),
+  cleaning: require('../../../assets/images/home/cleaning.png'),
+  design_print: require('../../../assets/images/home/design_print.png'),
   fallback: require('../../../assets/images/home/browse_services.jpg'),
   new_request: require('../../../assets/images/home/new_request.jpg'),
   browse_services: require('../../../assets/images/home/browse_services.jpg'),
   my_requests: require('../../../assets/images/home/my_requests.jpg'),
   my_wallet: require('../../../assets/images/home/my_wallet.jpg'),
-  photo_video: require('../../../assets/images/home/photo_video.jpg'),
+  photo_video: require('../../../assets/images/home/photo_video2.jpg'),
   catering: require('../../../assets/images/home/catering.jpg'),
 };
 
@@ -59,8 +61,10 @@ const getCategoryImageUrl = (name: string) => {
   if (n.includes('repair') || n.includes('tech') || n.includes('mechanic')) return LOCAL_IMAGES.repair;
   if (n.includes('errand') || n.includes('deliver') || n.includes('shop')) return LOCAL_IMAGES.errand;
   if (n.includes('tutor') || n.includes('academic')) return LOCAL_IMAGES.tutor;
-  if (n.includes('laundry') || n.includes('clean')) return LOCAL_IMAGES.laundry;
+  if (n.includes('clean')) return LOCAL_IMAGES.cleaning;
+  if (n.includes('laundry')) return LOCAL_IMAGES.laundry;
   if (n.includes('photo') || n.includes('video') || n.includes('camera')) return LOCAL_IMAGES.photo_video;
+  if (n.includes('design') || n.includes('print')) return LOCAL_IMAGES.design_print;
   if (n.includes('cater') || n.includes('event')) return LOCAL_IMAGES.catering;
   
   // Generic fallback
@@ -280,8 +284,6 @@ export default function HomeScreen({ route, navigation }: any) {
     return `${BASE_URL}${url}`;
   };
 
-
-
   const handleScroll = (event: any) => {
     const offsetY = event.nativeEvent.contentOffset.y;
     // Toggle sticky search bar when scrolled down past category shortcuts
@@ -447,19 +449,7 @@ export default function HomeScreen({ route, navigation }: any) {
   ] as const;
 
   return (
-    <ImageBackground
-      source={require('../../../assets/images/app_bg_pattern.png')}
-      style={[styles.root, { backgroundColor: colors.background, paddingTop: insets.top, overflow: 'hidden' }]}
-      imageStyle={{ 
-        opacity: isDark ? 0.1 : 0.6,
-        resizeMode: 'repeat',
-        width: '200%',
-        height: '200%',
-        top: '-50%',
-        left: '-50%',
-        transform: [{ scale: 0.5 }]
-      }}
-    >
+    <View style={[styles.root, { backgroundColor: 'transparent', paddingTop: insets.top, overflow: 'hidden' }]}>
 
       {/* Announcement Modal */}
       <Modal visible={showAnnouncement} transparent animationType="fade">
@@ -489,31 +479,19 @@ export default function HomeScreen({ route, navigation }: any) {
       </Modal>
 
       {/* ── Fixed Header Bar ── */}
-      <View style={[styles.headerBar, { paddingTop: 8 }]}>
-        {/* Avatar + Greeting */}
-        <TouchableOpacity
-          style={styles.headerLeft}
-          onPress={() => navigation.navigate('Settings')}
-          activeOpacity={0.8}
-        >
-          {user?.profilePictureUrl ? (
-            <Image
-              source={{ uri: getFullImageUrl(user.profilePictureUrl) || undefined }}
-              style={styles.headerAvatar}
-            />
-          ) : (
-            <View style={[styles.headerAvatarPlaceholder, { backgroundColor: colors.primary }]}>
-              <Text style={styles.headerAvatarText}>{getInitials(user?.fullName || '')}</Text>
-            </View>
-          )}
-          <View>
-            <Text style={[styles.greetSub, { color: colors.textMuted }]}>Hello, 👋</Text>
-            <Text style={[styles.greetName, { color: colors.text }]}>{user?.fullName?.split(' ')[0] || 'Student'}</Text>
-          </View>
-        </TouchableOpacity>
+      <View style={[styles.headerBar, { paddingTop: 8, paddingHorizontal: 16, alignItems: 'center', justifyContent: 'space-between' }]}>
+        {/* Left: Spacer for center alignment balance */}
+        <View style={{ width: 40 }} />
+
+        {/* Center: App Logo */}
+        <View style={{ flex: 1, alignItems: 'center' }}>
+          <Text style={{ fontSize: 24, fontWeight: '900', color: colors.text, letterSpacing: -0.5 }}>
+            Campus<Text style={{ color: colors.primary }}>Serve.</Text>
+          </Text>
+        </View>
 
         {/* Right actions */}
-        <View style={[styles.headerRight, { gap: 8 }]}>
+        <View style={[styles.headerRight, { gap: 12 }]}>
           <RoleSwitcher />
           <TouchableOpacity
             style={[styles.iconBtn, { backgroundColor: colors.cardBackground }]}
@@ -547,8 +525,33 @@ export default function HomeScreen({ route, navigation }: any) {
         ItemSeparatorComponent={() => <View style={{ height: 12 }} />}
         ListHeaderComponent={
           <>
-            {/* Search Bar */}
-            <SearchBar />
+            {/* ── Hero Banner ── */}
+            <View style={[styles.heroBanner, { backgroundColor: colors.primary }]}>
+              <Text style={styles.heroText}>
+                Our providers
+                {"\n"}
+                will take it from here
+              </Text>
+              
+              <View style={[styles.heroSearchBar, { backgroundColor: '#FFF' }]}>
+                <TextInput
+                  style={[styles.heroSearchInput, { color: '#000' }]}
+                  placeholder='Try "building mobile app"'
+                  placeholderTextColor="#888"
+                  value={searchQuery}
+                  onChangeText={setSearchQuery}
+                  accessibilityLabel="Search for services"
+                />
+                {searchQuery.length > 0 && (
+                  <TouchableOpacity onPress={() => setSearchQuery('')} style={{ marginRight: 8 }}>
+                    <CustomIonicons name="close-circle" size={18} color="#888" />
+                  </TouchableOpacity>
+                )}
+                <TouchableOpacity style={[styles.heroSearchBtn, { backgroundColor: colors.text }]}>
+                  <CustomIonicons name="search-outline" size={20} color={colors.background} />
+                </TouchableOpacity>
+              </View>
+            </View>
 
             {/* Pending Review CTA */}
             {pendingReview && (
@@ -567,21 +570,21 @@ export default function HomeScreen({ route, navigation }: any) {
 
             {/* Quick Action Tiles 2x2 */}
             {!isSearchMode && (
-              <View style={styles.tilesGrid}>
+              <View style={styles.gridContainer}>
                 {quickTiles.map((tile) => (
                   <TouchableOpacity
                     key={tile.label}
-                    style={styles.tile}
+                    style={styles.gridItem}
                     onPress={() => tile.nav && navigation.navigate(tile.nav as any)}
                     activeOpacity={0.88}
                   >
                     <ImageBackground
                       source={tile.image}
-                      style={styles.catImageBg}
-                      imageStyle={{ borderRadius: 20 }}
+                      style={[styles.gridIconBox, { justifyContent: 'flex-end', paddingBottom: 16 }]}
+                      imageStyle={{ borderRadius: 24 }}
                     >
-                      <View style={styles.catOverlay} />
-                      <Text style={styles.catLabel}>{tile.label}</Text>
+                      <View style={[StyleSheet.absoluteFillObject, { backgroundColor: 'rgba(0,0,0,0.4)', borderRadius: 24 }]} />
+                      <Text style={styles.catLabel} numberOfLines={2}>{tile.label}</Text>
                     </ImageBackground>
                   </TouchableOpacity>
                 ))}
@@ -594,28 +597,36 @@ export default function HomeScreen({ route, navigation }: any) {
                 <Text style={[styles.sectionTitle, { color: colors.text }]}>Category</Text>
               </View>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.categoryScrollList}>
-                {categories.map((item) => {
-                  const isActive = activeCategory === item.name;
-                  return (
-                    <TouchableOpacity
-                      key={item.id}
-                      style={[styles.catCard, isActive && { shadowColor: colors.primary, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.5, shadowRadius: 8, elevation: 8 }]}
-                      onPress={() => handleCategoryToggle(item.id, item.name)}
-                      activeOpacity={0.8}
-                    >
-                      <ImageBackground
-                        source={getCategoryImageUrl(item.name)}
-                        style={styles.catImageBg}
-                        imageStyle={{ borderRadius: 20 }}
+                {(() => {
+                  const seenImages = new Set();
+                  return categories.filter(item => {
+                    const img = getCategoryImageUrl(item.name);
+                    if (seenImages.has(img)) return false;
+                    seenImages.add(img);
+                    return true;
+                  }).map((item) => {
+                    const isActive = activeCategory === item.name;
+                    return (
+                      <TouchableOpacity
+                        key={item.id}
+                        style={[styles.catCard, isActive && { shadowColor: colors.primary, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.5, shadowRadius: 8, elevation: 8 }]}
+                        onPress={() => handleCategoryToggle(item.id, item.name)}
+                        activeOpacity={0.8}
                       >
-                        <View style={isActive ? [styles.catActiveOverlay, { borderColor: colors.primary }] : styles.catOverlay} />
-                        <Text style={styles.catLabel} numberOfLines={2}>
-                          {item.name}
-                        </Text>
-                      </ImageBackground>
-                    </TouchableOpacity>
-                  );
-                })}
+                        <ImageBackground
+                          source={getCategoryImageUrl(item.name)}
+                          style={styles.catImageBg}
+                          imageStyle={{ borderRadius: 20 }}
+                        >
+                          <View style={isActive ? [styles.catActiveOverlay, { borderColor: colors.primary }] : styles.catOverlay} />
+                          <Text style={styles.catLabel} numberOfLines={2}>
+                            {item.name}
+                          </Text>
+                        </ImageBackground>
+                      </TouchableOpacity>
+                    );
+                  });
+                })()}
                 {loading && categories.length === 0 && (
                   <Text style={{ color: colors.textMuted, marginLeft: 4 }}>Loading...</Text>
                 )}
@@ -628,25 +639,6 @@ export default function HomeScreen({ route, navigation }: any) {
             {/* Active Filter Chips */}
             {renderActiveFilterChips()}
 
-            {/* Wallet Banner */}
-            {!isSearchMode && (
-              <TouchableOpacity
-                style={[styles.walletBanner, { backgroundColor: colors.primary }]}
-                onPress={() => navigation.navigate('Wallet')}
-                activeOpacity={0.9}
-              >
-                <View>
-                  <Text style={[styles.walletLabel, { color: 'rgba(255,255,255,0.75)' }]}>Escrow Wallet</Text>
-                  <Text style={[styles.walletBalance, { color: '#FFFFFF' }]}>GHS {balance}</Text>
-                  <Text style={[styles.walletSub, { color: 'rgba(255,255,255,0.65)' }]}>Tap to manage funds</Text>
-                </View>
-                <View style={styles.walletRight}>
-                  <View style={[styles.walletIconWrap, { backgroundColor: '#FFFFFF' }]}>
-                    <CustomIonicons name="wallet-outline" size={26} color={colors.primary} />
-                  </View>
-                </View>
-              </TouchableOpacity>
-            )}
 
             {/* Section Header */}
             {!isSearchMode && (
@@ -654,9 +646,6 @@ export default function HomeScreen({ route, navigation }: any) {
                 <Text style={[styles.sectionTitle, { color: colors.text }]}>
                   {isProvider ? 'Available Bids' : 'Recent Activity'}
                 </Text>
-                <TouchableOpacity onPress={() => navigation.navigate('MyRequests')}>
-                  <Text style={[styles.seeAll, { color: colors.primary }]}>View all</Text>
-                </TouchableOpacity>
               </View>
             )}
 
@@ -712,14 +701,14 @@ export default function HomeScreen({ route, navigation }: any) {
           }}
         />
       )}
-    </ImageBackground>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   root: { flex: 1 },
   loadingContainer: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  listContent: { paddingHorizontal: 20, paddingTop: 8 },
+  listContent: { paddingBottom: 100 },
   announcementModal: { borderRadius: 24, padding: 24, width: '100%', maxWidth: 400 },
 
   // Header
@@ -746,12 +735,65 @@ const styles = StyleSheet.create({
     shadowRadius: 6,
     elevation: 2,
   },
+  headerIconBtn: { padding: 4 },
   headerAvatar: { width: 44, height: 44, borderRadius: 22 },
   headerAvatarPlaceholder: {
     width: 44, height: 44, borderRadius: 22,
     alignItems: 'center', justifyContent: 'center',
   },
   headerAvatarText: { fontSize: 16, fontWeight: '800', color: '#FFF' },
+
+  // --- Hero Banner ---
+  heroBanner: {
+    marginHorizontal: 12,
+    marginTop: 12,
+    marginBottom: 24,
+    paddingHorizontal: 20,
+    paddingTop: 36,
+    paddingBottom: 36,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.18,
+    shadowRadius: 16,
+    elevation: 6,
+  },
+  heroText: {
+    color: '#FFF',
+    fontSize: 28,
+    fontWeight: '800',
+    textAlign: 'center',
+    letterSpacing: -0.5,
+    marginBottom: 24,
+    lineHeight: 36,
+  },
+  heroSearchBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    width: '100%',
+    height: 52,
+    borderRadius: 26,
+    paddingHorizontal: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 4,
+  },
+  heroSearchInput: {
+    flex: 1,
+    fontSize: 16,
+  },
+  heroSearchBtn: {
+    backgroundColor: '#05230E',
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
 
   // Search
   searchRow: { flexDirection: 'row', paddingVertical: 14, gap: 10, alignItems: 'center' },
@@ -766,25 +808,38 @@ const styles = StyleSheet.create({
   searchInput: { flex: 1, fontSize: 14, fontWeight: '500' },
   filterBtn: { width: 50, height: 50, borderRadius: 25, alignItems: 'center', justifyContent: 'center' },
 
-  // 2x2 Quick tiles
-  tilesGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', paddingHorizontal: 20, marginBottom: 24, rowGap: 16 },
-  tile: {
-    width: '47%',
-    aspectRatio: 1,
-    borderRadius: 20,
+  // New Grid System (Replaces 2x2 and Category scroll)
+  gridContainer: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', paddingHorizontal: 32, marginBottom: 24, rowGap: 24 },
+  gridItem: {
+    width: '45%', // slightly smaller to create more center gap
+    alignItems: 'center',
+  },
+  gridIconBox: {
+    width: '100%',
+    aspectRatio: 1, // perfect square
+    borderRadius: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
-    elevation: 4,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.06,
+    shadowRadius: 10,
+    elevation: 3,
+    marginBottom: 12,
+  },
+  gridLabel: {
+    fontSize: 13,
+    fontWeight: '700',
+    textAlign: 'center',
+    lineHeight: 18,
   },
 
   // Category
-  categoryScrollList: { paddingVertical: 8, paddingHorizontal: 16, gap: 12 },
-  catCard: { width: 130, height: 130, borderRadius: 20 },
-  catImageBg: { flex: 1, justifyContent: 'flex-end', padding: 12 },
-  catOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.35)', borderRadius: 20 },
-  catActiveOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.6)', borderWidth: 3, borderRadius: 20 },
+  categoryScrollList: { paddingVertical: 8, paddingHorizontal: 16, gap: 14 },
+  catCard: { width: 148, height: 148, borderRadius: 22 },
+  catImageBg: { flex: 1, justifyContent: 'flex-end', padding: 14 },
+  catOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.35)', borderRadius: 22 },
+  catActiveOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.6)', borderWidth: 3, borderRadius: 22 },
   catLabel: { color: '#FFF', fontSize: 16, fontWeight: '800', textAlign: 'center', textShadowColor: 'rgba(0,0,0,0.5)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 4 },
 
   // Filter chips
@@ -797,20 +852,21 @@ const styles = StyleSheet.create({
 
   // Wallet banner
   walletBanner: {
-    borderRadius: 24, padding: 20,
-    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+    borderRadius: 24, paddingHorizontal: 24, paddingVertical: 24,
     marginBottom: 24,
     shadowColor: '#000', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.18, shadowRadius: 16, elevation: 6,
   },
-  walletLabel: { color: 'rgba(255,255,255,0.7)', fontSize: 12, fontWeight: '600', marginBottom: 4 },
-  walletBalance: { color: '#FFF', fontSize: 28, fontWeight: '900', marginBottom: 4, letterSpacing: -0.5 },
-  walletSub: { color: 'rgba(255,255,255,0.6)', fontSize: 11 },
-  walletRight: { alignItems: 'center' },
-  walletIconWrap: { width: 52, height: 52, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
+  walletTopRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
+  walletLabel: { color: 'rgba(255,255,255,0.8)', fontSize: 13, fontWeight: '700', letterSpacing: 0.5 },
+  walletBalance: { color: '#FFF', fontSize: 44, fontWeight: '900', letterSpacing: -1, lineHeight: 48, marginBottom: 8 },
+  walletSub: { color: 'rgba(255,255,255,0.9)', fontSize: 13, fontWeight: '500', marginBottom: 24 },
+  walletButtonsRow: { flexDirection: 'row', gap: 12 },
+  walletBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 14, borderRadius: 100, gap: 6 },
+  walletBtnText: { fontSize: 15, fontWeight: '700' },
 
   // Section headers
-  sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
-  sectionTitle: { fontSize: 18, fontWeight: '800', letterSpacing: -0.2 },
+  sectionHeader: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginBottom: 12, gap: 8 },
+  sectionTitle: { fontSize: 18, fontWeight: '800', letterSpacing: -0.2, textAlign: 'center' },
   seeAll: { fontSize: 13, fontWeight: '700' },
   resultsCount: { fontSize: 12, fontWeight: '600' },
 

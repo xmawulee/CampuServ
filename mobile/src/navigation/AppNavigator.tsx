@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, StyleSheet, AppState, AppStateStatus, TouchableOpacity } from 'react-native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { CustomIonicons as Ionicons } from '../components/CustomIcons';
 import { useTheme } from '../styles/ThemeContext';
 import { useAuthStore } from '../store/authStore';
@@ -24,6 +24,7 @@ import ProviderBioScreen from '../screens/auth/ProviderBioScreen';
 import ProviderReviewScreen from '../screens/auth/ProviderReviewScreen';
 
 import HomeScreen from '../screens/core/HomeScreen';
+import SearchScreen from '../screens/core/SearchScreen';
 import RequestDetailsScreen from '../screens/core/RequestDetailsScreen';
 import RequestDetailForProviderScreen from '../screens/provider/RequestDetailForProviderScreen';
 import SelectProviderScreen from '../screens/core/SelectProviderScreen';
@@ -55,12 +56,13 @@ const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 
 function CustomTabBar({ state, descriptors, navigation, colors, isDark }: any) {
+  const insets = useSafeAreaInsets();
   return (
     <View
       style={{
         flexDirection: 'row',
         position: 'absolute',
-        bottom: 16,
+        bottom: 16 + insets.bottom,
         left: 16,
         right: 16,
         height: 64,
@@ -111,6 +113,7 @@ function CustomTabBar({ state, descriptors, navigation, colors, isDark }: any) {
         else if (route.name === 'Wallet') iconName = isFocused ? 'wallet' : 'wallet-outline';
         else if (route.name === 'Settings') iconName = isFocused ? 'person' : 'person-outline';
         else if (route.name === 'Home') iconName = isFocused ? 'home' : 'home-outline';
+        else if (route.name === 'Search') iconName = isFocused ? 'search' : 'search-outline';
         else if (route.name === 'MyRequests') iconName = isFocused ? 'list' : 'list-outline';
 
         // Override label for bottom tabs
@@ -118,9 +121,10 @@ function CustomTabBar({ state, descriptors, navigation, colors, isDark }: any) {
         if (route.name === 'ProviderDashboardHome') displayLabel = 'Dashboard';
         else if (route.name === 'IncomingRequests') displayLabel = 'Requests';
         else if (route.name === 'ProviderJobList') displayLabel = 'Jobs';
-        else if (route.name === 'Wallet') displayLabel = label === 'Escrow Wallet' ? 'Wallet' : 'Earnings';
+        else if (route.name === 'Wallet') displayLabel = 'Wallet';
         else if (route.name === 'Settings') displayLabel = 'Account';
         else if (route.name === 'Home') displayLabel = 'Home';
+        else if (route.name === 'Search') displayLabel = 'Search';
         else if (route.name === 'MyRequests') displayLabel = 'Requests';
 
         return (
@@ -162,10 +166,11 @@ function ProviderNavigator() {
   const { colors, isDark } = useTheme();
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }} edges={['bottom']}>
+    <View style={{ flex: 1, backgroundColor: 'transparent' }}>
       <Tab.Navigator
         tabBar={(props) => <CustomTabBar {...props} colors={colors} isDark={isDark} />}
         screenOptions={{ headerShown: false }}
+        sceneContainerStyle={{ backgroundColor: 'transparent' }}
       >
         <Tab.Screen name="ProviderDashboardHome" component={ProviderDashboardHomeScreen} />
         <Tab.Screen name="IncomingRequests" component={IncomingRequestsScreen} />
@@ -173,7 +178,7 @@ function ProviderNavigator() {
         <Tab.Screen name="Wallet" component={ProviderWalletScreen} />
         <Tab.Screen name="Settings" component={SettingsScreen} />
       </Tab.Navigator>
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -182,17 +187,19 @@ function AppTabs() {
   const { colors, isDark } = useTheme();
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }} edges={['bottom']}>
+    <View style={{ flex: 1, backgroundColor: 'transparent' }}>
       <Tab.Navigator
         tabBar={(props) => <CustomTabBar {...props} colors={colors} isDark={isDark} />}
         screenOptions={{ headerShown: false }}
+        sceneContainerStyle={{ backgroundColor: 'transparent' }}
       >
         <Tab.Screen name="Home" component={HomeScreen} />
+        <Tab.Screen name="Search" component={SearchScreen} />
         <Tab.Screen name="MyRequests" component={MyRequestsScreen} />
         <Tab.Screen name="Wallet" component={StudentWalletScreen} />
         <Tab.Screen name="Settings" component={SettingsScreen} />
       </Tab.Navigator>
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -412,6 +419,7 @@ function AppNavigatorInner() {
         headerShadowVisible: false,
         headerTintColor: colors.text,
         headerTitleStyle: { fontWeight: '700', fontSize: 17 },
+        contentStyle: { backgroundColor: 'transparent' },
       }}
     >
       {/* ── Unauthenticated ── */}

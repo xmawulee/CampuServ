@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   StyleSheet, Text, View, TextInput, TouchableOpacity,
-  ActivityIndicator, Alert, ScrollView, ImageBackground
+  ActivityIndicator, Alert, ScrollView
 } from 'react-native';
 import { CustomIonicons as Ionicons } from '../../components/CustomIcons';
 import { useAuthStore } from '../../store/authStore';
@@ -77,19 +77,7 @@ export default function SettingsScreen({ navigation }: any) {
   }
 
   return (
-    <ImageBackground
-      source={require('../../../assets/images/app_bg_pattern.png')}
-      style={{ flex: 1, backgroundColor: colors.background, overflow: 'hidden' }}
-      imageStyle={{ 
-        opacity: isDark ? 0.1 : 0.6,
-        resizeMode: 'repeat',
-        width: '200%',
-        height: '200%',
-        top: '-50%',
-        left: '-50%',
-        transform: [{ scale: 0.5 }]
-      }}
-    >
+    <View style={{ flex: 1, backgroundColor: 'transparent' }}>
       <ScrollView
         style={[styles.container, { backgroundColor: 'transparent' }]}
         showsVerticalScrollIndicator={false}
@@ -158,6 +146,22 @@ export default function SettingsScreen({ navigation }: any) {
           <View style={[styles.card, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
             {[
               {
+                icon: 'notifications-outline',
+                label: 'Notifications and Sounds',
+                sub: 'Manage alerts',
+                onPress: () => {
+                  // TODO: Navigate to Notifications Settings
+                }
+              },
+              {
+                icon: 'settings-outline',
+                label: 'App Settings',
+                sub: 'Preferences',
+                onPress: () => {
+                  // TODO: Navigate to App Settings
+                }
+              },
+              {
                 icon: 'help-circle-outline',
                 label: 'Help & Support',
                 sub: 'Get assistance',
@@ -209,7 +213,7 @@ export default function SettingsScreen({ navigation }: any) {
           <View style={{ height: 40 }} />
         </View>
       </ScrollView>
-    </ImageBackground>
+    </View>
   );
 }
 

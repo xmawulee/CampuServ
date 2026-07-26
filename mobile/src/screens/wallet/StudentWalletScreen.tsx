@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   StyleSheet, Text, View, ScrollView, TextInput,
-  TouchableOpacity, ActivityIndicator, Alert, RefreshControl, ImageBackground
+  TouchableOpacity, ActivityIndicator, Alert, RefreshControl
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { api } from '../../services/api';
@@ -67,19 +67,7 @@ export default function StudentWalletScreen() {
   const txnList = Array.isArray(transactions) ? transactions : [];
 
   return (
-    <ImageBackground
-      source={require('../../../assets/images/app_bg_pattern.png')}
-      style={[styles.container, { backgroundColor: colors.background, overflow: 'hidden' }]}
-      imageStyle={{ 
-        opacity: isDark ? 0.1 : 0.6,
-        resizeMode: 'repeat',
-        width: '200%',
-        height: '200%',
-        top: '-50%',
-        left: '-50%',
-        transform: [{ scale: 0.5 }]
-      }}
-    >
+    <View style={[styles.container, { backgroundColor: 'transparent' }]}>
       <ScrollView
         style={{ flex: 1 }}
         contentContainerStyle={{ paddingTop: insets.top + 16, paddingBottom: 40 + insets.bottom }}
@@ -153,7 +141,7 @@ export default function StudentWalletScreen() {
 
       <View style={{ height: 40 }} />
       </ScrollView>
-    </ImageBackground>
+    </View>
   );
 }
 

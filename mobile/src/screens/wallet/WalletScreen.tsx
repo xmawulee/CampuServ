@@ -73,13 +73,17 @@ export default function WalletScreen() {
     >
       {/* ── Balance Card ── */}
       <View style={[styles.balanceCard, { backgroundColor: colors.primary }]}>
-        <Text style={[styles.balanceCardLabel, { color: 'rgba(255,255,255,0.75)' }]}>
-          {isViewingAsProvider ? 'Provider Earnings Balance' : 'Escrow Spending Balance'}
-        </Text>
+        <View style={styles.walletTopRow}>
+          <Text style={[styles.balanceCardLabel, { color: 'rgba(255,255,255,0.8)' }]}>
+            {isViewingAsProvider ? 'PROVIDER EARNINGS BALANCE' : 'ESCROW SPENDING BALANCE'}
+          </Text>
+          <Ionicons name="wallet" size={24} color="#FFF" />
+        </View>
+
         <Text style={[styles.balanceCardAmount, { color: '#FFFFFF' }]}>
           GHS {wallet ? Number(wallet.balance).toFixed(2) : '0.00'}
         </Text>
-        <Text style={[styles.balanceCardSub, { color: 'rgba(255,255,255,0.65)' }]}>
+        <Text style={[styles.balanceCardSub, { color: 'rgba(255,255,255,0.9)' }]}>
           {isViewingAsProvider ? 'Available for bank withdrawal & payout' : 'Available for booking campus service providers'}
         </Text>
 
@@ -87,19 +91,19 @@ export default function WalletScreen() {
         <View style={styles.quickActionsRow}>
           {!isViewingAsProvider ? (
             <>
-              <TouchableOpacity style={[styles.quickAction, { backgroundColor: '#FFFFFF' }]} onPress={handleDeposit}>
-                <Ionicons name="add-circle-outline" size={20} color={colors.primary} />
+              <TouchableOpacity style={[styles.quickAction, { backgroundColor: '#FFFFFF' }]} onPress={handleDeposit} activeOpacity={0.8}>
+                <Ionicons name="add" size={20} color={colors.primary} />
                 <Text style={[styles.quickActionLabel, { color: colors.primary }]}>Add Funds</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={[styles.quickAction, { backgroundColor: 'rgba(255,255,255,0.15)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.25)' }]} onPress={handleWithdrawal}>
-                <Ionicons name="arrow-up-circle-outline" size={20} color="#FFF" />
+              <TouchableOpacity style={[styles.quickAction, { backgroundColor: 'rgba(0,0,0,0.1)' }]} onPress={handleWithdrawal} activeOpacity={0.8}>
+                <Ionicons name="arrow-up" size={18} color="#FFF" />
                 <Text style={[styles.quickActionLabel, { color: '#FFF' }]}>Withdraw</Text>
               </TouchableOpacity>
             </>
           ) : (
-            <TouchableOpacity style={[styles.quickAction, { backgroundColor: '#FFFFFF' }]} onPress={handleWithdrawal}>
-              <Ionicons name="arrow-up-circle-outline" size={20} color={colors.primary} />
-              <Text style={[styles.quickActionLabel, { color: colors.primary }]}>Request Payout</Text>
+            <TouchableOpacity style={[styles.quickAction, { backgroundColor: '#FFFFFF' }]} onPress={handleWithdrawal} activeOpacity={0.8}>
+              <Ionicons name="arrow-up" size={18} color={colors.primary} />
+              <Text style={[styles.quickActionLabel, { color: colors.primary }]}>Withdraw</Text>
             </TouchableOpacity>
           )}
         </View>
@@ -152,16 +156,17 @@ const styles = StyleSheet.create({
   loadingContainer: { flex: 1, alignItems: 'center', justifyContent: 'center' },
 
   balanceCard: {
-    margin: 20, borderRadius: 24, padding: 24,
+    marginHorizontal: 12, marginTop: 12, marginBottom: 24, borderRadius: 24, padding: 24,
     shadowColor: '#1A1A1A', shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.25, shadowRadius: 20, elevation: 8,
   },
-  balanceCardLabel: { color: 'rgba(255,255,255,0.65)', fontSize: 13, fontWeight: '600' },
-  balanceCardAmount: { color: '#FFFFFF', fontSize: 40, fontWeight: '900', marginVertical: 6, letterSpacing: -1 },
-  balanceCardSub: { color: 'rgba(255,255,255,0.55)', fontSize: 12, marginBottom: 24 },
+  walletTopRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
+  balanceCardLabel: { color: 'rgba(255,255,255,0.8)', fontSize: 13, fontWeight: '700', letterSpacing: 0.5 },
+  balanceCardAmount: { color: '#FFFFFF', fontSize: 44, fontWeight: '900', letterSpacing: -1, lineHeight: 48, marginBottom: 8 },
+  balanceCardSub: { color: 'rgba(255,255,255,0.9)', fontSize: 13, fontWeight: '500', marginBottom: 24 },
   quickActionsRow: { flexDirection: 'row', gap: 12 },
-  quickAction: { flex: 1, height: 52, borderRadius: 16, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8 },
-  quickActionLabel: { color: '#FFFFFF', fontSize: 14, fontWeight: '700' },
+  quickAction: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 14, borderRadius: 100, gap: 6 },
+  quickActionLabel: { fontSize: 15, fontWeight: '700' },
 
   escrowCard: {
     marginHorizontal: 24, borderRadius: 20, padding: 18, borderWidth: 1,

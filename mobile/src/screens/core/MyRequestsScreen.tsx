@@ -8,7 +8,7 @@ import {
   ActivityIndicator,
   RefreshControl,
   Image,
-  ImageBackground,
+  ScrollView,
   Dimensions,
   Platform,
 } from 'react-native';
@@ -408,21 +408,9 @@ export default function MyRequestsScreen({ navigation }: any) {
   };
 
   return (
-    <ImageBackground 
-      source={require('../../../assets/images/app_bg_pattern.png')}
-      style={[styles.container, { backgroundColor: colors.screenBackground, overflow: 'hidden' }]}
-      imageStyle={{ 
-        opacity: isDark ? 0.1 : 0.6,
-        resizeMode: 'repeat',
-        width: '200%',
-        height: '200%',
-        top: '-50%',
-        left: '-50%',
-        transform: [{ scale: 0.5 }]
-      }}
-    >
+    <View style={[styles.container, { backgroundColor: 'transparent' }]}>
       {/* Tab bar header */}
-      <View style={[styles.tabBarContainer, { borderBottomColor: colors.border, backgroundColor: colors.background, paddingTop: Math.max(insets.top, 16) }]}>
+      <View style={[styles.tabBarContainer, { paddingTop: Math.max(insets.top, 16) }]}>
         <View style={[styles.segmentedControl, { backgroundColor: isDark ? colors.cardBackground : '#F1F5F9' }]}>
           {(['active', 'completed', 'cancelled'] as const).map((tab) => {
             const isActive = activeTab === tab;
@@ -481,15 +469,7 @@ export default function MyRequestsScreen({ navigation }: any) {
         />
       )}
 
-      {/* Floating Action Button (FAB) */}
-      <TouchableOpacity
-        style={[styles.fab, { backgroundColor: colors.primary, shadowColor: colors.primary }]}
-        accessibilityLabel="Post a new request"
-        accessibilityRole="button"
-        onPress={() => navigation.navigate('PostRequest')}
-      >
-        <Ionicons name="add" size={32} color="#FFFFFF" />
-      </TouchableOpacity>
+
 
       {/* Status Dialog */}
       <StatusDialog
@@ -505,7 +485,7 @@ export default function MyRequestsScreen({ navigation }: any) {
         onCancel={closeDialog}
         onClose={closeDialog}
       />
-    </ImageBackground>
+    </View>
   );
 }
 
@@ -516,20 +496,24 @@ const styles = StyleSheet.create({
   tabBarContainer: {
     paddingHorizontal: 16,
     paddingVertical: 12,
-    borderBottomWidth: 1,
     zIndex: 10,
   },
   segmentedControl: {
     flexDirection: 'row',
-    borderRadius: 14,
-    padding: 4,
+    borderRadius: 100,
+    padding: 6,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
   },
   segmentButton: {
     flex: 1,
     paddingVertical: 10,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 12,
+    borderRadius: 100,
   },
   segmentActive: {
     elevation: 2,
