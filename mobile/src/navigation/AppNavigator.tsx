@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, StyleSheet, AppState, AppStateStatus } from 'react-native';
+import { View, Text, StyleSheet, AppState, AppStateStatus, TouchableOpacity } from 'react-native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -54,97 +54,124 @@ import CreateEditListingScreen from '../screens/provider/CreateEditListingScreen
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 
-// ── Tab Bar Icon Helper ───────────────────────────────────────────────────
-function TabIcon({ name, focused, colors }: { name: string; focused: boolean; colors: any }) {
+function CustomTabBar({ state, descriptors, navigation, colors, isDark }: any) {
   return (
-    <View style={{ alignItems: 'center', justifyContent: 'center' }}>
-      <Ionicons name={name as any} size={24} color={focused ? colors.primary : colors.textMuted} />
-      {focused && (
-        <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: colors.primary, marginTop: 2 }} />
-      )}
+    <View
+      style={{
+        flexDirection: 'row',
+        position: 'absolute',
+        bottom: 16,
+        left: 16,
+        right: 16,
+        height: 64,
+        borderRadius: 32,
+        backgroundColor: isDark ? '#1E1E1E' : '#FFFFFF',
+        elevation: 10,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.15,
+        shadowRadius: 12,
+        paddingHorizontal: 12,
+        alignItems: 'center',
+        justifyContent: 'space-between',
+      }}
+    >
+      {state.routes.map((route: any, index: number) => {
+        const { options } = descriptors[route.key];
+        const label =
+          options.tabBarLabel !== undefined
+            ? options.tabBarLabel
+            : options.title !== undefined
+            ? options.title
+            : route.name;
+
+        const isFocused = state.index === index;
+
+        const onPress = () => {
+          const event = navigation.emit({
+            type: 'tabPress',
+            target: route.key,
+            canPreventDefault: true,
+          });
+
+          if (!isFocused && !event.defaultPrevented) {
+            navigation.navigate({ name: route.name, merge: true });
+          }
+        };
+
+        const onLongPress = () => {
+          navigation.emit({ type: 'tabLongPress', target: route.key });
+        };
+
+        // Determine icon name
+        let iconName = 'help-outline';
+        if (route.name === 'ProviderDashboardHome') iconName = isFocused ? 'grid' : 'grid-outline';
+        else if (route.name === 'IncomingRequests') iconName = isFocused ? 'flash' : 'flash-outline';
+        else if (route.name === 'ProviderJobList') iconName = isFocused ? 'briefcase' : 'briefcase-outline';
+        else if (route.name === 'Wallet') iconName = isFocused ? 'wallet' : 'wallet-outline';
+        else if (route.name === 'Settings') iconName = isFocused ? 'person' : 'person-outline';
+        else if (route.name === 'Home') iconName = isFocused ? 'home' : 'home-outline';
+        else if (route.name === 'MyRequests') iconName = isFocused ? 'list' : 'list-outline';
+
+        // Override label for bottom tabs
+        let displayLabel = label;
+        if (route.name === 'ProviderDashboardHome') displayLabel = 'Dashboard';
+        else if (route.name === 'IncomingRequests') displayLabel = 'Requests';
+        else if (route.name === 'ProviderJobList') displayLabel = 'Jobs';
+        else if (route.name === 'Wallet') displayLabel = label === 'Escrow Wallet' ? 'Wallet' : 'Earnings';
+        else if (route.name === 'Settings') displayLabel = 'Account';
+        else if (route.name === 'Home') displayLabel = 'Home';
+        else if (route.name === 'MyRequests') displayLabel = 'Requests';
+
+        return (
+          <TouchableOpacity
+            key={route.key}
+            accessibilityRole="button"
+            accessibilityState={isFocused ? { selected: true } : {}}
+            accessibilityLabel={options.tabBarAccessibilityLabel}
+            testID={options.tabBarTestID}
+            onPress={onPress}
+            onLongPress={onLongPress}
+            style={[
+              {
+                paddingVertical: 10,
+                paddingHorizontal: 16,
+                borderRadius: 24,
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexDirection: 'row',
+              },
+              isFocused && { backgroundColor: colors.primary },
+            ]}
+          >
+            <Ionicons name={iconName as any} size={20} color={isFocused ? '#FFF' : colors.textMuted} />
+            {isFocused && (
+              <Text style={{ color: '#FFF', marginLeft: 6, fontWeight: '700', fontSize: 13 }}>
+                {displayLabel}
+              </Text>
+            )}
+          </TouchableOpacity>
+        );
+      })}
     </View>
   );
 }
 
 // ── Provider Bottom Tabs ────────────────────────────────────────────────────
 function ProviderNavigator() {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }} edges={['bottom']}>
       <Tab.Navigator
-        screenOptions={{
-          headerShown: false,
-          tabBarStyle: {
-            backgroundColor: colors.cardBackground,
-            borderTopWidth: 1,
-            borderTopColor: colors.border,
-            elevation: 8,
-            shadowColor: '#000',
-            shadowOffset: { width: 0, height: -2 },
-            shadowOpacity: 0.05,
-            shadowRadius: 4,
-            paddingTop: 4,
-          },
-          tabBarActiveTintColor: colors.primary,
-          tabBarInactiveTintColor: colors.textMuted,
-          tabBarLabelStyle: {
-            fontSize: 11,
-            fontWeight: '500',
-            paddingBottom: 4,
-          },
-        }}
+        tabBar={(props) => <CustomTabBar {...props} colors={colors} isDark={isDark} />}
+        screenOptions={{ headerShown: false }}
       >
-        <Tab.Screen
-          name="ProviderDashboardHome"
-          component={ProviderDashboardHomeScreen}
-          options={{
-            tabBarIcon: ({ focused }) => (
-              <TabIcon name={focused ? 'grid' : 'grid-outline'} focused={focused} colors={colors} />
-            ),
-            title: 'Dashboard',
-          }}
-        />
-        <Tab.Screen
-          name="IncomingRequests"
-          component={IncomingRequestsScreen}
-          options={{
-            tabBarIcon: ({ focused }) => (
-              <TabIcon name={focused ? 'flash' : 'flash-outline'} focused={focused} colors={colors} />
-            ),
-            title: 'Requests',
-          }}
-        />
-        <Tab.Screen
-          name="ProviderJobList"
-          component={ProviderJobListScreen}
-          options={{
-            tabBarIcon: ({ focused }) => (
-              <TabIcon name={focused ? 'briefcase' : 'briefcase-outline'} focused={focused} colors={colors} />
-            ),
-            title: 'My Jobs',
-          }}
-        />
-        <Tab.Screen
-          name="Wallet"
-          component={ProviderWalletScreen}
-          options={{
-            tabBarIcon: ({ focused }) => (
-              <TabIcon name={focused ? 'wallet' : 'wallet-outline'} focused={focused} colors={colors} />
-            ),
-            title: 'Earnings',
-          }}
-        />
-        <Tab.Screen
-          name="Settings"
-          component={SettingsScreen}
-          options={{
-            tabBarIcon: ({ focused }) => (
-              <TabIcon name={focused ? 'person' : 'person-outline'} focused={focused} colors={colors} />
-            ),
-            title: 'Account',
-          }}
-        />
+        <Tab.Screen name="ProviderDashboardHome" component={ProviderDashboardHomeScreen} />
+        <Tab.Screen name="IncomingRequests" component={IncomingRequestsScreen} />
+        <Tab.Screen name="ProviderJobList" component={ProviderJobListScreen} />
+        <Tab.Screen name="Wallet" component={ProviderWalletScreen} />
+        <Tab.Screen name="Settings" component={SettingsScreen} />
       </Tab.Navigator>
     </SafeAreaView>
   );
@@ -152,73 +179,18 @@ function ProviderNavigator() {
 
 // ── Client Bottom Tabs ──────────────────────────────────────────────────────
 function AppTabs() {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }} edges={['bottom']}>
       <Tab.Navigator
-        screenOptions={{
-          headerShown: false,
-          tabBarStyle: {
-            backgroundColor: colors.cardBackground,
-            borderTopWidth: 1,
-            borderTopColor: colors.border,
-            elevation: 8,
-            shadowColor: '#000',
-            shadowOffset: { width: 0, height: -2 },
-            shadowOpacity: 0.05,
-            shadowRadius: 4,
-            paddingTop: 4,
-          },
-          tabBarActiveTintColor: colors.primary,
-          tabBarInactiveTintColor: colors.textMuted,
-          tabBarLabelStyle: {
-            fontSize: 11,
-            fontWeight: '500',
-            paddingBottom: 4,
-          },
-        }}
+        tabBar={(props) => <CustomTabBar {...props} colors={colors} isDark={isDark} />}
+        screenOptions={{ headerShown: false }}
       >
-        <Tab.Screen
-          name="Home"
-          component={HomeScreen}
-          options={{
-            tabBarIcon: ({ focused }) => (
-              <TabIcon name={focused ? 'home' : 'home-outline'} focused={focused} colors={colors} />
-            ),
-            title: 'Explore',
-          }}
-        />
-        <Tab.Screen
-          name="MyRequests"
-          component={MyRequestsScreen}
-          options={{
-            tabBarIcon: ({ focused }) => (
-              <TabIcon name={focused ? 'list' : 'list-outline'} focused={focused} colors={colors} />
-            ),
-            title: 'My Requests',
-          }}
-        />
-        <Tab.Screen
-          name="Wallet"
-          component={StudentWalletScreen}
-          options={{
-            tabBarIcon: ({ focused }) => (
-              <TabIcon name={focused ? 'wallet' : 'wallet-outline'} focused={focused} colors={colors} />
-            ),
-            title: 'Escrow Wallet',
-          }}
-        />
-        <Tab.Screen
-          name="Settings"
-          component={SettingsScreen}
-          options={{
-            tabBarIcon: ({ focused }) => (
-              <TabIcon name={focused ? 'person' : 'person-outline'} focused={focused} colors={colors} />
-            ),
-            title: 'Account',
-          }}
-        />
+        <Tab.Screen name="Home" component={HomeScreen} />
+        <Tab.Screen name="MyRequests" component={MyRequestsScreen} />
+        <Tab.Screen name="Wallet" component={StudentWalletScreen} />
+        <Tab.Screen name="Settings" component={SettingsScreen} />
       </Tab.Navigator>
     </SafeAreaView>
   );

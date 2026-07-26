@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
   StyleSheet, Text, View, TextInput, TouchableOpacity,
-  ActivityIndicator, Alert, ScrollView
+  ActivityIndicator, Alert, ScrollView, ImageBackground
 } from 'react-native';
 import { CustomIonicons as Ionicons } from '../../components/CustomIcons';
 import { useAuthStore } from '../../store/authStore';
@@ -13,7 +13,7 @@ import { useToast } from '../../styles/ToastContext';
 
 export default function SettingsScreen({ navigation }: any) {
   const { user, roleMode, logout, setAuth } = useAuthStore();
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const insets = useSafeAreaInsets();
 
   const activeRoleView = roleMode || (user?.role === 'PROVIDER' ? 'PROVIDER' : 'STUDENT');
@@ -77,14 +77,26 @@ export default function SettingsScreen({ navigation }: any) {
   }
 
   return (
-    <View style={{ flex: 1 }}>
+    <ImageBackground
+      source={require('../../../assets/images/app_bg_pattern.png')}
+      style={{ flex: 1, backgroundColor: colors.background, overflow: 'hidden' }}
+      imageStyle={{ 
+        opacity: isDark ? 0.1 : 0.6,
+        resizeMode: 'repeat',
+        width: '200%',
+        height: '200%',
+        top: '-50%',
+        left: '-50%',
+        transform: [{ scale: 0.5 }]
+      }}
+    >
       <ScrollView
-        style={[styles.container, { backgroundColor: colors.background }]}
+        style={[styles.container, { backgroundColor: 'transparent' }]}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: insets.bottom }}
       >
         {/* ── Profile Hero Section ── */}
-        <View style={[styles.profileHero, { backgroundColor: colors.primary }]}>
+        <View style={[styles.profileHero, { backgroundColor: colors.primary, paddingTop: Math.max(insets.top + 16, 40) }]}>
           <AvatarUploader
             currentAvatarUrl={profilePictureUrl}
             userId={user?.id || ''}
@@ -197,7 +209,7 @@ export default function SettingsScreen({ navigation }: any) {
           <View style={{ height: 40 }} />
         </View>
       </ScrollView>
-    </View>
+    </ImageBackground>
   );
 }
 

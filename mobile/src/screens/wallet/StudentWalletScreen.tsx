@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   StyleSheet, Text, View, ScrollView, TextInput,
-  TouchableOpacity, ActivityIndicator, Alert, RefreshControl
+  TouchableOpacity, ActivityIndicator, Alert, RefreshControl, ImageBackground
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { api } from '../../services/api';
@@ -16,7 +16,7 @@ import { useToast } from '../../styles/ToastContext';
 export default function StudentWalletScreen() {
   const { showToast } = useToast();
   const { user } = useAuthStore();
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<any>();
 
@@ -67,12 +67,25 @@ export default function StudentWalletScreen() {
   const txnList = Array.isArray(transactions) ? transactions : [];
 
   return (
-    <ScrollView
-      style={[styles.container, { backgroundColor: colors.background }]}
-      contentContainerStyle={{ paddingBottom: 40 + insets.bottom }}
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}
-      showsVerticalScrollIndicator={false}
+    <ImageBackground
+      source={require('../../../assets/images/app_bg_pattern.png')}
+      style={[styles.container, { backgroundColor: colors.background, overflow: 'hidden' }]}
+      imageStyle={{ 
+        opacity: isDark ? 0.1 : 0.6,
+        resizeMode: 'repeat',
+        width: '200%',
+        height: '200%',
+        top: '-50%',
+        left: '-50%',
+        transform: [{ scale: 0.5 }]
+      }}
     >
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={{ paddingTop: insets.top + 16, paddingBottom: 40 + insets.bottom }}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}
+        showsVerticalScrollIndicator={false}
+      >
       {/* ── Balance Card ── */}
       <View style={[styles.balanceCard, { backgroundColor: colors.primary }]}>
         <View style={styles.balanceHeaderRow}>
@@ -139,7 +152,8 @@ export default function StudentWalletScreen() {
       )}
 
       <View style={{ height: 40 }} />
-    </ScrollView>
+      </ScrollView>
+    </ImageBackground>
   );
 }
 

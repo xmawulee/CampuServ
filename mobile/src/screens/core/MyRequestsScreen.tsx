@@ -8,6 +8,7 @@ import {
   ActivityIndicator,
   RefreshControl,
   Image,
+  ImageBackground,
   Dimensions,
   Platform,
 } from 'react-native';
@@ -407,9 +408,21 @@ export default function MyRequestsScreen({ navigation }: any) {
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.screenBackground }]}>
+    <ImageBackground 
+      source={require('../../../assets/images/app_bg_pattern.png')}
+      style={[styles.container, { backgroundColor: colors.screenBackground, overflow: 'hidden' }]}
+      imageStyle={{ 
+        opacity: isDark ? 0.1 : 0.6,
+        resizeMode: 'repeat',
+        width: '200%',
+        height: '200%',
+        top: '-50%',
+        left: '-50%',
+        transform: [{ scale: 0.5 }]
+      }}
+    >
       {/* Tab bar header */}
-      <View style={[styles.tabBarContainer, { borderBottomColor: colors.border, backgroundColor: colors.background }]}>
+      <View style={[styles.tabBarContainer, { borderBottomColor: colors.border, backgroundColor: colors.background, paddingTop: Math.max(insets.top, 16) }]}>
         <View style={[styles.segmentedControl, { backgroundColor: isDark ? colors.cardBackground : '#F1F5F9' }]}>
           {(['active', 'completed', 'cancelled'] as const).map((tab) => {
             const isActive = activeTab === tab;
@@ -492,7 +505,7 @@ export default function MyRequestsScreen({ navigation }: any) {
         onCancel={closeDialog}
         onClose={closeDialog}
       />
-    </View>
+    </ImageBackground>
   );
 }
 

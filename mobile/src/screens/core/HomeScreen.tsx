@@ -10,9 +10,12 @@ import {
   TextInput,
   Dimensions,
   Image,
+  ImageBackground,
   Alert,
   ScrollView,
   Modal,
+  Animated,
+  Easing,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
@@ -29,15 +32,44 @@ import { SecondaryRoleStatusBanner } from '../../components/SecondaryRoleStatusB
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
-// Categories will be loaded dynamically from API
-// const CATEGORIES = [
-//   { id: 'cat-1', name: 'Laundry',   icon: 'shirt-outline',          bg: '#FFF0E6', iconColor: '#FF6B35' },
-// ...
-// ];
+const LOCAL_IMAGES = {
+  food: require('../../../assets/images/home/food.jpg'),
+  fashion: require('../../../assets/images/home/fashion.jpg'),
+  electronic: require('../../../assets/images/home/electronic.jpg'),
+  beauty: require('../../../assets/images/home/beauty.jpg'),
+  repair: require('../../../assets/images/home/repair.jpg'),
+  errand: require('../../../assets/images/home/errand.jpg'),
+  tutor: require('../../../assets/images/home/tutor.jpg'),
+  laundry: require('../../../assets/images/home/laundry.jpg'),
+  fallback: require('../../../assets/images/home/browse_services.jpg'),
+  new_request: require('../../../assets/images/home/new_request.jpg'),
+  browse_services: require('../../../assets/images/home/browse_services.jpg'),
+  my_requests: require('../../../assets/images/home/my_requests.jpg'),
+  my_wallet: require('../../../assets/images/home/my_wallet.jpg'),
+  photo_video: require('../../../assets/images/home/photo_video.jpg'),
+  catering: require('../../../assets/images/home/catering.jpg'),
+};
+
+const getCategoryImageUrl = (name: string) => {
+  const n = name.toLowerCase();
+  if (n.includes('food')) return LOCAL_IMAGES.food;
+  if (n.includes('fashion') || n.includes('cloth')) return LOCAL_IMAGES.fashion;
+  if (n.includes('electronic') || n.includes('gadget')) return LOCAL_IMAGES.electronic;
+  if (n.includes('styl') || n.includes('groom') || n.includes('beauty') || n.includes('hair')) return LOCAL_IMAGES.beauty;
+  if (n.includes('repair') || n.includes('tech') || n.includes('mechanic')) return LOCAL_IMAGES.repair;
+  if (n.includes('errand') || n.includes('deliver') || n.includes('shop')) return LOCAL_IMAGES.errand;
+  if (n.includes('tutor') || n.includes('academic')) return LOCAL_IMAGES.tutor;
+  if (n.includes('laundry') || n.includes('clean')) return LOCAL_IMAGES.laundry;
+  if (n.includes('photo') || n.includes('video') || n.includes('camera')) return LOCAL_IMAGES.photo_video;
+  if (n.includes('cater') || n.includes('event')) return LOCAL_IMAGES.catering;
+  
+  // Generic fallback
+  return LOCAL_IMAGES.fallback;
+};
 
 export default function HomeScreen({ route, navigation }: any) {
   const { user, accessToken } = useAuthStore();
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const { showToast } = useToast();
 
   // Data State
@@ -408,14 +440,26 @@ export default function HomeScreen({ route, navigation }: any) {
 
   // Quick action tiles for the home screen
   const quickTiles = [
-    { label: 'New Request', icon: 'add-circle-outline', bg: colors.primary, nav: 'PostRequest' },
-    { label: 'Browse Services', icon: 'grid-outline', bg: '#8DC63F', nav: null },
-    { label: 'My Requests', icon: 'document-text-outline', bg: colors.text, nav: 'MyRequests' },
-    { label: 'My Wallet', icon: 'wallet-outline', bg: '#6B7280', nav: 'Wallet' },
+    { label: 'New Request', icon: 'add-circle-outline', bg: colors.primary, nav: 'PostRequest', image: LOCAL_IMAGES.new_request },
+    { label: 'Browse Services', icon: 'grid-outline', bg: '#8DC63F', nav: null, image: LOCAL_IMAGES.browse_services },
+    { label: 'My Requests', icon: 'document-text-outline', bg: colors.text, nav: 'MyRequests', image: LOCAL_IMAGES.my_requests },
+    { label: 'My Wallet', icon: 'wallet-outline', bg: '#6B7280', nav: 'Wallet', image: LOCAL_IMAGES.my_wallet },
   ] as const;
 
   return (
-    <View style={[styles.root, { backgroundColor: colors.background, paddingTop: insets.top }]}>
+    <ImageBackground
+      source={require('../../../assets/images/app_bg_pattern.png')}
+      style={[styles.root, { backgroundColor: colors.background, paddingTop: insets.top, overflow: 'hidden' }]}
+      imageStyle={{ 
+        opacity: isDark ? 0.1 : 0.6,
+        resizeMode: 'repeat',
+        width: '200%',
+        height: '200%',
+        top: '-50%',
+        left: '-50%',
+        transform: [{ scale: 0.5 }]
+      }}
+    >
 
       {/* Announcement Modal */}
       <Modal visible={showAnnouncement} transparent animationType="fade">
@@ -486,7 +530,7 @@ export default function HomeScreen({ route, navigation }: any) {
 
       {/* ── Sticky Search Bar overlay ── */}
       {isSearchBarSticky && (
-        <View style={[styles.stickySearchContainer, { top: 70 + insets.top, backgroundColor: colors.background, borderBottomColor: colors.border }]}>
+        <View style={[styles.stickySearchContainer, { top: 70 + insets.top }]}>
           <SearchBar isSticky />
         </View>
       )}
@@ -527,12 +571,18 @@ export default function HomeScreen({ route, navigation }: any) {
                 {quickTiles.map((tile) => (
                   <TouchableOpacity
                     key={tile.label}
-                    style={[styles.tile, { backgroundColor: tile.bg }]}
+                    style={styles.tile}
                     onPress={() => tile.nav && navigation.navigate(tile.nav as any)}
                     activeOpacity={0.88}
                   >
-                    <CustomIonicons name={tile.icon as any} size={28} color="#FFF" />
-                    <Text style={styles.tileLabel}>{tile.label}</Text>
+                    <ImageBackground
+                      source={tile.image}
+                      style={styles.catImageBg}
+                      imageStyle={{ borderRadius: 20 }}
+                    >
+                      <View style={styles.catOverlay} />
+                      <Text style={styles.catLabel}>{tile.label}</Text>
+                    </ImageBackground>
                   </TouchableOpacity>
                 ))}
               </View>
@@ -549,25 +599,28 @@ export default function HomeScreen({ route, navigation }: any) {
                   return (
                     <TouchableOpacity
                       key={item.id}
-                      style={[styles.catCard, { backgroundColor: isActive ? colors.text : colors.cardBackground }]}
+                      style={[styles.catCard, isActive && { shadowColor: colors.primary, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.5, shadowRadius: 8, elevation: 8 }]}
                       onPress={() => handleCategoryToggle(item.id, item.name)}
                       activeOpacity={0.8}
                     >
-                      <View style={[styles.catIconWrap, { backgroundColor: isActive ? 'rgba(255,255,255,0.15)' : colors.inputBackground }]}>
-                        <CategoryIcon
-                          name={item.name}
-                          size={22}
-                          color={isActive ? '#FFFFFF' : colors.primary}
-                        />
-                      </View>
-                      <Text style={[styles.catLabel, { color: isActive ? '#FFFFFF' : colors.textMuted }]} numberOfLines={1}>
-                        {item.name}
-                      </Text>
+                      <ImageBackground
+                        source={getCategoryImageUrl(item.name)}
+                        style={styles.catImageBg}
+                        imageStyle={{ borderRadius: 20 }}
+                      >
+                        <View style={isActive ? [styles.catActiveOverlay, { borderColor: colors.primary }] : styles.catOverlay} />
+                        <Text style={styles.catLabel} numberOfLines={2}>
+                          {item.name}
+                        </Text>
+                      </ImageBackground>
                     </TouchableOpacity>
                   );
                 })}
-                {categories.length === 0 && (
+                {loading && categories.length === 0 && (
                   <Text style={{ color: colors.textMuted, marginLeft: 4 }}>Loading...</Text>
+                )}
+                {!loading && categories.length === 0 && (
+                  <Text style={{ color: colors.textMuted, marginLeft: 4 }}>No categories found.</Text>
                 )}
               </ScrollView>
             </View>
@@ -646,15 +699,6 @@ export default function HomeScreen({ route, navigation }: any) {
       />
 
       {/* ── FAB ── */}
-      {!isProvider && !isSearchMode && (
-        <TouchableOpacity
-          style={[styles.fab, { backgroundColor: colors.accent }]}
-          onPress={() => navigation.navigate('PostRequest')}
-          activeOpacity={0.9}
-        >
-          <CustomIonicons name="add" size={28} color="#FFF" />
-        </TouchableOpacity>
-      )}
 
       {/* Rating Modal */}
       {pendingReview && (
@@ -668,7 +712,7 @@ export default function HomeScreen({ route, navigation }: any) {
           }}
         />
       )}
-    </View>
+    </ImageBackground>
   );
 }
 
@@ -714,42 +758,34 @@ const styles = StyleSheet.create({
   searchRowSticky: { paddingHorizontal: 20, paddingVertical: 10 },
   stickySearchContainer: {
     position: 'absolute', left: 0, right: 0, zIndex: 100, elevation: 4,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.08, shadowRadius: 4, borderBottomWidth: 1,
   },
-  searchBar: { flex: 1, flexDirection: 'row', alignItems: 'center', borderRadius: 50, paddingHorizontal: 16, height: 50 },
+  searchBar: { 
+    flex: 1, flexDirection: 'row', alignItems: 'center', borderRadius: 50, paddingHorizontal: 16, height: 50,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.08, shadowRadius: 10, elevation: 5 
+  },
   searchInput: { flex: 1, fontSize: 14, fontWeight: '500' },
   filterBtn: { width: 50, height: 50, borderRadius: 25, alignItems: 'center', justifyContent: 'center' },
 
   // 2x2 Quick tiles
-  tilesGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 12,
-    marginBottom: 20,
-  },
+  tilesGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', paddingHorizontal: 20, marginBottom: 24, rowGap: 16 },
   tile: {
-    width: (SCREEN_WIDTH - 40 - 12) / 2,
-    aspectRatio: 1.3,
+    width: '47%',
+    aspectRatio: 1,
     borderRadius: 20,
-    padding: 16,
-    justifyContent: 'space-between',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.12,
-    shadowRadius: 10,
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
     elevation: 4,
   },
-  tileLabel: { fontSize: 14, fontWeight: '700', color: '#FFF' },
 
   // Category
-  categoryScrollList: { paddingVertical: 4, gap: 10 },
-  catCard: {
-    width: 88, borderRadius: 20, padding: 12,
-    alignItems: 'center', gap: 8,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 3, elevation: 1,
-  },
-  catIconWrap: { width: 44, height: 44, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
-  catLabel: { fontSize: 11, fontWeight: '700', textAlign: 'center' },
+  categoryScrollList: { paddingVertical: 8, paddingHorizontal: 16, gap: 12 },
+  catCard: { width: 130, height: 130, borderRadius: 20 },
+  catImageBg: { flex: 1, justifyContent: 'flex-end', padding: 12 },
+  catOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.35)', borderRadius: 20 },
+  catActiveOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.6)', borderWidth: 3, borderRadius: 20 },
+  catLabel: { color: '#FFF', fontSize: 16, fontWeight: '800', textAlign: 'center', textShadowColor: 'rgba(0,0,0,0.5)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 4 },
 
   // Filter chips
   filterChipsContainer: { marginBottom: 16, height: 36 },
@@ -812,12 +848,4 @@ const styles = StyleSheet.create({
   emptySub: { fontSize: 13, textAlign: 'center', lineHeight: 18 },
   emptyBtn: { paddingHorizontal: 24, paddingVertical: 12, borderRadius: 14, marginTop: 4 },
   emptyBtnText: { color: '#FFF', fontWeight: '700', fontSize: 14 },
-
-  // FAB
-  fab: {
-    position: 'absolute', bottom: 24, right: 20,
-    width: 58, height: 58, borderRadius: 29,
-    alignItems: 'center', justifyContent: 'center',
-    shadowColor: '#E8A838', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.4, shadowRadius: 12, elevation: 8,
-  },
 });

@@ -44,9 +44,9 @@
     "typescript": "~5.9.2"
   },
   "scripts": {
-    "start": "expo start --lan --offline",
-    "android": "expo start --android --lan --offline",
-    "ios": "expo start --ios --lan --offline",
+    "start": "expo start --lan",
+    "android": "expo start --android --lan",
+    "ios": "expo start --ios --lan",
     "web": "expo start --web"
   },
   "overrides": {

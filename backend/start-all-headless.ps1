@@ -59,6 +59,11 @@ foreach ($module in $modules) {
         Write-Host "Waiting 15 seconds for Eureka to initialize..."
         Start-Sleep -Seconds 15
     }
+    
+    if ($module -eq "auth-service") {
+        Write-Host "Waiting 30 seconds for auth-service to complete Flyway migrations before starting others..."
+        Start-Sleep -Seconds 30
+    }
 }
 
 Write-Host "All services started in headless mode. Logs are being written to backend folder."

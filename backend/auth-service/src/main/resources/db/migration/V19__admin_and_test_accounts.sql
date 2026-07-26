@@ -1,10 +1,3 @@
-ALTER TABLE provider_profiles 
-    ADD COLUMN approval_status VARCHAR(20) NOT NULL DEFAULT 'PENDING'
-      CHECK (approval_status IN ('PENDING', 'APPROVED', 'REJECTED')),
-    ADD COLUMN rejection_reason TEXT,
-    ADD COLUMN approved_at TIMESTAMP,
-    ADD COLUMN approved_by VARCHAR(50),
-    ADD COLUMN is_test_account BOOLEAN NOT NULL DEFAULT FALSE;
 
 ALTER TABLE users 
     ADD COLUMN verification_status VARCHAR(20) DEFAULT 'PENDING_REVIEW'

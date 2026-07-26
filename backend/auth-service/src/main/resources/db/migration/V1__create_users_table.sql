@@ -5,6 +5,7 @@ CREATE TABLE users (
     full_name VARCHAR(100) NOT NULL,
     role VARCHAR(20) NOT NULL, -- 'STUDENT', 'PROVIDER', 'ADMIN'
     is_verified BOOLEAN DEFAULT FALSE,
+    is_provider BOOLEAN DEFAULT FALSE,
     student_id_photo_url VARCHAR(255),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
