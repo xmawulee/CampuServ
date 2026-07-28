@@ -22,6 +22,8 @@ eureka:
   client:
     serviceUrl:
       defaultZone: http://127.0.0.1:8761/eureka/
+    registry-fetch-interval-seconds: 5
+    initial-instance-info-replication-interval-seconds: 5
   instance:
     preferIpAddress: true
     ip-address: 127.0.0.1
@@ -32,7 +34,19 @@ paystack:
   callback-url: ${PAYSTACK_CALLBACK_URL:http://localhost:8080/payments/callback}
 
 app:
-  upload-dir: ${UPLOAD_DIR:c:/Users/allen/Desktop/CampuServ/backend/uploads/}
+  upload-dir: ${UPLOAD_DIR:../uploads/}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,circuitbreakers
+  endpoint:
+    health:
+      show-details: always
+  health:
+    circuitbreakers:
+      enabled: true
 
 ---
 spring:
@@ -41,7 +55,7 @@ spring:
       on-profile: local-dev
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: validate
 
 paystack:
   secret-key: sk_test_mock_paystack_secret_key_ghana_knust

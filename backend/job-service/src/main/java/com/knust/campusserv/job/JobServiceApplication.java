@@ -20,9 +20,4 @@ public class JobServiceApplication {
     }
 
 
-
-    @Bean
-    public Queue jobStatusQueue() {
-        return new Queue("job-status-queue", true);
-    }
 }

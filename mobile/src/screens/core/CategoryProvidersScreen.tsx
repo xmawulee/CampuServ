@@ -8,6 +8,7 @@ import { CustomIonicons as Ionicons } from '../../components/CustomIcons';
 import { useTheme } from '../../styles/ThemeContext';
 import { useFocusEffect } from '@react-navigation/native';
 import { getProviders, ProviderResponse } from '../../services/userService';
+import ProviderFeedCard from '../../components/ProviderFeedCard';
 
 const { width } = Dimensions.get('window');
 
@@ -66,40 +67,12 @@ export default function CategoryProvidersScreen({ route, navigation }: any) {
     setSortOption(nextSort);
   };
 
-  const renderItem = ({ item }: { item: ProviderResponse }) => (
-    <TouchableOpacity
-      style={[styles.providerCard, { backgroundColor: colors.cardBackground }]}
-      onPress={() => navigation.navigate('ProviderProfile', { providerId: (item as any).id || item.providerId })}
-      activeOpacity={0.85}
-    >
-      <View style={styles.cardHeader}>
-        <View style={styles.avatarWrap}>
-          <Text style={styles.avatarText}>{item.fullName.charAt(0)}</Text>
-        </View>
-        <View style={styles.cardBody}>
-          <Text style={[styles.name, { color: colors.text }]} numberOfLines={1}>
-            {item.fullName}
-          </Text>
-          <View style={styles.ratingRow}>
-            <Ionicons name="star" size={14} color="#FFB800" />
-            <Text style={[styles.ratingText, { color: colors.text }]}>
-              {(item.completedJobsCount > 0 || item.rating > 0)
-                ? `${item.rating.toFixed(1)} rating • ${item.completedJobsCount} jobs done`
-                : 'New provider'}
-            </Text>
-          </View>
-        </View>
-        <View style={[styles.chevronWrap, { backgroundColor: `${colors.primary}15` }]}>
-          <Ionicons name="chevron-forward" size={18} color={colors.primary} />
-        </View>
-      </View>
-      {item.bio ? (
-        <Text style={[styles.bio, { color: colors.textMuted }]} numberOfLines={2}>
-          {item.bio}
-        </Text>
-      ) : null}
-    </TouchableOpacity>
-  );
+  const renderItem = useCallback(({ item }: { item: ProviderResponse }) => (
+    <ProviderFeedCard
+      provider={item}
+      onPress={() => navigation.navigate('ListingDetail', { providerId: (item as any).id || item.providerId })}
+    />
+  ), [navigation]);
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>

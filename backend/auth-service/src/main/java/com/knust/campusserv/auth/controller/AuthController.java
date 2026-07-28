@@ -327,7 +327,7 @@ public class AuthController {
             if ("STUDENT".equalsIgnoreCase(targetView) && 
                 "PROVIDER".equalsIgnoreCase(user.getPrimaryRole()) && 
                 user.getSecondaryRole() == null) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                         .body("This is a provider-only account. You cannot switch to a student view.");
             }
 
@@ -385,6 +385,10 @@ public class AuthController {
         }
 
         User user = userOpt.get();
+
+        if (Boolean.TRUE.equals(user.getIsVerified()) && "APPROVED".equalsIgnoreCase(user.getVerificationStatus())) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Verified providers cannot alter their approved service category.");
+        }
 
         if (categoryIds != null && !categoryIds.isEmpty()) {
             System.out.println("=> categoryIds is present and not empty, executing JDBC updates");

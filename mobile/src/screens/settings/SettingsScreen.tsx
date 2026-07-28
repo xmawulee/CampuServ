@@ -154,6 +154,12 @@ export default function SettingsScreen({ navigation }: any) {
                 }
               },
               {
+                icon: 'chatbubbles-outline',
+                label: 'My Chats',
+                sub: 'View conversations',
+                onPress: () => navigation.navigate('ChatList'),
+              },
+              {
                 icon: 'settings-outline',
                 label: 'App Settings',
                 sub: 'Preferences',

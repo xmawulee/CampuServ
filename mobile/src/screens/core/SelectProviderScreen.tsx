@@ -46,11 +46,7 @@ export default function SelectProviderScreen({ route, navigation }: any) {
   }, [fetchProviders]);
 
   const handleSelect = (provider: any) => {
-    navigation.navigate({
-      name: 'PostRequest',
-      params: { selectedTargetProvider: provider },
-      merge: true,
-    });
+    (navigation as any).navigate('PostRequest', { selectedTargetProvider: provider }, { merge: true });
   };
 
   const getFullImageUrl = (url?: string | null) => {

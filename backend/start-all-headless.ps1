@@ -5,6 +5,7 @@ $env:BREVO_SENDER_NAME = "CampusServ"
 $env:EMAIL_VERIFICATION_URL = "http://localhost:8080/auth/verify-email"
 $env:UPLOAD_DIR = "$PSScriptRoot\uploads\"
 $env:JWT_SECRET = "dGhlLXN1cGVyLXNlY3JldC1jb25mZGVudGlhbC1qd3Qta2V5LWZvci1jYW1wdXNzZXJ2LWtudXN0LWdyb3VwLTg4"
+$env:INTERNAL_SERVICE_SECRET = "default_internal_service_secret_knust_campusserv_2026"
 $env:GOOGLE_API_KEY = "AIzaSyCO_EY_6hSn0bxRQJdZq9GLdX5_LIIhcK0"
 $env:ADMIN_SEED_EMAIL = "admin@campusserv.com"
 $env:ADMIN_SEED_PASSWORD = "admin123"
@@ -17,17 +18,17 @@ Write-Host "Stopping any running Java processes..."
 Stop-Process -Name java -Force -ErrorAction SilentlyContinue
 Start-Sleep -Seconds 2
 
-# Clear specific microservice ports if they are still held
+# Clear specific microservice ports if they are still held using netstat (much faster, avoids Get-NetTCPConnection hangs)
 $ports = @(8761, 8080, 8087, 8083, 8082, 8084, 8085, 8086)
 Write-Host "Clearing microservice ports if held..."
 foreach ($port in $ports) {
-    $connections = Get-NetTCPConnection -LocalPort $port -ErrorAction SilentlyContinue
-    if ($connections) {
-        foreach ($conn in $connections) {
-            $owningPid = $conn.OwningProcess
-            if ($owningPid -and $owningPid -ne 0) {
-                Write-Host "Killing process $owningPid listening on port $port..."
-                Stop-Process -Id $owningPid -Force -ErrorAction SilentlyContinue
+    $netstat = netstat -ano | Select-String ":$port\s+"
+    foreach ($line in $netstat) {
+        if ($line -match '(\d+)$') {
+            $pidToKill = [int]$Matches[1]
+            if ($pidToKill -ne 0 -and $pidToKill -ne $PID) {
+                Write-Host "Killing process $pidToKill listening on port $port..."
+                Stop-Process -Id $pidToKill -Force -ErrorAction SilentlyContinue
             }
         }
     }

@@ -11,12 +11,12 @@ import { CustomIonicons as Ionicons } from '../../components/CustomIcons';
 import ImageViewerModal from '../../components/ImageViewerModal';
 import { api, BASE_URL } from '../../services/api';
 import type { ProviderJob } from '../../types/provider';
+import { startChat, startChatWithStudent } from '../../services/chatService';
 import { useFocusEffect } from '@react-navigation/native';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTheme } from '../../styles/ThemeContext';
 import { useAuthStore } from '../../store/authStore';
 import { useToast } from '../../styles/ToastContext';
-import ChatScreen from '../chat/ChatScreen';
 import { stompClient } from '../../services/socket';
 import CompletionCodeClientModal from '../../components/CompletionCodeClientModal';
 import CompletionCodeEntryModal from '../../components/CompletionCodeEntryModal';
@@ -249,6 +249,40 @@ export default function ActiveJobScreen({ navigation, route }: any) {
     }
   };
 
+  const [loadingChat, setLoadingChat] = useState(false);
+
+  const handleChat = async () => {
+    if (!job) return;
+    setLoadingChat(true);
+    try {
+      if (isProvider) {
+        const thread = await startChatWithStudent(job.requesterId);
+        navigation.navigate('ChatThread', {
+          threadId: thread.id,
+          otherUser: {
+            id: job.requesterId,
+            fullName: job.requesterName || 'Student',
+            profilePictureUrl: null,
+          }
+        });
+      } else {
+        const thread = await startChat(job.providerId);
+        navigation.navigate('ChatThread', {
+          threadId: thread.id,
+          otherUser: {
+            id: job.providerId,
+            fullName: job.providerName || 'Provider',
+            profilePictureUrl: null,
+          }
+        });
+      }
+    } catch (e: any) {
+      showToast({ status: 'error', title: 'Could not open chat', subtitle: e.message || 'Please try again.' });
+    } finally {
+      setLoadingChat(false);
+    }
+  };
+
   const handleOpenGoogleMaps = () => {
     if (!job?.locationLat || !job?.locationLng) return;
     const url = `https://www.google.com/maps/dir/?api=1&destination=${job.locationLat},${job.locationLng}&travelmode=walking`;
@@ -397,6 +431,24 @@ export default function ActiveJobScreen({ navigation, route }: any) {
               <Text style={[styles.actionBtnText, { color: '#EF4444' }]}>Raise Dispute</Text>
             </TouchableOpacity>
           )}
+          {job.status !== 'COMPLETED' && job.status !== 'CANCELLED' && (
+            <TouchableOpacity 
+              style={[styles.actionBtn, { backgroundColor: colors.cardBackground, borderWidth: 1.5, borderColor: colors.primary, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: 8 }]} 
+              onPress={handleChat}
+              disabled={loadingChat}
+            >
+              {loadingChat ? (
+                <ActivityIndicator color={colors.primary} />
+              ) : (
+                <>
+                  <Ionicons name="chatbubbles-outline" size={20} color={colors.primary} />
+                  <Text style={[styles.actionBtnText, { color: colors.primary }]}>
+                    Chat with {isProvider ? 'Client' : 'Provider'}
+                  </Text>
+                </>
+              )}
+            </TouchableOpacity>
+          )}
         </View>
 
         {/* Job Details Section */}
@@ -526,10 +578,6 @@ export default function ActiveJobScreen({ navigation, route }: any) {
         )}
       </ScrollView>
 
-      <View style={[styles.chatContainer, { borderTopColor: colors.border }]}>
-        {/* Pinned Chat Thread */}
-        <ChatScreen route={{ params: { requestId: job.requestId } }} navigation={navigation} />
-      </View>
       {/* Modals */}
       <CompletionCodeClientModal
         visible={showClientModal}

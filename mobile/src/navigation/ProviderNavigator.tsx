@@ -138,7 +138,7 @@ export default function ProviderNavigator() {
           tabBarIcon: ({ focused }) => (
             <TabIcon name={focused ? 'list' : 'list-outline'} focused={focused} colors={colors} />
           ),
-          title: 'My Services',
+          title: 'My Listings',
         }}
       />
       <Tab.Screen

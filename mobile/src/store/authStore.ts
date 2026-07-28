@@ -19,6 +19,8 @@ export interface User {
   serviceCategory?: string;
   bio?: string;
   whatsappNumber?: string;
+  portfolio?: string[];
+  keyServices?: string[];
 }
 
 interface AuthState {

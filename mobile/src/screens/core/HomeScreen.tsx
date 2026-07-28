@@ -29,8 +29,110 @@ import RatingModal from '../../components/RatingModal';
 import { useToast } from '../../styles/ToastContext';
 import { RoleSwitcher } from '../../components/RoleSwitcher';
 import { SecondaryRoleStatusBanner } from '../../components/SecondaryRoleStatusBanner';
+import { useQuery } from '@tanstack/react-query';
+import { getChats } from '../../services/chatService';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
+
+const getStatusColor = (status: string, colors: any) => {
+  switch (status) {
+    case 'OPEN': return colors.success;
+    case 'IN_PROGRESS': return colors.primary;
+    case 'COMPLETED': return colors.success;
+    case 'CANCELLED': return colors.error;
+    default: return colors.warning;
+  }
+};
+
+const getStatusBg = (status: string, colors: any) => {
+  switch (status) {
+    case 'OPEN': return colors.successLight;
+    case 'IN_PROGRESS': return colors.warningLight;
+    case 'COMPLETED': return colors.successLight;
+    case 'CANCELLED': return colors.errorLight;
+    default: return colors.warningLight;
+  }
+};
+
+const HomeScreenRequestCard = React.memo(({ item, colors, onPress }: { item: any; colors: any; onPress: () => void }) => {
+  const stripColor = getStatusColor(item.status, colors);
+  return (
+    <TouchableOpacity
+      style={[styles.requestCard, { backgroundColor: colors.cardBackground }]}
+      onPress={onPress}
+      activeOpacity={0.88}
+      accessibilityRole="button"
+      accessibilityLabel={`View request details for ${item.category?.name || 'Service'}`}
+    >
+      <View style={[styles.cardStrip, { backgroundColor: stripColor }]} />
+      <View style={styles.cardBody}>
+        <View style={styles.cardTop}>
+          <Text style={[styles.cardCategory, { color: colors.textMuted }]}>
+            Category: {item.category?.name || 'Service'}
+          </Text>
+          <View style={[styles.statusPill, { backgroundColor: getStatusBg(item.status, colors) }]}>
+            <Text style={[styles.statusPillText, { color: stripColor }]}>
+              {item.status?.replace('_', ' ')}
+            </Text>
+          </View>
+        </View>
+        <Text style={[styles.cardDesc, { color: colors.text }]} numberOfLines={2}>
+          {item.description}
+        </Text>
+        <View style={styles.cardFooter}>
+          <View style={styles.cardMeta}>
+            <CustomIonicons name="location-outline" size={12} color={colors.textMuted} />
+            <Text style={[styles.cardMetaText, { color: colors.textMuted }]}>
+              {item.location || 'Campus'}
+            </Text>
+          </View>
+          <Text style={[styles.cardPrice, { color: colors.primary }]}>
+            Contact for quote
+          </Text>
+        </View>
+      </View>
+      <View style={[styles.cardChevron, { backgroundColor: colors.inputBackground }]}>
+        <CustomIonicons name="arrow-forward" size={14} color={colors.text} />
+      </View>
+    </TouchableOpacity>
+  );
+});
+
+const SearchBar = React.memo(({
+  colors,
+  searchQuery,
+  setSearchQuery,
+  searchInputRef,
+  isSticky
+}: {
+  colors: any;
+  searchQuery: string;
+  setSearchQuery: (q: string) => void;
+  searchInputRef: React.RefObject<any>;
+  isSticky?: boolean;
+}) => {
+  return (
+    <View style={[styles.searchRow, isSticky ? styles.searchRowSticky : null]}>
+      <View style={[styles.searchBar, { backgroundColor: colors.inputBackground }]}>
+        <CustomIonicons name="search-outline" size={18} color={colors.textMuted} style={{ marginRight: 8 }} />
+        <TextInput
+          ref={isSticky ? undefined : searchInputRef}
+          style={[styles.searchInput, { color: colors.text }]}
+          placeholder="Search services, categories..."
+          placeholderTextColor={colors.placeholderText}
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+          accessibilityLabel="Search for services"
+        />
+        {searchQuery.length > 0 && (
+          <TouchableOpacity onPress={() => { setSearchQuery(''); if (!isSticky) searchInputRef.current?.focus(); }}>
+            <CustomIonicons name="close-circle" size={18} color={colors.textMuted} />
+          </TouchableOpacity>
+        )}
+      </View>
+    </View>
+  );
+});
 
 const LOCAL_IMAGES = {
   food: require('../../../assets/images/home/food.jpg'),
@@ -75,6 +177,14 @@ export default function HomeScreen({ route, navigation }: any) {
   const { user, accessToken } = useAuthStore();
   const { colors, isDark } = useTheme();
   const { showToast } = useToast();
+
+  const { data: chatThreads } = useQuery<any[]>({
+    queryKey: ['chat-list'],
+    queryFn: getChats,
+    staleTime: 30000,
+  });
+
+  const unreadChatCount = chatThreads?.reduce((acc, t) => acc + (t.unreadCount || 0), 0) || 0;
 
   // Data State
   const [balance, setBalance] = useState('0.00');
@@ -294,91 +404,13 @@ export default function HomeScreen({ route, navigation }: any) {
     }
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'OPEN': return colors.success;
-      case 'IN_PROGRESS': return colors.primary;
-      case 'COMPLETED': return colors.success;
-      case 'CANCELLED': return colors.error;
-      default: return colors.warning;
-    }
-  };
-
-  const getStatusBg = (status: string) => {
-    switch (status) {
-      case 'OPEN': return colors.successLight;
-      case 'IN_PROGRESS': return colors.warningLight;
-      case 'COMPLETED': return colors.successLight;
-      case 'CANCELLED': return colors.errorLight;
-      default: return colors.warningLight;
-    }
-  };
-
-  const renderRequestCard = ({ item }: any) => {
-    const stripColor = getStatusColor(item.status);
-    return (
-      <TouchableOpacity
-        style={[styles.requestCard, { backgroundColor: colors.cardBackground }]}
-        onPress={() => navigation.navigate('RequestDetails', { requestId: item.id })}
-        activeOpacity={0.88}
-      >
-        <View style={[styles.cardStrip, { backgroundColor: stripColor }]} />
-        <View style={styles.cardBody}>
-          <View style={styles.cardTop}>
-            <Text style={[styles.cardCategory, { color: colors.textMuted }]}>
-              {item.category?.name || 'Service'}
-            </Text>
-            <View style={[styles.statusPill, { backgroundColor: getStatusBg(item.status) }]}>
-              <Text style={[styles.statusPillText, { color: getStatusColor(item.status) }]}>
-                {item.status?.replace('_', ' ')}
-              </Text>
-            </View>
-          </View>
-          <Text style={[styles.cardDesc, { color: colors.text }]} numberOfLines={2}>
-            {item.description}
-          </Text>
-          <View style={styles.cardFooter}>
-            <View style={styles.cardMeta}>
-              <CustomIonicons name="location-outline" size={12} color={colors.textMuted} />
-              <Text style={[styles.cardMetaText, { color: colors.textMuted }]}>
-                {item.location || 'Campus'}
-              </Text>
-            </View>
-            <Text style={[styles.cardPrice, { color: colors.primary }]}>
-              {item.budget ? `GHS ${item.budget}` : 'Open bid'}
-            </Text>
-          </View>
-        </View>
-        <View style={[styles.cardChevron, { backgroundColor: colors.inputBackground }]}>
-          <CustomIonicons name="arrow-forward" size={14} color={colors.text} />
-        </View>
-      </TouchableOpacity>
-    );
-  };
-
-  const SearchBar = ({ isSticky }: { isSticky?: boolean }) => {
-    return (
-      <View style={[styles.searchRow, isSticky ? styles.searchRowSticky : null]}>
-        <View style={[styles.searchBar, { backgroundColor: colors.inputBackground }]}>
-          <CustomIonicons name="search-outline" size={18} color={colors.textMuted} style={{ marginRight: 8 }} />
-          <TextInput
-            ref={isSticky ? undefined : searchInputRef}
-            style={[styles.searchInput, { color: colors.text }]}
-            placeholder="Search services, categories..."
-            placeholderTextColor={colors.placeholderText}
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-            accessibilityLabel="Search for services"
-          />
-          {searchQuery.length > 0 && (
-            <TouchableOpacity onPress={() => { setSearchQuery(''); searchInputRef.current?.focus(); }}>
-              <CustomIonicons name="close-circle" size={18} color={colors.textMuted} />
-            </TouchableOpacity>
-          )}
-        </View>
-      </View>
-    );
-  };
+  const renderItem = useCallback(({ item }: any) => (
+    <HomeScreenRequestCard
+      item={item}
+      colors={colors}
+      onPress={() => navigation.navigate('RequestDetails', { requestId: item.id })}
+    />
+  ), [colors, navigation]);
 
   const renderActiveFilterChips = () => {
     const chips = [];
@@ -494,6 +526,20 @@ export default function HomeScreen({ route, navigation }: any) {
         <View style={[styles.headerRight, { gap: 12 }]}>
           <RoleSwitcher />
           <TouchableOpacity
+            style={[styles.iconBtn, { backgroundColor: colors.cardBackground, position: 'relative' }]}
+            onPress={() => navigation.navigate('ChatList')}
+            accessibilityLabel="Open Messages"
+          >
+            <CustomIonicons name="chatbubbles-outline" size={18} color={colors.text} />
+            {unreadChatCount > 0 && (
+              <View style={[styles.badgeContainer, { borderColor: colors.cardBackground }]}>
+                <Text style={styles.badgeText}>
+                  {unreadChatCount > 99 ? '99+' : unreadChatCount}
+                </Text>
+              </View>
+            )}
+          </TouchableOpacity>
+          <TouchableOpacity
             style={[styles.iconBtn, { backgroundColor: colors.cardBackground }]}
             onPress={() => navigation.navigate('NotificationCenter')}
             accessibilityLabel="Open Notifications"
@@ -509,7 +555,13 @@ export default function HomeScreen({ route, navigation }: any) {
       {/* ── Sticky Search Bar overlay ── */}
       {isSearchBarSticky && (
         <View style={[styles.stickySearchContainer, { top: 70 + insets.top }]}>
-          <SearchBar isSticky />
+          <SearchBar
+            colors={colors}
+            searchQuery={searchQuery}
+            setSearchQuery={setSearchQuery}
+            searchInputRef={searchInputRef}
+            isSticky
+          />
         </View>
       )}
 
@@ -517,7 +569,7 @@ export default function HomeScreen({ route, navigation }: any) {
         ref={flatListRef}
         data={listData}
         keyExtractor={(item) => item.id}
-        renderItem={renderRequestCard}
+        renderItem={renderItem}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}
         scrollEventThrottle={16}
         onScroll={handleScroll}
@@ -904,4 +956,24 @@ const styles = StyleSheet.create({
   emptySub: { fontSize: 13, textAlign: 'center', lineHeight: 18 },
   emptyBtn: { paddingHorizontal: 24, paddingVertical: 12, borderRadius: 14, marginTop: 4 },
   emptyBtnText: { color: '#FFF', fontWeight: '700', fontSize: 14 },
+  badgeContainer: {
+    position: 'absolute',
+    top: -2,
+    right: -2,
+    minWidth: 16,
+    height: 16,
+    borderRadius: 8,
+    backgroundColor: '#EF4444',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 3,
+    borderWidth: 1.5,
+    zIndex: 10,
+  },
+  badgeText: {
+    color: '#FFFFFF',
+    fontSize: 9,
+    fontWeight: '900',
+    textAlign: 'center',
+  },
 });

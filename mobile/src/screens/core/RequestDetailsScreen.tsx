@@ -13,8 +13,8 @@ import {
   RefreshControl,
 } from 'react-native';
 import { api, BASE_URL } from '../../services/api';
-import { getThreadForRequest } from '../../services/chatService';
 import { cancelRequest } from '../../services/requestService';
+import { startChat } from '../../services/chatService';
 import { stompClient } from '../../services/socket';
 import { useAuthStore } from '../../store/authStore';
 import { useTheme } from '../../styles/ThemeContext';
@@ -29,6 +29,23 @@ export default function RequestDetailsScreen({ route, navigation }: any) {
   const { requestId } = route.params;
   const { user } = useAuthStore();
   const { colors } = useTheme();
+
+  const handleOpenChat = async (providerId: string, providerName?: string, providerAvatar?: string) => {
+    setChatLoading(true);
+    try {
+      const chatThread = await startChat(providerId);
+      navigation.navigate('ChatThread', {
+        threadId: chatThread.id,
+        otherUserName: chatThread.otherUserName ?? providerName,
+        otherUserAvatar: chatThread.otherUserAvatar ?? providerAvatar,
+      });
+    } catch (e: any) {
+      showToast({ status: 'error', title: 'Chat Error', subtitle: e?.response?.data?.message || 'Could not open chat.' });
+    } finally {
+      setChatLoading(false);
+    }
+  };
+
   const [request, setRequest] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
@@ -53,6 +70,7 @@ export default function RequestDetailsScreen({ route, navigation }: any) {
   const [cancelDialog, setCancelDialog] = useState(false);
 
   const [refreshing, setRefreshing] = useState(false);
+  const [chatLoading, setChatLoading] = useState(false);
 
   const fetchRequestDetails = useCallback(async () => {
     try {
@@ -150,23 +168,6 @@ export default function RequestDetailsScreen({ route, navigation }: any) {
     }
   };
 
-  const [thread, setThread] = useState<any>(null);
-
-  useEffect(() => {
-    if (request && (request.status === 'ASSIGNED' || request.status === 'COMPLETED' || request.status === 'CANCELLED')) {
-      const fetchThread = async () => {
-        try {
-          const threadData = await getThreadForRequest(request.id);
-          setThread(threadData);
-        } catch (e) {
-          console.warn('Failed to fetch chat thread:', e);
-        }
-      };
-      fetchThread();
-    } else {
-      setThread(null);
-    }
-  }, [request]);
   useEffect(() => {
     let subId = '';
     const token = useAuthStore.getState().accessToken;
@@ -292,7 +293,7 @@ export default function RequestDetailsScreen({ route, navigation }: any) {
       {/* ── Hero Card ── */}
       <View style={[styles.heroCard, { backgroundColor: colors.primary }]}>
         <View style={styles.heroBadge}>
-          <Text style={styles.heroBadgeText}>{request.category?.name || 'Service'}</Text>
+          <Text style={styles.heroBadgeText}>Category: {request.category?.name || 'Service'}</Text>
         </View>
         <Text style={styles.heroDesc} numberOfLines={4}>{request.description}</Text>
         <View style={styles.heroStats}>
@@ -312,7 +313,7 @@ export default function RequestDetailsScreen({ route, navigation }: any) {
             <View style={styles.heroStatIconWrap}>
               <Ionicons name="wallet" size={12} color={colors.primary} />
             </View>
-            <Text style={styles.heroStatText}>{request.budget ? `${request.budget} GHS` : 'Open'}</Text>
+            <Text style={styles.heroStatText}>Contact for quote</Text>
           </View>
         </View>
       </View>
@@ -630,7 +631,7 @@ export default function RequestDetailsScreen({ route, navigation }: any) {
           {userOffer.status === 'ACCEPTED' && (
             <TouchableOpacity
               style={[styles.chatBtn, { backgroundColor: colors.primary, shadowColor: colors.primary }]}
-              onPress={() => thread && navigation.navigate('Chat', { requestId: request.id, threadId: thread.id })}
+              onPress={() => navigation.navigate('ChatList')}
             >
               <Ionicons name="chatbubbles" size={18} color="#FFF" style={{ marginRight: 8 }} />
               <Text style={styles.chatBtnText}>Open Chat Channel</Text>
@@ -677,30 +678,6 @@ export default function RequestDetailsScreen({ route, navigation }: any) {
       <View style={{ height: 120 }} />
       </ScrollView>
 
-      {/* ── Chat Action Footer ── */}
-      {thread && (
-        <View style={[styles.footerAction, { backgroundColor: colors.cardBackground, borderTopColor: colors.border }]}>
-          {request.status === 'ASSIGNED' ? (
-            <TouchableOpacity
-              style={[styles.messageBtn, { backgroundColor: colors.primary, shadowColor: colors.primary }]}
-              onPress={() => navigation.navigate('Chat', { requestId: request.id, threadId: thread.id })}
-            >
-              <Ionicons name="chatbubbles" size={20} color="#FFF" style={{ marginRight: 10 }} />
-              <Text style={styles.actionBtnText}>Message {thread.otherParticipant?.fullName?.split(' ')[0] || 'User'}</Text>
-            </TouchableOpacity>
-          ) : (
-            thread.hasHistory && (
-              <TouchableOpacity
-                style={[styles.viewConvBtn, { backgroundColor: colors.inputBackground, borderColor: colors.border }]}
-                onPress={() => navigation.navigate('Chat', { requestId: request.id, threadId: thread.id })}
-              >
-                <Ionicons name="eye" size={20} color={colors.text} style={{ marginRight: 10 }} />
-                <Text style={[styles.viewConvBtnText, { color: colors.text }]}>View Conversation</Text>
-              </TouchableOpacity>
-            )
-          )}
-        </View>
-      )}
 
       <Modal visible={acceptDialogVisible} transparent animationType="slide" onRequestClose={() => setAcceptDialogVisible(false)}>
         <View style={styles.sheetOverlay}>
@@ -719,7 +696,7 @@ export default function RequestDetailsScreen({ route, navigation }: any) {
               </View>
             </View>
 
-            <View style={[styles.feeInfoBox, { backgroundColor: 'rgba(34, 197, 94, 0.08)', borderColor: 'rgba(34, 197, 94, 0.25)', borderWidth: 1, borderRadius: 14, padding: 14, marginBottom: 16, flexDirection: 'row', alignItems: 'flex-start', gap: 10 }]}>
+            <View style={{ backgroundColor: 'rgba(34, 197, 94, 0.08)', borderColor: 'rgba(34, 197, 94, 0.25)', borderWidth: 1, borderRadius: 14, padding: 14, marginBottom: 16, flexDirection: 'row', alignItems: 'flex-start', gap: 10 }}>
               <Ionicons name="information-circle" size={20} color="#16A34A" style={{ marginTop: 1 }} />
               <Text style={{ color: '#16A34A', fontSize: 13, fontWeight: '500', flex: 1, lineHeight: 19 }}>
                 No platform fee is charged to you. A 5% service fee is deducted from the provider's payout. Provider receives {providerReceives.toFixed(2)} GHS upon completion.

@@ -383,8 +383,10 @@ public class JobController {
         }
 
         Job job = jobOpt.get();
-        if (!"ACTIVE".equals(job.getStatus()) && !"AWAITING_CODE".equals(job.getStatus())) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Job cannot be completed. Current status: " + job.getStatus());
+        // Direct completion only allowed for AWAITING_CODE (remote/non-code-verified) jobs.
+        // ACTIVE jobs must go through mark-complete → AWAITING_CODE → confirm-completion.
+        if (!"AWAITING_CODE".equals(job.getStatus()) && !"IN_PROGRESS".equals(job.getStatus())) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Job cannot be completed directly. Current status: " + job.getStatus() + ". Use mark-complete first.");
         }
 
         job.setStatus("COMPLETED");

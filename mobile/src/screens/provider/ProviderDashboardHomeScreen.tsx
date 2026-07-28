@@ -15,6 +15,7 @@ import { getProviderJobSummary, JobSummary } from '../../services/jobService';
 import { stompClient } from '../../services/socket';
 import { RoleSwitcher } from '../../components/RoleSwitcher';
 import { useQuery } from '@tanstack/react-query';
+import { getChats } from '../../services/chatService';
 
 type DashboardStats = {
   balance: number;
@@ -27,6 +28,14 @@ export default function ProviderDashboardHomeScreen({ navigation }: any) {
   const { colors, isDark } = useTheme();
   const insets = useSafeAreaInsets();
   const user = useAuthStore((s) => s.user);
+
+  const { data: chatThreads } = useQuery<any[]>({
+    queryKey: ['chat-list'],
+    queryFn: getChats,
+    staleTime: 30000,
+  });
+
+  const unreadChatCount = chatThreads?.reduce((acc, t) => acc + (t.unreadCount || 0), 0) || 0;
 
   const getGreeting = () => {
     const hour = new Date().getHours();
@@ -120,6 +129,21 @@ export default function ProviderDashboardHomeScreen({ navigation }: any) {
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flexShrink: 0 }}>
             <RoleSwitcher />
             <TouchableOpacity
+              style={[styles.notificationBtn, { backgroundColor: colors.inputBackground, position: 'relative' }]}
+              onPress={() => navigation.navigate('ChatList')}
+              accessibilityLabel="Open Messages"
+              activeOpacity={0.8}
+            >
+              <Ionicons name="chatbubbles-outline" size={20} color={colors.text} />
+              {unreadChatCount > 0 && (
+                <View style={[styles.badgeContainer, { borderColor: colors.inputBackground }]}>
+                  <Text style={styles.badgeText}>
+                    {unreadChatCount > 99 ? '99+' : unreadChatCount}
+                  </Text>
+                </View>
+              )}
+            </TouchableOpacity>
+            <TouchableOpacity
               style={[styles.notificationBtn, { backgroundColor: colors.inputBackground }]}
               onPress={() => navigation.navigate('NotificationCenter')}
               accessibilityLabel="Open Notifications"
@@ -176,6 +200,36 @@ export default function ProviderDashboardHomeScreen({ navigation }: any) {
             </Text>
             <Text style={[styles.snapshotLabel, { color: colors.textMuted }]}>In Progress</Text>
           </TouchableOpacity>
+        </View>
+
+        {/* ── Marketplace Listings & Services Quick Action Card ── */}
+        <View style={[styles.promoCard, { backgroundColor: 'rgba(0, 150, 255, 0.08)', borderColor: 'rgba(0, 150, 255, 0.3)' }]}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+            <View style={[styles.promoIconWrap, { backgroundColor: '#0096FF' }]}>
+              <Ionicons name="sparkles" size={18} color="#FFF" />
+            </View>
+            <Text style={[styles.promoTitle, { color: colors.text }]}>Marketplace Listings & Services</Text>
+          </View>
+          <Text style={[styles.promoSub, { color: colors.textMuted }]}>
+            Create service offerings, upload work sample photos to your portfolio, and set base pricing for student feeds.
+          </Text>
+          <View style={styles.promoActions}>
+            <TouchableOpacity
+              style={[styles.promoBtnPrimary, { backgroundColor: '#0096FF' }]}
+              onPress={() => navigation.navigate('CreateEditListing')}
+              activeOpacity={0.85}
+            >
+              <Ionicons name="add-circle-outline" size={16} color="#FFF" />
+              <Text style={styles.promoBtnPrimaryText}>+ Post New Service</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.promoBtnSecondary, { borderColor: '#0096FF' }]}
+              onPress={() => navigation.navigate('Listings')}
+              activeOpacity={0.8}
+            >
+              <Text style={[styles.promoBtnSecondaryText, { color: '#0096FF' }]}>Manage All Services →</Text>
+            </TouchableOpacity>
+          </View>
         </View>
 
         {/* ── Active Jobs List ── */}
@@ -310,4 +364,35 @@ const styles = StyleSheet.create({
   jobActions: { flexDirection: 'row', gap: 8 },
   actionChip: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 10 },
   actionChipText: { fontSize: 12, fontWeight: '700' },
+
+  // Marketplace promo card
+  promoCard: { borderRadius: 20, borderWidth: 1, padding: 18, marginBottom: 28 },
+  promoIconWrap: { width: 32, height: 32, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
+  promoTitle: { fontSize: 16, fontWeight: '800' },
+  promoSub: { fontSize: 13, lineHeight: 18, marginBottom: 16 },
+  promoActions: { flexDirection: 'row', gap: 10, flexWrap: 'wrap' },
+  promoBtnPrimary: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 16, paddingVertical: 10, borderRadius: 14 },
+  promoBtnPrimaryText: { color: '#FFF', fontSize: 13, fontWeight: '700' },
+  promoBtnSecondary: { paddingHorizontal: 16, paddingVertical: 10, borderRadius: 14, borderWidth: 1.5 },
+  promoBtnSecondaryText: { fontSize: 13, fontWeight: '700' },
+  badgeContainer: {
+    position: 'absolute',
+    top: -2,
+    right: -2,
+    minWidth: 16,
+    height: 16,
+    borderRadius: 8,
+    backgroundColor: '#EF4444',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 3,
+    borderWidth: 1.5,
+    zIndex: 10,
+  },
+  badgeText: {
+    color: '#FFFFFF',
+    fontSize: 9,
+    fontWeight: '900',
+    textAlign: 'center',
+  },
 });

@@ -1,458 +1,481 @@
-# CampusServ — System Documentation & Technical Baseline
+# CampusServ — Complete System Documentation (Current Implementation Baseline)
 
-**Version:** 3.0 (Current Implementation Baseline)  
-**Last Updated:** July 22, 2026  
-**Repository Root:** `c:\Users\allen\Desktop\CampuServ`
+**Version:** 4.0  
+**Last Updated:** July 2026  
+**Repository Root:** `c:\Users\allen\Downloads\New folder\CampuServ`
 
 ---
 
 ## 1. Architecture Overview
 
-CampusServ is a microservices-based errand and freelance service marketplace engineered for KNUST (Kwame Nkrumah University of Science and Technology). The platform allows university students to request campus service errands or upgrade their profiles to become verified service providers.
+CampusServ is a full-stack microservices marketplace platform designed for university campuses (specifically KNUST — Kwame Nkrumah University of Science and Technology). The platform bridges students who need campus errands/services with verified student service providers and freelancers.
 
 ### High-Level System Architecture Diagram (Verbal)
 
-The architecture consists of six Spring Boot core business microservices, one Spring Cloud API Gateway, one Netflix Eureka Discovery Server, a React Native (Expo) mobile client, and a Next.js web admin portal. All services share a single PostgreSQL database instance.
+The system is structured around an **8-service Spring Boot backend ecosystem**, coordinated by Spring Cloud Gateway and Netflix Eureka, serving a **React Native (Expo) dual-role mobile app** and a **Next.js 14 Web Admin Portal**. All core services connect to a shared PostgreSQL database server while maintaining logically segregated tables per service domain.
 
 ```
-                                  ┌────────────────────────┐
-                                  │ Next.js Admin Panel    │
-                                  │ (Port 3000)            │
-                                  └───────────┬────────────┘
-                                              │ REST (Admin endpoints)
-                                              ▼
-┌──────────────────────┐         ┌────────────────────────┐
-│ Expo Mobile Client   ├────────►│ API Gateway            │
-│ (React Native)       │ REST /  │ (Spring Cloud Gateway) │
-│                      │ WebSockets (Port 8080)            │
-│                      │         └───────────┬────────────┘
-└──────────┬───────────┘                     │
-           │                                 │ REST (Downstream routing with
-           │                                 │       X-User-Id / X-User-Role)
-           │                                 ▼
-           │                       ┌──────────────────┐
-           │                       │  Eureka Server   │
-           │                       │  (Port 8761)     │
-           │                       └──────────────────┘
-           │ WebSocket (Direct or via Gateway)
-           ▼
-  ┌──────────────────┐
-  │ Supporting Svc   │◄──────────────────────────────────────────────────────┐
-  │ (Port 8086)      │                                                       │
-  └────────┬─────────┘                                                       │
-           │                                                                 │
-           │           ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  │
-           │           │ Auth Service │  │ User Service │  │ Request Svc  │  │
-           │           │ (Port 8087)  │  │ (Port 8083)  │  │ (Port 8082)  │  │
-           │           └──────┬───────┘  └──────┬───────┘  └──────┬───────┘  │
-           │                  │                 │                 │          │
-           │                  ▼                 ▼                 ▼          │
-           │         ┌──────────────────────────────────────────────────┐    │
-           │         │               PostgreSQL Database                │    │
-           │         │               (Port 5433 / `campusserv`)         │    │
-           │         └──────────────────────────────────────────────────┘    │
-           │                  ▲                 ▲                 ▲          │
-           │                  │                 │                 │          │
-           │           ┌──────┴───────┐  ┌──────┴───────┐  ┌──────┴───────┐  │
-           │           │ Job Service  │  │ Payment Svc  │  │ Supporting   │  │
-           │           │ (Port 8084)  │  │ (Port 8085)  │  │ Service      │──┘
-           │           └──────────────┘  └──────────────┘  └──────────────┘
-           │
-           ▼
-┌────────────────────────────────────────────────────────────────────────────┐
-│ RabbitMQ Broker (Port 5672) - Event Exchanges:                             │
-│ - `provider_verification_queue` / `provider.verification`                  │
-│ - `user.status.updated` / `user.deleted`                                   │
-│ - `admin_notifications_queue` / `admin.notifications`                      │
-│ - `job-status-queue` / `provider.review.submitted`                         │
-└────────────────────────────────────────────────────────────────────────────┘
+                                      ┌────────────────────────┐
+                                      │ Next.js Admin Portal   │
+                                      │ (Port 3000)            │
+                                      └───────────┬────────────┘
+                                                  │ REST (Admin Endpoints)
+                                                  ▼
+┌─────────────────────────┐          ┌────────────────────────┐
+│ React Native Mobile App ├─────────►│ API Gateway            │
+│ (Expo / iOS & Android)  │ REST /   │ (Spring Cloud Gateway) │
+│                         │ WS       │ (Port 8080)            │
+└────────────┬────────────┘          └───────────┬────────────┘
+             │                                   │ REST (Downstream routing with
+             │                                   │       X-User-Id, X-User-Role)
+             │                                   ▼
+             │                        ┌──────────────────┐
+             │                        │  Eureka Server   │
+             │                        │  (Port 8761)     │
+             │                        └──────────────────┘
+             │ Direct / Gateway WS
+             ▼
+    ┌──────────────────┐
+    │ Supporting Svc   │◄───────────────────────────────────────────────────────┐
+    │ (STOMP/WebSocket)│  Async RabbitMQ Events (e.g., job.status.changed)      │
+    │ (Port 8086)      │                                                        │
+    └──────────────────┘                                                        │
+             ▲                                                                  │
+             │                    ┌─────────────────────────────────────────────┴─┐
+             │ Synchronous REST   │       Core Business Microservices             │
+             │ via RestTemplate   │                                               │
+             │                    ├─────────────────┬─────────────────┬───────────┤
+             │                    │  auth-service   │  user-service   │ request-  │
+             │                    │  (Port 8087)    │  (Port 8083)    │ service   │
+             │                    │                 │                 │ (8082)    │
+             │                    ├─────────────────┼─────────────────┼───────────┤
+             │                    │   job-service   │ payment-service │           │
+             │                    │   (Port 8084)   │   (Port 8085)   │           │
+             │                    └─────────────────┴─────────────────┴───────────┘
+             │                                           │
+             └───────────────────────────────────────────┴────────────────► PostgreSQL (Port 5432)
+                                                                            & RabbitMQ (Port 5672)
 ```
 
-### Communication Protocols
-1. **External Client Integration:**
-   - **REST APIs:** The Expo mobile client and Next.js admin portal send HTTP REST requests to backend services via `api-gateway` on port `8080`.
-   - **Real-Time WebSockets:** STOMP over WebSockets connects mobile clients to `supporting-service` (routed through gateway at `/ws/chats` or directly to port `8086` in dev). Handles live chat, location tracking, and real-time alerts.
-2. **Internal Microservice-to-Microservice Integration:**
-   - **Synchronous REST:** Services invoke each other directly using Spring `@LoadBalanced RestTemplate` pointing to Eureka registration IDs (e.g., `http://payment-service/wallet/create`).
-   - **Asynchronous Messaging:** Decoupled events are broadcast over **RabbitMQ** (Port `5672`). For example, when `job-service` updates job status, it publishes to `job-status-queue`, consumed by `supporting-service` to send STOMP alerts and persist notifications.
+### Microservices Inventory & Responsibilities
 
-### Component Tech Stack & Versions
+| Service Name | Local Port | Core Responsibility |
+| :--- | :---: | :--- |
+| **`api-gateway`** | `8080` | Single public entry point. Handles CORS, global JWT token validation (`JwtAuthenticationFilter`), route stripping, and downstream identity header injection (`X-User-Id`, `X-User-Email`, `X-User-Role`). |
+| **`eureka-server`** | `8761` | Service discovery registry. Downstream microservices register dynamically to enable service-name-based load balancing. |
+| **`auth-service`** | `8087` | User authentication, client/provider sign-up, KNUST student email validation (`@st.knust.edu.gh`), JWT issuance, password resets, and admin credential seeding. |
+| **`user-service`** | `8083` | Student and Provider profiles, marketplace listing feeds, provider portfolio photo storage (`/users/files/**`), saved bookmarks (`saved_listings`), community moderation reports (`listing_reports`), and strict service category gating. |
+| **`request-service`** | `8082` | Service requests (student job postings), service category catalog (`service_categories`), request attachments, and provider bidding (`offers`). |
+| **`job-service`** | `8084` | Active job contracts (`jobs`), status lifecycle management (`PENDING_START` → `IN_PROGRESS` → `COMPLETED`), student/provider reviews, call logs, and dispute logging. |
+| **`payment-service`** | `8085` | Financial ledger, student/provider wallets (`wallets`), transactions, escrow locking upon job start, Paystack gateway integration, and payout withdrawals. |
+| **`supporting-service`**| `8086` | Real-time chat via STOMP/WebSockets (`/ws`), dispute message threads, system push notifications (consuming RabbitMQ events), FAQ catalog, and emergency contacts. |
 
-| Component | Language / Core Framework | Key Libraries & Features | Default Local Port |
-|---|---|---|---|
-| **Discovery Server** | Java 17 / Spring Boot 3.2.x | Spring Cloud Netflix Eureka Server | `8761` |
-| **API Gateway** | Java 17 / Spring Boot 3.2.x | Spring Cloud Gateway, Reactive Netty, `JwtValidationGatewayFilterFactory`, Global CORS | `8080` |
-| **Auth Service** | Java 17 / Spring Boot 3.2.x | Spring Security, JJWT (HS256), Flyway Migrations (V1–V43), Brevo Mail SDK | `8087` |
-| **User Service** | Java 17 / Spring Boot 3.2.x | Hibernate JPA, PostgreSQL Driver | `8083` |
-| **Request Service** | Java 17 / Spring Boot 3.2.x | Hibernate JPA, Spring AMQP (RabbitMQ) | `8082` |
-| **Job Service** | Java 17 / Spring Boot 3.2.x | Hibernate JPA, Spring Scheduling (Job completion scheduler) | `8084` |
-| **Payment Service** | Java 17 / Spring Boot 3.2.x | Paystack Java API, Spring Data JPA (Pessimistic Locking `findByUserIdForWrite`) | `8085` |
-| **Supporting Service**| Java 17 / Spring Boot 3.2.x | Spring Message Broker (STOMP WebSockets), Google Maps Directions / Geocoding APIs | `8086` |
-| **Mobile Client** | TypeScript / React Native | Expo (managed), React Navigation v7, Zustand, TanStack React Query v5, custom STOMP client | `8081` (Metro) |
-| **Admin Panel** | TypeScript / Next.js 14 | App Router, Tailwind CSS, TanStack React Table & Query, Recharts, Lucide React | `3000` |
-| **Infrastructure** | Docker Containers | PostgreSQL 15 (Port `5433`), RabbitMQ 3.12 (Ports `5672`/`15672`), Redis 7 (Port `6379`) | Container Ports |
+### Technology Stack per Component
 
-### Gateway Routing Table
-The `api-gateway` strips path prefixes where configured and routes incoming traffic downstream:
+- **Backend Core:** Java 17, Spring Boot 3.2.0, Spring Cloud 2023.0.0, Spring Security, Spring Data JPA, Hibernate 6.x, Flyway DB Migrations, Lombok, JJWT 0.11.5, Paystack Java SDK.
+- **Messaging & Cache:** RabbitMQ 3.12 (Event Brokering), Caffeine Cache / Spring Cache.
+- **Database:** PostgreSQL 15 (Shared physical database instance, isolated logical table schema per service).
+- **Mobile Client (`mobile`):** React Native 0.81.5, Expo 54, TypeScript 5.9, React 19, React Navigation 7 (Native Stack & Bottom Tabs), Zustand 5 (Global State), TanStack React Query 5 (Server State), Axios, Expo Secure Store, Expo Image Picker, STOMP WebSockets.
+- **Admin Portal (`campusserv-admin`):** Next.js 14 (App Router), React 18, TypeScript, Tailwind CSS, Lucide React Icons, Axios.
 
-| Incoming Path Pattern | Target Destination | Strip Prefix? | Guard Filters Enforced |
-|---|---|---|---|
-| `/auth/**`, `/admin/providers/**`, `/admin/verification/**`, `/admin/users/**`, `/admin/counts` | `lb://auth-service` | No | `JwtValidation` (Exempts `/auth/login`, `/auth/register`, `/auth/refresh`, etc.) |
-| `/users/**`, `/providers/**` | `lb://user-service` | No | `JwtValidation` |
-| `/requests/**`, `/admin/requests/**`, `/categories/**`, `/admin/categories/**` | `lb://request-service` | No | `JwtValidation` (Exempts public `/categories`) |
-| `/jobs/**`, `/admin/jobs/**` | `lb://job-service` | No | `JwtValidation` |
-| `/payments/**`, `/admin/finance/**` | `lb://payment-service` | No | `JwtValidation` (Exempts `/payments/webhook`) |
-| `/wallet/**` | `lb://payment-service` | No | `JwtValidation` |
-| `/ws/chats`, `/ws/chats/**` | `lb:ws://supporting-service` | No | WebSocket STOMP passthrough |
-| `/chats/**`, `/reviews/**`, `/disputes/**`, `/notifications/**`, `/location/**` + Admin endpoints | `lb://supporting-service` | No | `JwtValidation` |
+### Gateway Routing Rules
+
+The `api-gateway` strips prefixes and maps external URLs to internal Eureka service instances:
+
+| External Path Pattern | Target Microservice | Strip Prefix | Authentication Requirement |
+| :--- | :--- | :---: | :--- |
+| `/auth/**` | `auth-service` | No | Public (Login, Register, Password Reset) |
+| `/users/**`, `/providers/**` | `user-service` | No | Protected (Requires valid JWT Bearer) |
+| `/api/users/**` | `user-service` | `StripPrefix=1` | Protected |
+| `/requests/**`, `/categories/**` | `request-service` | No | Protected (Categories read is open) |
+| `/api/requests/**` | `request-service` | `StripPrefix=1` | Protected |
+| `/jobs/**` | `job-service` | No | Protected |
+| `/payments/**`, `/wallet/**` | `payment-service` | No | Protected |
+| `/api/v1/payments/**` | `payment-service` | `StripPrefix=2` | Protected |
+| `/chats/**`, `/reviews/**`, `/disputes/**`, `/notifications/**`, `/ws/**`| `supporting-service`| No | Protected (WebSocket auth via token param/header) |
+| `/admin/**` | Mapped per domain | Varies | Enforces `X-User-Role == 'ADMIN'` |
 
 ---
 
 ## 2. Data Layer
 
-The system runs on a single shared PostgreSQL database (`campusserv` on Docker port `5433`).
+The platform utilizes a single shared PostgreSQL database (`campusserv`), with ownership of specific tables strictly divided among microservices.
 
-> [!WARNING]
-> **Data Layer Boundary & Migration Inconsistency Risk:** 
-> - Services share a single PostgreSQL database schema, referencing inter-service tables via plain `VARCHAR`/`UUID` columns rather than database foreign key constraints.
-> - Only `auth-service` uses Flyway migration scripts (`auth-service/src/main/resources/db/migration/V1__...` through `V43__...`).
-> - All other services rely on Hibernate `spring.jpa.hibernate.ddl-auto: update` or `validate` to sync entity definitions with tables.
-> - Certain entities (such as `RefreshTokens`) were created via JPA mapping and later added in Flyway (`V38`), but deploying with `ddl-auto: validate` without Flyway enabled across all services introduces schema drift risk.
+### Table Ownership & Schema Definitions
 
-### Major Database Tables & Entities
+#### 1. `auth-service` Owned Tables
+- **`auth_users`**: Stores authentication credentials. Fields: `id` (UUID, PK), `email` (Unique, `@st.knust.edu.gh` enforced), `password_hash`, `role` (`STUDENT`, `PROVIDER`, `ADMIN`), `is_verified`, `created_at`.
+- **`verification_tokens`** & **`password_reset_tokens`**: Stores OTP/tokens linked to `auth_users.id` with expiration timestamps.
 
-#### 1. Auth Domain (`auth-service`)
-* **`users`**: Core entity for user credentials, roles, and verification status.
-  * *Fields:* `id` (PK, UUID), `email` (KNUST student email), `password_hash`, `full_name`, `primary_role` (STUDENT, PROVIDER), `secondary_role` (PROVIDER, NONE), `secondary_role_status` (PENDING_VERIFICATION, APPROVED, REJECTED, NONE), `active_role_view` (STUDENT, PROVIDER), `primary_role_verified` (Boolean), `is_verified` (Boolean), `account_status` (ACTIVE, SUSPENDED, BANNED, PENDING_VERIFICATION), `service_category`, `rejection_count`, `completed_jobs_count`, `created_at`, `updated_at`.
-* **`refresh_tokens`**: Active and revoked refresh token records for JWT session rotation.
-  * *Fields:* `id` (PK), `user_id` (FK to users), `token_hash`, `expires_at`, `revoked_at`, `replaced_by_token_id`, `created_at`.
-* **`email_verification_tokens`**: One-time email verification hashes for new signups.
-  * *Fields:* `id`, `user_id`, `token_hash`, `expires_at`.
+#### 2. `user-service` Owned Tables
+- **`users`**: Base profile information. Fields: `id` (UUID, PK), `full_name`, `phone_number`, `avatar_url`, `bio`, `rating`, `completed_jobs_count`, `service_category` (Comma-separated string of approved categories).
+- **`provider_profile`**: Extended seller metadata. Fields: `user_id` (UUID, FK to `users`), `whatsapp_number`, `view_count` (BIGINT), `approval_status` (`PENDING`, `APPROVED`, `REJECTED`), `id_card_url`, `portfolio_urls` (Comma-separated image strings), `created_at`.
+- **`provider_services`**: Individual ad listings posted by providers. Fields: `id` (UUID, PK), `provider_id`, `category_id`, `title`, `description`, `base_price`, `is_active`.
+- **`provider_key_services`**: Element collection table storing short tag badges (e.g., `24hr Turnaround`, `Express Delivery`) linked to provider IDs.
+- **`saved_listings`**: Stores student bookmarks. Fields: `id` (UUID, PK), `user_id` (Student ID), `provider_id` (Seller ID), `created_at`. Unique constraint on `(user_id, provider_id)`.
+- **`listing_reports`**: Community moderation reports. Fields: `id` (UUID, PK), `reporter_id`, `provider_id`, `reason`, `details`, `created_at`.
 
-#### 2. User & Provider Profiles Domain (`user-service`)
-* **`provider_profiles`**: Detailed portfolio and rating metrics for service providers.
-  * *Fields:* `id` (PK, 1:1 with users.id), `bio`, `rating` (DECIMAL), `total_reviews` (Integer), `completed_jobs_count` (Integer), `portfolio_urls` (Text list), `approval_status` (VERIFIED, REJECTED, SUSPENDED, PENDING), `rejection_reason`.
-* **`service_categories`**: Service genres (e.g. Tutoring, Laundry, Errands).
-  * *Fields:* `id` (PK), `name` (Unique), `description`, `icon_key`, `bg_color`, `icon_color`.
-* **`provider_services`**: Links providers to categories with custom base prices.
-  * *Fields:* `id` (PK), `provider_id` (FK to users), `category_id` (FK to service_categories), `base_price` (DECIMAL).
+#### 3. `request-service` Owned Tables
+- **`service_categories`**: Global service catalog. Fields: `id` (String ID, e.g., `cat-1`), `name`, `icon_name`, `description`.
+- **`service_requests`**: Student job postings. Fields: `id` (UUID, PK), `student_id`, `category_id`, `title`, `description`, `budget`, `location`, `status` (`OPEN`, `ASSIGNED`, `CANCELLED`), `created_at`.
+- **`offers`**: Bids submitted by providers on requests. Fields: `id` (UUID, PK), `request_id`, `provider_id`, `proposed_price`, `message`, `status` (`PENDING`, `ACCEPTED`, `REJECTED`).
 
-#### 3. Marketplace Requests & Offers Domain (`request-service`)
-* **`service_requests`**: Errands and tasks posted by student clients.
-  * *Fields:* `id` (PK), `requester_id` (FK to users), `category_id` (FK to service_categories), `description`, `deadline` (Timestamp), `location` (Text description), `status` (OPEN, ASSIGNED, COMPLETED, CANCELLED), `budget_min`, `budget_max`, `timing_type`, `scheduled_date`, `location_type` (ON_SITE, REMOTE), `delivery_mode`, `target_provider_id`, `escrow_held` (Boolean).
-* **`offers`**: Bids submitted by service providers.
-  * *Fields:* `id` (PK), `request_id` (FK to service_requests), `provider_id` (FK to users), `price` (DECIMAL), `eta` (Text), `message`, `status` (PENDING, ACCEPTED, DECLINED, WITHDRAWN).
-* **`request_attachments`**: Attachment metadata and file URLs.
-* **`request_locations`**: Geo-coordinates (lat/lng) associated with requests.
+#### 4. `job-service` Owned Tables
+- **`jobs`**: Executed contracts. Fields: `id` (UUID, PK), `request_id`, `student_id`, `provider_id`, `agreed_price`, `status` (`PENDING_START`, `IN_PROGRESS`, `COMPLETED`, `DISPUTED`), `started_at`, `completed_at`.
+- **`reviews`**: Ratings & feedback. Fields: `id`, `job_id`, `reviewer_id`, `reviewee_id`, `rating` (1-5), `comment`.
+- **`disputes`**: Active conflict tickets linked to `jobs`. Fields: `id`, `job_id`, `initiator_id`, `reason`, `status` (`OPEN`, `RESOLVED`).
 
-#### 4. Job Execution Domain (`job-service`)
-* **`jobs`**: Active or completed contract resulting from an accepted offer.
-  * *Fields:* `id` (PK, job-XXXX), `request_id`, `offer_id`, `requester_id`, `provider_id`, `service_mode` (ON_SITE, REMOTE), `agreed_price` (DECIMAL), `status` (ACTIVE, IN_PROGRESS, AWAITING_CODE, PROOF_SUBMITTED, COMPLETED, CANCELLED, DISPUTED), `completion_code` (6-digit OTP for on-site completion), `created_at`, `updated_at`.
-* **`job_proofs`**: Photos/notes submitted by providers to prove work completion.
-  * *Fields:* `id` (PK), `job_id`, `file_url`, `notes`, `submitted_at`.
-* **`job_status_history`**: Audit trail of state transitions for jobs.
+#### 5. `payment-service` Owned Tables
+- **`wallets`**: Ledger accounts. Fields: `id`, `user_id` (Unique), `balance` (BigDecimal), `currency` (`GHS`), `updated_at`.
+- **`escrow_accounts`**: Locked funds for active jobs. Fields: `id`, `job_id`, `amount`, `status` (`HELD`, `RELEASED`, `REFUNDED`).
+- **`transactions`**: Audit trail. Fields: `id`, `wallet_id`, `amount`, `type` (`DEPOSIT`, `WITHDRAWAL`, `ESCROW_LOCK`, `PAYOUT`), `reference` (Paystack reference), `status`.
 
-#### 5. Wallet Ledger & Financial Domain (`payment-service`)
-* **`student_wallets`**: Balance tracking for student deposits and escrow holds.
-  * *Fields:* `user_id` (PK), `balance` (GHS), `held_balance` (escrow locked), `currency`, `version` (Optimistic lock).
-* **`provider_wallets`**: Balance tracking for provider withdrawable earnings.
-  * *Fields:* `user_id` (PK), `balance` (GHS), `currency`, `version`.
-* **`student_wallet_transactions`**: Append-only transaction ledger for students.
-  * *Fields:* `id`, `wallet_txn_id`, `user_id`, `type` (DEPOSIT, ESCROW_HOLD, ESCROW_RELEASE, ESCROW_REFUND), `status`, `amount`, `balance_before`, `balance_after`, `reference_id`, `related_job_id`, `narration`.
-* **`provider_wallet_transactions`**: Append-only transaction ledger for providers.
-  * *Fields:* `id`, `wallet_txn_id`, `user_id`, `type` (JOB_PAYOUT, WITHDRAWAL, COMMISSION_DEDUCTED), `status`, `amount`, `balance_before`, `balance_after`, `reference_id`, `related_job_id`, `narration`.
-* **`transactions`**: Escrow and Paystack reference log.
-  * *Fields:* `id`, `job_id`, `amount`, `paystack_reference`, `status`, `escrow_status`, `platform_commission`, `provider_payout`, `confirmed_at`.
-* **`payout_methods`**: Saved Mobile Money (MoMo) / bank details for provider cash-outs.
+#### 6. `supporting-service` Owned Tables
+- **`chat_rooms`** & **`chat_messages`**: Real-time communication records between students and providers.
+- **`notifications`**: User push/in-app alert history. Fields: `id`, `user_id`, `title`, `message`, `is_read`, `created_at`.
 
-#### 6. Support & Communication Domain (`supporting-service`)
-* **`chat_threads`**: Active chat channels linking client and provider per request/job.
-* **`chat_messages`**: Chat text records sent over WebSocket.
-* **`reviews`**: Provider rating entries (1–5 stars, review comment).
-* **`disputes`**: Conflict resolution tickets raised by users.
-* **`notifications`**: Persistent in-app user notifications.
-* **`admin_notifications`**: Platform alert feed for administrators.
+### Migration Strategy & Technical Inconsistency Risk
+
+- **Current Implementation:** Services such as `user-service`, `request-service`, and `job-service` include formal SQL migration scripts via **Flyway** (e.g., `V1__init.sql`, `V8__add_listing_feed_fields.sql`).
+- **Inconsistency Risk:** Several service `application.yml` files simultaneously define `spring.jpa.hibernate.ddl-auto: update` (or `validate`). 
+  - **BLUNT RISK ASSESSMENT:** Mixing auto-DDL updates with versioned Flyway scripts across multiple microservices connecting to the same physical database is a **major technical risk**. In staging/production, concurrent startup of microservices can cause table locks, race conditions, and unversioned schema drift. All production profiles must strictly enforce `ddl-auto: validate` with Flyway as the sole source of schema mutations.
 
 ---
 
 ## 3. API Surface
 
-### REST Endpoints Inventory
+### Core REST Endpoints Inventory
 
-#### 1. Auth Service (`auth-service`, Port 8087)
-| Method | Path | Auth Requirement | Request / Response Summary | Description |
-|---|---|---|---|---|
-| `POST` | `/auth/register` | Public | Body: `{ email, password, fullName, role }` | Register student or provider account |
-| `POST` | `/auth/login` | Public | Body: `{ email, password }` -> Returns `{ accessToken, refreshToken, user }` | Authenticate user & issue tokens |
-| `POST` | `/auth/refresh` | Public | Body: `{ refreshToken }` -> Returns `{ accessToken, refreshToken }` | Rotate refresh token and issue new access token |
-| `GET` | `/auth/verify-email` | Public | Query: `?token=...` | Verify student email link |
-| `GET` | `/auth/check-status` | Public | Query: `?email=...` | Returns role & verification status for an email |
-| `POST` | `/auth/resend-verification` | Public | Body: `{ email }` | Re-send verification link |
-| `POST` | `/auth/upload-id` | Authorized | Multipart: `file` | Upload student ID card photo |
-| `POST` | `/admin/verification/{userId}/approve` | Admin Only | Path var: `userId` | Approve provider application |
-| `POST` | `/admin/verification/{userId}/reject` | Admin Only | Body: `{ reason }` | Reject provider application |
-| `GET` | `/admin/users` | Admin Only | Response: List of user objects | List all registered users |
-| `GET` | `/admin/counts` | Admin Only | Response: Summary metrics | System aggregate counts |
+#### `auth-service` (`/auth/**`)
+| Method | Endpoint Path | Auth Req | Request Body / Params | Response Shape | Responsible Service |
+| :--- | :--- | :---: | :--- | :--- | :--- |
+| `POST` | `/auth/login` | Public | `{"email", "password"}` | `{"token", "userId", "role", "expiresIn"}` | `auth-service` |
+| `POST` | `/auth/register/client` | Public | `{"email", "password", "fullName", ...}` | `{"message", "userId"}` | `auth-service` |
+| `POST` | `/auth/register/provider` | Public | `{"email", "password", "category", ...}`| `{"message", "userId", "status"}` | `auth-service` |
+| `POST` | `/auth/verify-email` | Public | `{"token"}` | `{"status": "VERIFIED"}` | `auth-service` |
 
-#### 2. User Service (`user-service`, Port 8083)
-| Method | Path | Auth Requirement | Request / Response Summary | Description |
-|---|---|---|---|---|
-| `GET` | `/users/{id}` | Authorized | Response: `UserProfileDTO` | Get public user profile |
-| `PUT` | `/users/{id}/profile` | Authorized | Body: Profile fields | Update bio / profile information |
-| `POST` | `/users/{id}/profile-picture` | Authorized | Multipart `file` | Upload profile image |
-| `GET` | `/providers` | Authorized | Query: `?category=...` | List approved service providers |
-| `POST` | `/providers/{id}/services` | Authorized | Body: `{ categoryId, basePrice }` | Add service listing to provider |
-| `POST` | `/providers/{id}/portfolio` | Authorized | Multipart `files` | Upload portfolio photos |
+#### `user-service` (`/users/**`, `/providers/**`)
+| Method | Endpoint Path | Auth Req | Request Body / Params | Response Shape | Responsible Service |
+| :--- | :--- | :---: | :--- | :--- | :--- |
+| `GET` | `/users/providers` | Protected | Query: `category`, `search`, `page`, `size` | `PaginatedList<UserProfileResponse>` (Hero photo, verified badge, rating, view count, isSaved) | `user-service` |
+| `GET` | `/users/providers/{id}` | Protected | Path: `id` | `UserProfileResponse` (Atomically increments view count, returns tenure year) | `user-service` |
+| `POST` | `/users/providers/{id}/save` | Protected | None | `{"status": "SAVED"}` (Idempotent toggle) | `user-service` |
+| `DELETE`| `/users/providers/{id}/save` | Protected | None | `{"status": "UNSAVED"}` | `user-service` |
+| `POST` | `/users/providers/{id}/report`| Protected| `{"reason", "details"}` | `{"status": "REPORTED"}` (Rate-limited, duplicate prevention)| `user-service` |
+| `GET` | `/users/providers/{id}/listings`| Protected| Path: `id` | `List<ProviderServiceResponse>` | `user-service` |
+| `POST` | `/providers/{id}/services` | Protected | `{"title", "category", "basePrice", ...}`| `ProviderServiceResponse` (**Enforces strict category approval**) | `user-service` |
+| `PUT` | `/providers/{id}/services/{sId}`| Protected| `{"title", "basePrice", ...}` | `ProviderServiceResponse` | `user-service` |
+| `DELETE`| `/providers/{id}/services/{sId}`| Protected| None | HTTP 204 No Content | `user-service` |
+| `POST` | `/users/{id}/portfolio` | Protected | `MultipartFile file` | `{"url": "/users/files/..."}` (Syncs User & ProviderProfile) | `user-service` |
+| `GET` | `/users/files/{filename}` | Public | Path: `filename` | Binary image stream | `user-service` |
 
-#### 3. Request Service (`request-service`, Port 8082)
-| Method | Path | Auth Requirement | Request / Response Summary | Description |
-|---|---|---|---|---|
-| `GET` | `/categories` | Public | Response: List of category items | Get canonical service categories |
-| `POST` | `/requests` | Authorized | Body: Service request payload | Create new errand posting |
-| `GET` | `/requests` | Authorized | Query: status/category filters | List open service requests |
-| `GET` | `/requests/{id}` | Authorized | Response: Request details + offers | Get request details and bid offers |
-| `POST` | `/requests/{id}/offers` | Provider | Body: `{ price, eta, message }` | Submit a bid offer |
-| `PUT` | `/requests/{id}/offers/{offerId}/accept` | Client | Path vars: `id`, `offerId` | Accept offer (locks escrow & creates job) |
+#### `request-service` (`/requests/**`, `/categories/**`)
+| Method | Endpoint Path | Auth Req | Request Body / Params | Response Shape | Responsible Service |
+| :--- | :--- | :---: | :--- | :--- | :--- |
+| `GET` | `/categories` | Protected | None | `List<ServiceCategory>` | `request-service` |
+| `POST` | `/requests` | Protected | `{"title", "categoryId", "budget", ...}`| `ServiceRequestResponse` | `request-service` |
+| `GET` | `/requests` | Protected | Query: `status`, `category` | `PaginatedList<ServiceRequestResponse>`| `request-service` |
+| `POST` | `/requests/{id}/offers` | Protected | `{"proposedPrice", "message"}` | `OfferResponse` (Provider bid) | `request-service` |
+| `POST` | `/requests/{id}/offers/{oId}/accept`| Protected| None | `{"status": "ACCEPTED", "jobId": "..."}` | `request-service` |
 
-#### 4. Job Service (`job-service`, Port 8084)
-| Method | Path | Auth Requirement | Request / Response Summary | Description |
-|---|---|---|---|---|
-| `POST` | `/jobs` | Internal Only | Body: Job creation payload | Initialize job contract (called by Request Service) |
-| `PUT` | `/jobs/{id}/start` | Authorized | Path var: `id` | Mark job state as IN_PROGRESS |
-| `POST` | `/jobs/{id}/proofs` | Authorized | Multipart files + notes | Upload job completion proof |
-| `PUT` | `/jobs/{id}/complete` | Client | Body: `{ completionCode }` (if on-site) | Complete job & release escrow to provider |
-| `PUT` | `/jobs/{id}/dispute` | Authorized | Body: `{ reason }` | Mark job as DISPUTED |
-| `PUT` | `/admin/jobs/{id}/force-complete` | Admin Only | Body: `{ reason }` | Force complete job and release funds |
-| `PUT` | `/admin/jobs/{id}/force-cancel` | Admin Only | Body: `{ reason }` | Force cancel job and refund client |
+#### `job-service` (`/jobs/**`)
+| Method | Endpoint Path | Auth Req | Request Body / Params | Response Shape | Responsible Service |
+| :--- | :--- | :---: | :--- | :--- | :--- |
+| `GET` | `/jobs` | Protected | Query: `role`, `status` | `List<JobResponse>` | `job-service` |
+| `POST` | `/jobs/{id}/start` | Protected | None | `{"status": "IN_PROGRESS"}` (Locks escrow) | `job-service` |
+| `POST` | `/jobs/{id}/complete` | Protected | None | `{"status": "COMPLETED"}` (Triggers payout)| `job-service` |
+| `POST` | `/jobs/{id}/reviews` | Protected | `{"rating", "comment"}` | `ReviewResponse` | `job-service` |
 
-#### 5. Payment Service (`payment-service`, Port 8085)
-| Method | Path | Auth Requirement | Request / Response Summary | Description |
-|---|---|---|---|---|
-| `POST` | `/wallet/deposit` | Authorized | Body: `{ amount }` -> Returns Paystack URL | Initialize Paystack deposit checkout |
-| `POST` | `/payments/webhook` | Public | Paystack webhook event payload | Handle Paystack deposit confirmation |
-| `POST` | `/wallet/create` | Internal Only | Body: `{ userId }` | Initialize student and provider wallets |
-| `POST` | `/payments/escrow/lock` | Internal Only | Body: `{ userId, amount, jobId }` | Lock student funds into escrow (`held_balance`) |
-| `PUT` | `/payments/release` | Internal Only | Body: `{ jobId }` | Release escrow funds to provider balance |
-| `PUT` | `/payments/escrow/split` | Admin Only | Body: `{ jobId, clientAmount, providerAmount }` | Split disputed funds between parties |
-| `PUT` | `/payments/refund` | Internal Only | Body: `{ jobId }` | Refund escrow balance to student |
-| `GET` | `/payments/student/wallet` | Authorized | Response: `StudentWalletDTO` | Get client wallet balance & ledger |
-| `GET` | `/payments/provider/wallet` | Authorized | Response: `ProviderWalletDTO` | Get provider earnings wallet & ledger |
-| `POST` | `/payments/provider/wallet/withdraw` | Authorized | Body: `{ amount, payoutMethodId }` | Process provider earnings payout |
+#### `payment-service` (`/wallet/**`, `/payments/**`)
+| Method | Endpoint Path | Auth Req | Request Body / Params | Response Shape | Responsible Service |
+| :--- | :--- | :---: | :--- | :--- | :--- |
+| `GET` | `/wallet` | Protected | None | `{"balance", "currency", "escrowBalance"}`| `payment-service` |
+| `POST` | `/wallet/deposit` | Protected | `{"amount", "reference"}` | `{"status": "SUCCESS", "newBalance"}` | `payment-service` |
+| `POST` | `/wallet/withdraw` | Protected | `{"amount", "accountNumber", "bank"}` | `{"status": "PENDING"}` | `payment-service` |
 
-#### 6. Supporting Service (`supporting-service`, Port 8086)
-| Method | Path | Auth Requirement | Request / Response Summary | Description |
-|---|---|---|---|---|
-| `GET` | `/chats/thread/request/{requestId}` | Authorized | Path var: `requestId` | Fetch chat thread ID for request |
-| `GET` | `/chats/history/{threadId}` | Authorized | Path var: `threadId` | Get message history for chat thread |
-| `POST` | `/location/task/{taskId}/arrive` | Authorized | Path var: `taskId` | Report provider arrival at location |
-| `GET` | `/location/reverse-geocode` | Authorized | Query: `?lat=...&lng=...` | Reverse geocode coordinates via Google Maps |
-| `GET` | `/location/places-autocomplete` | Authorized | Query: `?input=...` | Address search autocomplete |
-| `GET` | `/location/static-map` | Authorized | Query: coordinates | Returns PNG map image bytes |
-| `POST` | `/disputes` | Authorized | Body: `{ jobId, reason }` | Create a dispute ticket |
-| `GET` | `/notifications` | Authorized | Response: List of notifications | Get user notification feed |
+### STOMP & WebSocket Destinations (`supporting-service` on Port 8086 / `/ws`)
 
----
+| Destination Pattern | Type | Who Can Subscribe | What Triggers a Message |
+| :--- | :---: | :--- | :--- |
+| `/topic/chat.{roomId}` | Subscribe | Participants of `roomId` | Chat message sent via `/app/chat.send`. |
+| `/topic/notifications.{userId}`| Subscribe | Target `userId` | System alerts (job assignment, dispute update, payment receipt). |
+| `/topic/provider.{providerId}` | Subscribe | Any student viewing listing | Profile updates, view count changes, new ad services published. |
+| `/app/chat.send` | Send | Authenticated user | Client payload containing message text, sender ID, and room ID. |
 
-### WebSocket & STOMP Destinations
+### Asynchronous Message Queue Events (RabbitMQ)
 
-Clients connect to STOMP WebSockets via `/ws/chats` (Gateway Port 8080) or directly to port `8086` (`/chats/ws/connect`).
-
-#### STOMP Topics & Access Rules:
-1. **`/topic/chat/{threadId}`**: Chat messages. Enforced: Only conversation participants allowed.
-2. **`/topic/task/{taskId}/provider-location`**: Provider GPS updates. Enforced: Job client and provider allowed.
-3. **`/topic/user/{userId}/notifications`**: Push-type user alerts. Enforced: Target `userId` allowed.
-4. **`/topic/user/{userId}/status`**: Verification approval/rejection alerts. Enforced: Target `userId` allowed.
-5. **`/topic/user/{userId}/completion-code`**: 6-digit OTP code broadcasts. Enforced: Target `userId` allowed.
-6. **`/topic/admin/notifications`**: System admin alerts. Enforced: Requires `ADMIN` role.
-7. **`/topic/announcements`**: Broadcast announcements. Public / All authenticated users.
-8. **`/topic/provider/{providerId}/job-updates`**: Dashboard job state changes. *Unprotected.*
-9. **`/topic/job.{jobId}.status`**: Real-time job status updates. *Unprotected.*
-
----
-
-### Async Events (RabbitMQ Queue & Exchange Mapping)
-
-| Queue / Exchange | Publisher | Consumer | Payload Structure | Action Triggered |
-|---|---|---|---|---|
-| `job-status-queue` | `job-service` | `supporting-service` | `{ jobId, status, requesterId, providerId, requestId, completionCode }` | Creates in-app notifications, unlocks chat threads, and updates job counters |
-| `provider_verification_queue` | `auth-service` | `supporting-service` | `{ providerId, status, reason }` | Persists notification record and pushes STOMP alert to `/topic/user/{userId}/status` |
-| `admin_notifications_queue` | `auth-service`, `request-service`, `job-service` | `supporting-service` | `{ type, entityId, summary, severity }` | Saves admin alert and broadcasts to `/topic/admin/notifications` |
-| `provider.verification` | `auth-service` | `user-service` | `{ providerId, status, reason }` | Syncs approval status in `ProviderProfile` |
-| `user.status.updated` | `auth-service` | `user-service` | `{ userId, status }` | Updates provider profile state on user suspension/ban |
-| `provider.review.submitted` | `supporting-service` | `user-service` | `{ providerId, rating }` | Recalculates and updates provider average star rating |
-| `user.deleted` | `auth-service` | `user-service` | `{ userId }` | Sets provider profile approval status to DELETED |
+| Event Topic / Queue | Publisher | Consumer(s) | Payload Shape |
+| :--- | :--- | :--- | :--- |
+| `job.exchange` → `job.status.queue` | `job-service` | `supporting-service`, `payment-service` | `{"jobId", "studentId", "providerId", "status", "timestamp"}` |
+| `provider.verification.queue` | `user-service`| `supporting-service`, `auth-service` | `{"providerId", "status": "APPROVED", "category"}` |
 
 ---
 
 ## 4. Authentication & Authorization
 
-### End-to-End Authentication Flow
-1. **Credentials Validation:** Auth Service checks KNUST email and BCrypt-hashed password.
-2. **JWT Issuance:** Auth Service generates an HS256 JWT containing `sub` (User ID) and `role` claims, along with a secure refresh token.
-3. **Gateway Verification:** `api-gateway` executes `JwtValidationGatewayFilterFactory` on non-public endpoints. It checks token signature, verifies the user is not in the in-memory `revokedUsers` deny-list, and rejects tokens marked `pendingVerification`.
-4. **Identity Header Injection:** Upon successful token validation, the Gateway mutates downstream requests by injecting:
-   - `X-User-Id`: Authenticated user ID string
-   - `X-User-Role`: Active user role (`STUDENT`, `PROVIDER`, `ADMIN`)
-   - `X-Internal-Auth`: Shared internal secret key
-5. **Downstream Execution:** Microservices read `X-User-Id` and `X-User-Role` from HTTP headers without re-verifying the JWT signature.
+### End-to-End Identity Propagation
 
-### Role-Based Access Control
-* **Gateway Level:** Intercepts routes matching `/admin/**`. Rejects requests with HTTP `403 Forbidden` if `X-User-Role` is not `ADMIN`.
-* **Dual Roles:** Users can hold both `STUDENT` and `PROVIDER` roles. The active mode is determined by `users.active_role_view`, which controls the `X-User-Role` claim set in generated JWTs.
-* **Microservice Level:** Microservices check `X-User-Role` for role-specific operations (e.g. `request-service` ensures only providers can call `/requests/{id}/offers`).
+1. **Token Issuance:** When a user logs in via `/auth/login`, `auth-service` validates their credentials against `auth_users` and verifies that student emails match `@st.knust.edu.gh`. It signs a stateless JWT (HMAC-SHA256 using `JWT_SECRET`) embedding claims: `sub` (user UUID), `email`, and `roles` (`STUDENT`, `PROVIDER`, `ADMIN`).
+2. **Gateway Interception:** The client includes `Authorization: Bearer <token>` on all requests. The `api-gateway` intercepts the call via `JwtAuthenticationFilter`.
+3. **Stateless Verification:** The gateway verifies token signature and expiration without making synchronous database calls.
+4. **Header Injection:** Upon successful validation, the gateway strips the `Authorization` header (to prevent spoofing downstream) and injects explicit trusted HTTP headers before forwarding the request to internal microservices:
+   - `X-User-Id`: User UUID
+   - `X-User-Email`: Student/Provider Email
+   - `X-User-Role`: Active Role (`STUDENT`, `PROVIDER`, `ADMIN`)
 
----
+### Role-Based Access Enforcement
 
-## 5. Frontend (Mobile App)
-
-The mobile client is an Expo-managed React Native app located in `/mobile`.
-
-### Screen Inventory
-
-#### 1. Auth & Onboarding Flow
-* `RoleSelectScreen`: Choose between Student signup and Provider signup.
-* `SignInScreen`: Login form for credentials.
-* `ClientSignUpScreen` & `ProviderSignUpScreen`: Registration forms for student/provider roles.
-* `VerifyEmailScreen`: Awaits deep-link email verification.
-* `IdCaptureScreen`: Camera and file picker for student ID card uploads.
-* `CategorySelectScreen`: Multi-select picker for provider service categories.
-* `PendingApprovalScreen`: Polling view for pending provider approval.
-* `RejectedApplicationScreen`: Displays rejection feedback with ID re-upload capabilities.
-* `AccountRestrictedScreen`: Display blocker for suspended or banned users.
-
-#### 2. Student Core Flow (`AppTabs`)
-* `HomeScreen`: Category grid, active request feed, notification entry point.
-* `PostRequestScreen`: Errand creation form with map pin picker, budget sliders, and timing modes.
-* `SelectProviderScreen`: Provider search and category filtering browser.
-* `RequestDetailsScreen`: Request details, submitted provider offers, bid acceptance.
-* `ActiveJobScreen`: Active job tracking, 6-digit OTP completion code display, static map routing.
-* `RateProviderScreen` / `ReviewSubmissionScreen`: Star rating and comment submission form.
-
-#### 3. Provider Core Flow (`ProviderNavigator`)
-* `ProviderDashboardHomeScreen`: Daily earnings stats, matching nearby request feed.
-* `IncomingRequestsScreen`: New errand lead list.
-* `ProviderJobListScreen`: Filterable job list (Active, Proof Submitted, Completed).
-* `CreateEditListingScreen`: Base price and service category configuration panel.
-* `RequestDetailForProviderScreen`: Detailed request view with bid offer submission modal.
-
-#### 4. Settings, Chat & Wallet
-* `StudentWalletScreen`: Client deposit wallet, escrow held balance, transaction history.
-* `ProviderWalletScreen`: Provider earnings wallet, payout withdrawal triggers, ledger history.
-* `DepositScreen` & `WithdrawalScreen`: Paystack deposit integration and MoMo withdrawal forms.
-* `TransactionReceiptScreen` & `WalletReceiptScreen`: Detailed transaction receipt view.
-* `ChatScreen`: STOMP real-time messaging screen between client and provider.
-* `SettingsScreen`: User profile details, avatar upload, role switching, dark mode toggle.
-
-### State Management
-* **Global Auth Store (`authStore.ts`):** Built with **Zustand**, persisted locally via `expo-secure-store`. Manages `accessToken`, `refreshToken`, `user` object, and active `roleMode`. Handles active view switching (`/auth/users/me/active-role-view`).
-* **Server State:** Handled by **TanStack React Query v5** for caching request feeds, job lists, notifications, and profile details.
-* **Local Component State:** Native `useState` for form fields, modal visibility, and map viewport coordinates.
-
-### Navigation Structure
-`AppNavigator.tsx` serves as the root router:
-- Unauthenticated -> Auth Stack (`SignInScreen`, `SignUpScreen`, etc.)
-- Account Status `SUSPENDED` -> `AccountRestrictedScreen`
-- `primaryRoleVerified === false` -> `IdCaptureScreen` / `PendingApprovalScreen`
-- Active View `PROVIDER` -> `ProviderNavigator` (Bottom Tabs: Home, Requests, Jobs, Earnings, Account)
-- Active View `STUDENT` -> `AppTabs` (Bottom Tabs: Explore, Requests, Escrow Wallet, Account)
-
-### Design System Colors (`colors.ts`)
-* **Primary Brand Blue:** `#004E98` (Dark Mode: `#3A6EA5`)
-* **Secondary Blue:** `#3A6EA5` (Dark Mode: `#5A8EC5`)
-* **Accent Orange:** `#FF6700` (Dark Mode: `#FF8534` - Primary action buttons)
-* **Backgrounds:** Light Gray `#EBEBEB` (Light Mode) vs Dark Navy `#0D1B2A` (Dark Mode)
-* **Cards:** White `#FFFFFF` (Light Mode) vs Slate `#1A2A3E` (Dark Mode)
-* **Borders:** `#C0C0C0` (Light Mode) vs `#2E4060` (Dark Mode)
+- **Gateway Level:** Basic routing guards prevent unauthenticated requests from accessing `/users/**`, `/jobs/**`, or `/wallet/**`.
+- **Service Level:** Business logic gating is strictly enforced inside microservice controllers and services:
+  - **Strict Category Restriction:** In `UserController.java`, when a provider attempts to post or edit a service listing (`POST/PUT /providers/{id}/services`), the backend compares the target category against `user.getServiceCategory()`. If an approved provider attempts to post listings outside their approved category, the server returns HTTP `403 Forbidden` (`"You are approved strictly for category: X"`).
+  - **Admin Enforcement:** All endpoints under `/admin/**` or administrative endpoints in core services check `request.getHeader("X-User-Role").equals("ADMIN")`.
 
 ---
 
-## 6. Admin Panel
+## 5. Student Marketplace Feed & Provider Service Listings Architecture (Deep Dive)
 
-The Next.js admin dashboard is located in `/campusserv-admin`.
+This section documents the end-to-end implementation of the student discovery feed and provider service ad listings across the PostgreSQL database, Java Spring Boot backend, and React Native frontend.
 
-### Route & Page Inventory
-* **`/login`**: Admin authentication form (`admin@campusserv.com`).
-* **`/` (Dashboard)**: Metric cards (Total Users, Active Jobs, Total Escrow) with Recharts trend charts.
-* **`/verification` & `/providers`**: Provider verification queue with lightbox viewer for student ID cards and Approve/Reject controls.
-* **`/users`**: User list with status toggles (Active, Suspend, Ban).
-* **`/jobs`**: Active job monitor with **Force Complete** and **Force Cancel** action modals (requires mandatory audit reason).
-* **`/categories`**: Category management (Add/edit categories, icons, and colors).
-* **`/disputes`**: Dispute ticket management table.
-* **`/finance`**: Transaction ledger and escrow tracking auditor.
-* **`/announcements`**: System broadcast announcement creation form.
-* **`/reports`**: Metric summaries and platform reports.
+### 1. Database Schema & Data Synchronization
+- **`provider_services` Table (`user-service`):** Stores provider ad offerings. Fields: `id` (UUID, PK), `provider_id` (UUID, FK to `users`), `category_id` (String), `title` (String), `description` (Text), `base_price` (BigDecimal in GHS), `is_active` (Boolean), `created_at` (Timestamp).
+- **`provider_key_services` Table:** Element collection storing short badge tags (e.g., `24hr Turnaround`, `Express Delivery`, `Certified Pro`) linked to provider IDs.
+- **`saved_listings` Table:** Stores student bookmarking interactions. Unique constraint on `(user_id, provider_id)` ensuring idempotent toggles without duplicate rows.
+- **`listing_reports` Table:** Moderation reports submitted by students. Fields: `reporter_id`, `provider_id`, `reason`, `details`, `created_at`.
+- **Portfolio & Photo Data Synchronization:** When providers upload images via `POST /users/{id}/portfolio`, files are stored on disk in `/users/files/**` via `FileStorageService`. The backend updates both `User.portfolio` (list of strings) and `ProviderProfile.portfolioUrls` (comma-separated string), eliminating data fragmentation between general user profiles and seller listing carousels.
+
+### 2. Backend API Surface & Enforcement Logic (`user-service`)
+- **Feed Discovery Endpoint (`GET /api/users/providers`):**
+  - *Query Parameters:* `category` (optional filter), `search` (keyword search against full name, bio, and key services), `page`, `size`.
+  - *Response Model (`UserProfileResponse`):* Returns hero photo (`avatarUrl` or first portfolio image), verified checkmark status, star rating (`rating`), total completed jobs, live view count (`viewCount`), and an `isSaved` boolean (calculated by checking if a record exists in `saved_listings` for the calling user's `X-User-Id`).
+- **Bisame-Style Detail Endpoint (`GET /api/users/providers/{id}`):**
+  - Automatically and atomically increments `viewCount` in `ProviderProfile` upon each GET request.
+  - Returns seller tenure calculation (e.g., `Member since 2025`).
+- **Service Listings CRUD & Strict Category Gating (`POST/PUT/DELETE /providers/{id}/services`):**
+  - *Strict Category Enforcement:* When a provider creates (`POST`) or edits (`PUT`) a listing, `UserController` fetches the provider's approved `serviceCategory` from `users.service_category`. If the submitted listing `category` does not match their approved domain, the server rejects the request with HTTP `403 Forbidden` (`"You are approved strictly for category: X. You cannot post listings in other categories."`).
+- **Idempotent Bookmarking:** `POST /users/providers/{id}/save` and `DELETE /users/providers/{id}/save` add/remove rows in `saved_listings`.
+- **Community Spam & Moderation Reporting:** `POST /users/providers/{id}/report` stores user complaints in `listing_reports` with rate-limiting and duplicate check prevention.
+
+### 3. Mobile Frontend Implementation (`mobile/`)
+- **Student Discovery & Feed Rendering:**
+  - **`CategoryProvidersScreen.tsx` & `HomeScreen.tsx`:** Fetches provider feeds via TanStack React Query (`useQuery`). Filters dynamically by category pills and search inputs.
+  - **`ProviderFeedCard.tsx`:** High-trust compact marketplace card design.
+    - *URL Normalization (`getFullImageUrl`):* Automatically converts relative backend file paths (`/users/files/xxx.jpg`) into full network HTTP URLs using `EXPO_PUBLIC_API_URL` / `BASE_URL`.
+    - *Visual Badging:* Displays an emerald green **"Verified Pro"** badge with checkmark (`#10B981`) for approved sellers, star rating badge (`RatingBadge`), view count (`x views`), and up to 3 quick specialty chips.
+    - *Optimistic Save Toggle:* Interactive heart bookmark button that toggles local UI state instantly before confirming with backend save/unsave APIs.
+- **Full Bisame-Style Marketplace Listing Page:**
+  - **`ListingDetailScreen.tsx`:**
+    - *Interactive Photo Carousel Selector:* Swipeable gallery rendering all images in `portfolioUrls` with thumbnail selectors.
+    - *3 Direct Action CTAs:*
+      1. **Chat:** Navigates directly to `ChatScreen` with a pre-configured STOMP chat session between student and provider.
+      2. **Call Now:** Launches the mobile operating system's native phone dialer (`tel:${phoneNumber}`).
+      3. **Request Quote:** Opens a custom project specification modal that pre-populates the target provider ID and service listing to initiate an order.
+    - *3-Tab View Architecture:*
+      1. **Description:** Provider bio, contact WhatsApp number, seller tenure, and verified credentials.
+      2. **Key Services & Pricing:** List of active `ProviderService` cards with title, description, and base price in GHS, plus specialty tag badges.
+      3. **Reviews:** Chronological feedback and ratings from verified completed jobs.
+    - *Real-Time STOMP Socket Subscriptions:* Subscribes to `/topic/provider.${providerId}`. When a seller updates their pricing, bio, or uploads new photos, the listing detail screen refreshes dynamically without reloading.
+- **Provider Management & Posting Experience:**
+  - **`MyListingsScreen.tsx`:** Dedicated `"Listings"` bottom tab in the Provider dashboard. Renders active/inactive services with quick edit and delete triggers.
+  - **`CreateEditListingScreen.tsx`:**
+    - Comprehensive form capturing Title, Description, Base Price (GHS), WhatsApp contact number, detailed Bio textarea, and 10 one-tap specialty badge chips + custom tag adder.
+    - *Photo Upload Gallery:* Integrates `expo-image-picker` to select up to 6 work sample photos from device gallery or camera, uploading via multipart form data to `POST /users/{id}/portfolio`.
+    - *Visual Category Locking:* Reads the seller's approved category from `authStore`. In category selection controls, unapproved categories are rendered with dimmed opacity (`0.45`) and a padlock icon. Tapping a locked category displays an immediate Toast notice explaining category enforcement rules.
+  - **`ProviderDashboardHomeScreen.tsx`:** Features a prominent **"Marketplace Listings & Services"** hero banner (`+ Post New Service` and `Manage All Services`) directing sellers to create and govern their offerings.
 
 ---
 
-## 7. Features: Implemented vs. Partially Implemented vs. Stubbed
+## 6. Frontend (React Native Mobile App)
 
-### Fully Implemented
-1. **JWT Auth & Session Rotation:** BCrypt hashing, JWT generation, Gateway validation, header mutation (`X-User-Id`, `X-User-Role`), and refresh token rotation.
-2. **Role Verification Gate:** Onboarding routing gate blocking unverified or restricted accounts from accessing protected views.
-3. **Provider Upgrade Flow:** Provider application, student ID photo upload, category selection, and admin approval queue.
-4. **Split Wallet Ledger:** Separate `StudentWallet` (escrow holds) and `ProviderWallet` (withdrawable earnings) with append-only ledger transaction logging.
-5. **Job Lifecycle & Escrow:** Task posting, provider bidding, offer acceptance, escrow locking, completion proof uploads, and OTP code release validation.
-6. **Admin Audit Actions:** Force Complete and Force Cancel operations requiring mandatory written audit reasons.
+The mobile client (`mobile/`) is a dual-role React Native (Expo) application. Students can seamlessly switch to their Provider Dashboard if approved.
 
-### Partially Implemented
-1. **Paystack Payment Integration:** Deposit checkout URLs initialize successfully; webhooks and withdrawals are simulated in local development because Paystack webhooks require a public URL (ngrok/Cloudflare tunnel) to hit `http://localhost:8085`.
-2. **Location Services:** Static map rendering and Google Maps directions links are active; continuous background live GPS tracking falls back to foreground polling due to mobile OS background restrictions.
+### Comprehensive Screen Inventory (48 Screens)
 
-### Stubbed / Scaffolded
-1. **`OtpVerifyScreen`:** Mobile screen is scaffolded; email verification is handled via direct deep-link clicking (`/auth/verify-email`).
-2. **Admin Reports Export:** Report data visualizations render in UI, but PDF/CSV file export triggers return placeholder alerts.
+#### 1. Authentication & Onboarding Flow (`src/screens/auth/`)
+- **`SignInScreen.tsx`**: Email/password login form with secure token persistence in SecureStore.
+- **`ClientSignUpScreen.tsx`**: Student registration requiring valid `@st.knust.edu.gh` email domain.
+- **`ProviderSignUpScreen.tsx`**: Multi-step registration for service providers and freelancers.
+- **`CategorySelectScreen.tsx`**: Selection grid for providers to choose their primary service specialization.
+- **`IdCaptureScreen.tsx`**: KNUST Student ID card camera capture for provider verification.
+- **`ProviderBioScreen.tsx`**: Onboarding step for providers to input bio, skills, and base rates.
+- **`ProviderReviewScreen.tsx`**: Summary verification screen before application submission.
+- **`PendingApprovalScreen.tsx`**: Status waiting screen for providers whose applications are under admin review.
+- **`RejectedApplicationScreen.tsx`**: Notice screen displaying admin rejection reasons with re-application option.
+- **`AccountRestrictedScreen.tsx`**: Lockout screen shown when an account is suspended for policy violations.
+- **`RoleSelectScreen.tsx`**: Initial onboarding choice between Student Client and Service Provider flows.
+- **`IdUploadScreen.DEPRECATED.tsx`**: *Stubbed/Deprecated scaffold* replaced by `IdCaptureScreen.tsx`.
+
+#### 2. Student Client Core Flow (`src/screens/core/`)
+- **`HomeScreen.tsx`**: Student dashboard featuring category pills, search bar, active job banners, and top-rated provider feed.
+- **`CategoryProvidersScreen.tsx`**: Marketplace listing feed filtered by category, rendering high-trust `ProviderFeedCard` components.
+- **`SearchScreen.tsx`**: Global search interface for finding providers, service requests, or specific offerings.
+- **`SelectProviderScreen.tsx`**: Selection screen when reviewing multiple provider bids on a student's service request.
+- **`PostRequestScreen.tsx`**: Multi-step form for students to post custom errand/service requests with budget and location.
+- **`MyRequestsScreen.tsx`**: List view of student's posted requests grouped by status (`OPEN`, `ASSIGNED`, `COMPLETED`).
+- **`RequestDetailsScreen.tsx`**: Comprehensive request view showing provider bids (`offers`), timeline, and contract acceptance CTA.
+- **`ActiveJobScreen.tsx`**: Live execution tracking screen for an ongoing contract, featuring escrow status, chat button, and completion confirmation.
+- **`ActiveNavigationScreen.tsx`**: Map-based tracking view for delivery/errand jobs.
+- **`RiderLiveTrackingScreen.tsx`**: Location monitoring screen displaying provider GPS progress toward campus destination.
+- **`RateProviderScreen.tsx`**: Post-job rating modal with 1-5 star selector and written review submission.
+- **`ReviewSubmissionScreen.tsx`**: Success confirmation screen after submitting provider feedback.
+- **`RaiseDisputeScreen.tsx`**: Conflict initiation form to freeze escrow funds and alert admin moderation.
+- **`DisputeThreadScreen.tsx`**: Arbitration messaging interface between student, provider, and admin mediator.
+- **`NotificationCenterScreen.tsx`**: Chronological feed of system alerts, bid notifications, and payment receipts.
+- **`ProviderProfileScreen.tsx`**: Public seller view showing verified badge, bio, reviews, and completed job metrics.
+
+#### 3. Service Provider Flow (`src/screens/provider/`)
+- **`ProviderDashboardHomeScreen.tsx`**: Provider command center showing earnings summary, active order queue, and prominent **"Marketplace Listings & Services"** quick-action banner (`+ Post New Service`).
+- **`MyListingsScreen.tsx`**: Dedicated management hub for the seller's active ad services and offerings (registered as core `"Listings"` tab).
+- **`ListingDetailScreen.tsx`**: Full Bisame-style marketplace listing page with interactive photo carousel selector, seller tenure, view count auto-increment, 3 direct CTAs (**Chat**, **Call Now**, **Request Quote**), and 3-tab layout (**Description**, **Key Services & Pricing**, **Reviews**).
+- **`CreateEditListingScreen.tsx`**: Comprehensive service posting/editing form featuring Contact/WhatsApp number, detailed bio textarea, 10 one-tap specialty badge chips, image upload gallery, and **visual category locking** (dimmed opacity `0.45` + padlock icons for unapproved categories).
+- **`IncomingRequestsScreen.tsx`**: Feed of open student service requests matching the provider's approved category.
+- **`RequestDetailForProviderScreen.tsx`**: Detailed view of a student request allowing providers to submit competitive bids (`offers`).
+- **`ProviderJobListScreen.tsx`**: Order management screen tracking `PENDING_START`, `IN_PROGRESS`, and `COMPLETED` contracts.
+
+#### 4. Real-Time Chat & Communication (`src/screens/chat/`)
+- **`ChatScreen.tsx`**: Real-time messaging interface powered by STOMP/WebSockets, supporting text messages and image sharing.
+
+#### 5. Financial & Wallet Flow (`src/screens/wallet/`)
+- **`WalletScreen.tsx`**: Central financial dashboard displaying available balance, locked escrow balance, and transaction history.
+- **`StudentWalletScreen.tsx`**: Student-tailored wallet view with instant Paystack deposit triggers.
+- **`ProviderWalletScreen.tsx`**: Provider financial view highlighting earnings breakdown and payout withdrawal controls.
+- **`DepositScreen.tsx`**: Amount input screen initiating Paystack mobile money/card payment gateways.
+- **`WithdrawalScreen.tsx`**: Payout request form capturing Mobile Money (MoMo) number or bank account details.
+- **`TransactionReceiptScreen.tsx`**: Detailed itemized receipt view for individual payment transactions.
+- **`WalletReceiptScreen.tsx`**: Summary printable ledger statement for wallet funding and withdrawals.
+
+#### 6. Settings & Preferences (`src/screens/settings/`)
+- **`SettingsScreen.tsx`**: Profile configuration, role switcher toggle, notification preferences, and account logout.
+- **`DialogPreviewScreen.tsx`**: Developer/QA preview harness for testing system modal dialogs and alert treatments.
+
+### State Management Strategy
+
+1. **Global Client State (`Zustand`):**
+   - Implemented in `authStore.ts` and `locationStore.ts`.
+   - **Why:** Lightweight, synchronous access to authentication state (`user`, `token`, `activeRole`). Persisted securely using `expo-secure-store` across app restarts without boilerplate.
+2. **Server State (`TanStack React Query`):**
+   - Used across feed components, job lists, and request views.
+   - **Why:** Handles server data caching, background refetching, pagination, and optimistic UI updates (e.g., instant bookmark icon toggling in `ProviderFeedCard` before server acknowledgment).
+3. **Local Component State (`React useState/useRef`):**
+   - Used for transient UI controls: modal openness, carousel image index selection, custom tag input typing, and form validation error messages.
+
+### Navigation Hierarchy (`AppNavigator.tsx`)
+
+- **Root Switcher:** Evaluates `isAuthenticated` and `user.approvalStatus`.
+- **Student Bottom Tabs (`ClientTabNavigator`):** `Home` (`HomeScreen`), `Requests` (`MyRequestsScreen`), `Post` (`PostRequestScreen`), `Alerts` (`NotificationCenterScreen`), `Account` (`SettingsScreen`).
+- **Provider Bottom Tabs (`ProviderTabNavigator`):** `Dashboard` (`ProviderDashboardHomeScreen`), `Listings` (`MyListingsScreen` — *wired with dedicated tab icon*), `Orders` (`ProviderJobListScreen`), `Requests` (`IncomingRequestsScreen`), `Account` (`SettingsScreen`).
+- **Modal / Push Stack:** Overlay routes accessible from either role (`ListingDetailScreen`, `RequestDetailsScreen`, `ChatScreen`, `WalletScreen`).
+
+### Design System Implementation
+
+- **Curated Palette (`colors.ts`):** Primary KNUST Blue (`#0056D2`), Emerald Green Verified/Success (`#10B981`), Slate Muted Text (`#64748B`), Dark Slate Header (`#0F172A`), Off-White Background (`#F8FAFC`).
+- **Image URL Normalization:** Implemented `getFullImageUrl()` utility in feed and detail components to transform backend relative file paths (`/users/files/xxx.jpg`) into absolute HTTP network URLs using `BASE_URL`.
+- **Reusable Core UI:** `ProviderFeedCard` (compact marketplace card with hero image, verified badge, rating, and save button), `RatingBadge`, `RoleSwitcher`.
 
 ---
 
-## 8. Known Gaps, Risks, and Technical Debt
+## 7. Admin Panel (`campusserv-admin`)
 
-1. **Schema Migration Inconsistency:** Only `auth-service` implements Flyway (`V1`–`V43`). Other services rely on Hibernate `ddl-auto: update`. Running in production with `ddl-auto: validate` will cause startup failures if tables differ.
-2. **Unprotected WebSocket Channels:** Subscriptions to `/topic/provider/{providerId}/job-updates` and `/topic/job.{jobId}.status` do not validate channel authorization, allowing authenticated users to subscribe to job events of other users.
-3. **Synchronous Inter-Service Calls Without Circuit Breakers:** Direct `@LoadBalanced RestTemplate` calls (e.g., Request Service calling Payment Service to lock escrow) lack Resilience4j circuit breakers. A failure in Payment Service causes Request Service calls to hang and fail.
-4. **In-Memory Gateway Deny-List:** `JwtValidationGatewayFilterFactory` maintains revoked users in a local `ConcurrentHashMap`. Restarting the API Gateway clears this deny-list, losing revoked token states before their natural expiration.
-5. **Missing Message Broker DLQ:** RabbitMQ queues do not configure Dead-Letter Queues (DLQs). Unhandled message processing errors will cause message loss.
-6. **Hardcoded Dev Secrets:** Insecure fallback values for `jwt.secret` and `internal.auth.secret` exist in `application.yml` for local development and must be strictly overridden in production.
+Built with Next.js 14 (App Router) and Tailwind CSS, serving as the command center for KNUST campus moderators.
+
+### Route Inventory & Capabilities
+
+- **`/(auth)/login`**: Admin authentication portal requiring `ADMIN` role credentials.
+- **`/(dashboard)/page.tsx`**: Platform analytics dashboard showing total volume, active escrow value, and pending verification counts.
+- **`/users`**: Student directory with account suspension, password reset, and activity audit tools.
+- **`/providers`**: Active provider catalog with manual category override and revocation controls.
+- **`/verification`**: Critical moderation queue for reviewing submitted KNUST student ID cards (`id_card_url`) and approving or rejecting seller applications.
+- **`/jobs`**: System-wide contract oversight displaying live status progression and escrow amounts.
+- **`/finance`**: Financial controller interface for releasing locked escrow, reviewing withdrawal requests, and monitoring Paystack ledger reconciliations.
+- **`/disputes`**: Arbitration desk allowing mediators to read dispute threads, override job outcomes, and refund escrow to students or release to providers.
+- **`/reports`**: Community moderation queue displaying user-submitted listing reports (`listing_reports`) with dismiss or listing takedown actions.
+- **`/categories`**: CRUD management catalog for campus service categories and icon assignments.
+- **`/announcements`**: Broadcast messaging tool for sending system-wide push notifications.
 
 ---
 
-## 9. Environment & Configuration
+## 8. Features Implemented vs. Partially Implemented vs. Stubbed
 
-### Backend Services & Config Variables
+### 1. Fully Working Features
+- **Dual-Role Authentication & Onboarding:** End-to-end student and provider signup, KNUST email validation, JWT authentication, and instant role switching.
+- **Marketplace Listing Feed & Detail Experience:** High-trust seller cards (`GET /users/providers`), Bisame-style listing details (`GET /users/providers/{id}`) with photo carousel selector, seller tenure calculation, view count auto-increment, and direct action CTAs (Chat, Call Now, Request Quote).
+- **Idempotent Saved Listings & Community Reporting:** Student bookmarking (`saved_listings`) and duplicate-protected listing reporting (`listing_reports`).
+- **Strict Service Category Enforcement:** Full backend and frontend gating preventing providers from creating or editing service listings outside their approved specialty (with visual padlock icons on mobile).
+- **Provider Listing & Portfolio Management:** Complete CRUD for provider ad services and multi-image portfolio work samples (`/users/files/**`).
+- **Service Request & Bidding Lifecycle:** Student request posting, provider competitive bidding (`offers`), contract acceptance, and active job progression (`PENDING_START` → `IN_PROGRESS` → `COMPLETED`).
+- **Real-Time STOMP Chat & Notifications:** Live messaging between students and providers, plus instant STOMP socket refreshes when provider profiles change.
+- **Paystack Escrow & Wallet Ledger:** Student deposits, automatic escrow locking upon job start, and automated payout release upon job completion.
 
-| Service | Port | Required Env Variables | Purpose |
-|---|---|---|---|
-| **api-gateway** | `8080` | `JWT_SECRET`, `INTERNAL_SERVICE_SECRET` | Token validation & downstream proxying |
-| **eureka-server** | `8761` | `eureka.instance.hostname` | Service discovery server |
-| **auth-service** | `8087` | `BREVO_API_KEY`, `BREVO_SENDER_EMAIL`, `EMAIL_VERIFICATION_URL` | User auth, verification emails, JWTs |
-| **user-service** | `8083` | `SPRING_DATASOURCE_URL`, `POSTGRES_PASSWORD` | User profiles & categories |
-| **request-service** | `8082` | `SPRING_DATASOURCE_URL`, `RABBITMQ_PASSWORD` | Service requests & provider bids |
-| **job-service** | `8084` | `SPRING_DATASOURCE_URL` | Job execution & OTP validation |
-| **payment-service** | `8085` | `PAYSTACK_SECRET_KEY`, `PAYSTACK_WEBHOOK_SECRET` | Wallet ledgers & escrow tracking |
-| **supporting-service**| `8086` | `GOOGLE_API_KEY`, `REDIS_HOST`, `REDIS_PORT` | WebSockets STOMP broker, Google Maps |
+### 2. Partially Working Features (Exact Gaps Specified)
+- **Live Rider / Provider Tracking (`RiderLiveTrackingScreen.tsx`):**
+  - *What exists:* The mobile UI screen is implemented, rendering a map interface and polling location coordinates.
+  - *What's missing:* Continuous background GPS telemetry broadcasting from driver/provider mobile devices is not hooked up to device background location services. Google Maps API polyline routing and turn-by-turn navigation calculation are simulated rather than connected to live mapping billing APIs.
+- **AI Support Assistant & FAQ Catalog:**
+  - *What exists:* Database tables for FAQs and emergency contacts in `supporting-service`, along with basic keyword-matching REST endpoints.
+  - *What's missing:* Integration with an external Large Language Model (e.g., OpenAI or Gemini APIs) for conversational, generative AI customer support is not implemented; responses rely strictly on static database text matching.
+- **Offline Data Sync:**
+  - *What exists:* TanStack React Query caches fetched marketplace feeds and job lists during an active app session.
+  - *What's missing:* Offline persistence across app restarts (e.g., SQLite or MMKV offline cache hydration) and background offline mutation queueing (for sending chat messages while offline) are not implemented.
 
-### Mobile Client Config (`mobile/.env`)
-* `API_BASE_URL`: Target Gateway URL (e.g. `http://10.0.2.2:8080` or tunnel URL).
-* `WS_BASE_URL`: WebSocket endpoint (`ws://10.0.2.2:8086/chats/ws/connect`).
-* `GOOGLE_MAPS_API_KEY`: Google Maps & Places API key.
-* `PAYSTACK_PUBLIC_KEY`: Paystack public client key.
+### 3. Stubbed / Scaffolded Features
+- **`IdUploadScreen.DEPRECATED.tsx`**: An early onboarding screen file preserved in the codebase as a stub/scaffold; fully superseded by the camera-enabled `IdCaptureScreen.tsx`.
+- **Admin Data Export Batch Jobs**: Several CSV/PDF report export buttons in the Next.js admin panel render UI triggers and simple frontend data dumps, but lack asynchronous background batch processing or streaming server-side document generation.
 
-### Local Setup & Startup Command Sequence
-1. **Boot Docker Containers:** Start PostgreSQL (port 5433), RabbitMQ (port 5672/15672), and Redis (port 6379):
-   ```powershell
-   docker-compose up -d
-   ```
-2. **Start Backend Microservices:**
-   ```powershell
-   cd backend
-   .\start-all-headless.ps1
-   ```
-3. **Launch Admin Dashboard:**
-   ```powershell
-   cd campusserv-admin
-   npm run dev
-   ```
-4. **Launch Expo Mobile Client:**
-   ```powershell
-   cd mobile
-   npx expo start -c
-   ```
+---
+
+## 9. Known Gaps, Risks, and Technical Debt
+
+### 1. Database Schema & Migration Inconsistency (Severe Risk)
+- **The Risk:** While `user-service`, `request-service`, and `job-service` contain versioned Flyway migration scripts, multiple service `application.yml` configurations still include `spring.jpa.hibernate.ddl-auto: update` (or `validate`). 
+- **Impact:** In a multi-service architecture sharing a single PostgreSQL instance, concurrent microservice startup with `ddl-auto: update` can trigger database table locks, race conditions, and unversioned schema modifications.
+- **Remediation:** All production profiles must disable Hibernate auto-DDL (`ddl-auto: validate` or `none`) and rely exclusively on Flyway for schema management.
+
+### 2. Inter-Service Synchronous Coupling & Lack of Circuit Breakers
+- **The Risk:** Synchronous communication between microservices relies on Spring `@LoadBalanced RestTemplate` (e.g., `job-service` calling `payment-service` to lock escrow) without Resilience4j circuit breakers, bulkheads, or custom timeout fallbacks.
+- **Impact:** If `payment-service` or `user-service` experiences degradation or high latency, calling threads in `api-gateway` and downstream services will block indefinitely until TCP socket timeout. This can cause cascading thread-pool exhaustion across the entire campus platform.
+
+### 3. RabbitMQ Consumer Reliability & Missing Dead-Letter Queues (DLQ)
+- **The Risk:** Message listeners in `supporting-service` and `payment-service` process asynchronous RabbitMQ events without standardized Dead-Letter Exchanges (DLX) or exponential backoff retry policies defined in code.
+- **Impact:** If a message payload fails deserialization or encounters a transient database lock during notification generation, the unacknowledged message may enter an infinite requeue loop or be silently dropped, leading to missed notifications or lost audit events.
+
+### 4. Local Disk File Storage Incompatibility with Container Scaling
+- **The Risk:** Provider ID cards and portfolio photos are saved directly to the local server filesystem (`/users/files/**`) via `FileStorageService`.
+- **Impact:** While functional on a single-node server or local development machine, this architecture will break in horizontal cloud deployments (e.g., AWS ECS, Kubernetes, or Docker Swarm). Pod replicas will not have access to files saved on another container's local ephemeral disk without shared NFS or cloud object storage (e.g., AWS S3 or Cloudinary).
+
+### 5. Client-Side JWT Revocation & Security Edge Case
+- **The Risk:** User logout is implemented purely client-side by deleting the JWT from Expo SecureStore. 
+- **Impact:** There is no server-side token blacklist or Redis token revocation store in `auth-service`. If a JWT is intercepted or compromised, an attacker can continue to authenticate against `api-gateway` until the token's natural timestamp expiration occurs.
+
+---
+
+## 10. Environment & Config
+
+### Environment Variables Inventory
+
+| Variable Name | Target Microservice(s) | Purpose / Description | Fallback / Default Value |
+| :--- | :--- | :--- | :--- |
+| `SPRING_PROFILES_ACTIVE` | All Backend Services | Activates Spring environment configuration (`local-dev`, `docker`, `prod`). | `local-dev` |
+| `INTERNAL_SERVICE_SECRET`| All Backend Services | Shared secret for authenticating internal server-to-server REST requests. | `default_internal_service_secret...` |
+| `JWT_SECRET` | `api-gateway`, `auth-service` | HMAC-SHA256 signing key for issuing and verifying stateless user tokens. | `dGhlLXN1cGVyLXNlY3JldC...` |
+| `SPRING_DATASOURCE_URL` | Core Business Services | JDBC connection string for the shared PostgreSQL instance. | `jdbc:postgresql://localhost:5432/campusserv` |
+| `DB_USERNAME` / `DB_PASSWORD`| Core Business Services | Database authentication credentials. | `postgres` / `password` |
+| `RABBITMQ_HOST` / `PORT` | `user`, `job`, `payment`, `supporting` | Event broker connection host and port. | `localhost` / `5672` |
+| `EUREKA_CLIENT_SERVICEURL`| All downstreams except Eureka| Registry endpoint where microservices announce their IP/port. | `http://localhost:8761/eureka/` |
+| `PAYSTACK_SECRET_KEY` | `payment-service` | API key for verifying Paystack transactions and initiating transfers. | `sk_test_...` |
+| `EXPO_PUBLIC_API_URL` | `mobile` (React Native) | Base URL for REST network requests pointing to API Gateway. | `http://192.168.1.100:8080` (LAN IP) |
+| `EXPO_PUBLIC_SOCKET_URL` | `mobile` (React Native) | STOMP WebSocket server URL. | `http://192.168.1.100:8080/ws` |
+| `NEXT_PUBLIC_API_URL` | `campusserv-admin` | API Gateway routing target for Next.js admin dashboard. | `http://localhost:8080` |
+
+### Non-Obvious Manual Local Setup Steps
+
+1. **Strict Service Startup Bootstrapping Order:**
+   - Because services do not implement delayed retry loops for initial Eureka registration or RabbitMQ exchange declarations, local services **must** be launched in a strict dependency sequence:
+     1. Start PostgreSQL (`5432`) and RabbitMQ (`5672`).
+     2. Start **`eureka-server`** (`8761`) and wait for Tomcat initialization.
+     3. Start **`api-gateway`** (`8080`) so route tables bind to Eureka.
+     4. Launch downstream microservices (`auth`, `user`, `request`, `job`, `payment`, `supporting`).
+   - *Note:* The repository root contains a PowerShell utility (`start-all-headless.ps1`) that automates this staggered boot sequence on Windows systems.
+2. **Mobile Device Physical Testing LAN IP Binding:**
+   - When running the React Native mobile app on a physical iOS or Android device via Expo LAN mode, setting `EXPO_PUBLIC_API_URL=http://localhost:8080` or `127.0.0.1` **will fail silently** because `localhost` resolves to the phone's internal loopback adapter.
+   - Developers must manually inspect their PC's local WiFi IPv4 address (e.g., `ipconfig` → `192.168.x.x`) and hardcode it into `mobile/.env` before starting the Expo bundler (`npx expo start -c`).
+3. **RabbitMQ Virtual Host & Queue Declarations:**
+   - If starting RabbitMQ without the automated Spring boot initializers, the default virtual host (`/`) must be active, and services must have permissions to auto-declare topic exchanges (`job.exchange`, `provider.verification.exchange`). If an exchange type mismatch occurs (e.g., declaring a queue with mismatched Dead-Letter Exchange arguments), RabbitMQ will drop the channel with code `406 PRECONDITION_FAILED`.

@@ -53,7 +53,7 @@ export default function PostRequestScreen({ route, navigation }: any) {
   const [sessionExpiredDialogVisible, setSessionExpiredDialogVisible] = useState(false);
 
   // Fetch canonical categories from backend
-  const { data: serverCategories = [] } = useQuery<any[]>({
+  const { data: serverCategories = [], isSuccess: isCategoriesLoaded } = useQuery<any[]>({
     queryKey: ['categories'],
     queryFn: async () => {
       const res = await api.get('/categories');
@@ -283,19 +283,40 @@ export default function PostRequestScreen({ route, navigation }: any) {
       });
       setDeliveryMode('targeted');
       if (route.params?.categoryId) {
-        const matched = categoriesList.find((c: any) => c.id === route.params.categoryId || c.name === route.params.categoryId);
-        if (matched) setSelectedCategory(matched);
+        const matched = categoriesList.find((c: any) => 
+          (c.id && c.id.toLowerCase() === route.params.categoryId.toLowerCase()) || 
+          (c.name && c.name.toLowerCase() === route.params.categoryId.toLowerCase())
+        );
+        if (matched) {
+          setSelectedCategory(matched);
+          navigation.setParams({
+            targetProviderId: undefined,
+            targetProviderName: undefined,
+            targetProviderAvatarUrl: undefined,
+            targetProviderRating: undefined,
+            categoryId: undefined
+          });
+        } else if (isCategoriesLoaded) {
+          // If categories resolved but no match, clear to prevent loop
+          navigation.setParams({
+            targetProviderId: undefined,
+            targetProviderName: undefined,
+            targetProviderAvatarUrl: undefined,
+            targetProviderRating: undefined,
+            categoryId: undefined
+          });
+        }
+      } else {
+        navigation.setParams({
+          targetProviderId: undefined,
+          targetProviderName: undefined,
+          targetProviderAvatarUrl: undefined,
+          targetProviderRating: undefined,
+          categoryId: undefined
+        });
       }
-      // Clear route params to avoid re-triggering
-      navigation.setParams({
-        targetProviderId: undefined,
-        targetProviderName: undefined,
-        targetProviderAvatarUrl: undefined,
-        targetProviderRating: undefined,
-        categoryId: undefined
-      });
     }
-  }, [route.params?.targetProviderId, categoriesList]);
+  }, [route.params?.targetProviderId, categoriesList, isCategoriesLoaded]);
 
   // Handle Selected Target Provider (returning fromSelectProviderScreen)
   useEffect(() => {
@@ -312,14 +333,25 @@ export default function PostRequestScreen({ route, navigation }: any) {
       // Auto-fill category if provider has services
       if (p.services && p.services.length > 0) {
         const catId = p.services[0].category?.id || p.services[0].categoryId;
-        const matched = categoriesList.find((c: any) => c.id === catId || c.name === catId);
-        if (matched) {
-          setSelectedCategory(matched);
+        if (catId) {
+          const matched = categoriesList.find((c: any) => 
+            c.id.toLowerCase() === catId.toLowerCase() || 
+            c.name.toLowerCase() === catId.toLowerCase()
+          );
+          if (matched) {
+            setSelectedCategory(matched);
+            navigation.setParams({ selectedTargetProvider: undefined });
+          } else if (isCategoriesLoaded) {
+            navigation.setParams({ selectedTargetProvider: undefined });
+          }
+        } else {
+          navigation.setParams({ selectedTargetProvider: undefined });
         }
+      } else {
+        navigation.setParams({ selectedTargetProvider: undefined });
       }
-      navigation.setParams({ selectedTargetProvider: undefined });
     }
-  }, [route.params?.selectedTargetProvider, categoriesList]);
+  }, [route.params?.selectedTargetProvider, categoriesList, isCategoriesLoaded]);
 
   // Image picking
   const handlePickPhoto = () => {
@@ -548,6 +580,7 @@ export default function PostRequestScreen({ route, navigation }: any) {
           >
             {categoriesList.map((cat) => {
               const isActive = selectedCategory?.id === cat.id;
+              const isLocked = !!targetProvider && !isActive;
               return (
                 <TouchableOpacity
                   key={cat.id}
@@ -556,10 +589,11 @@ export default function PostRequestScreen({ route, navigation }: any) {
                     { 
                       backgroundColor: isActive ? colors.primary : (isDark ? colors.inputBackground : '#F8FAFC'),
                       borderColor: isActive ? colors.primary : (isDark ? colors.border : '#E2E8F0'),
+                      opacity: isLocked ? 0.5 : 1,
                     }
                   ]}
                   onPress={() => handleCategorySelect(cat)}
-                  disabled={isSubmitting}
+                  disabled={isSubmitting || !!targetProvider}
                 >
                   <View style={[
                     styles.catIconWrap,

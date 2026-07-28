@@ -2,6 +2,7 @@ package com.knust.campusserv.user.repository;
 
 import com.knust.campusserv.user.model.ProviderProfile;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -20,4 +21,13 @@ public interface ProviderProfileRepository extends JpaRepository<ProviderProfile
         @Param("minRating") BigDecimal minRating, 
         @Param("categoryId") String categoryId, 
         org.springframework.data.domain.Pageable pageable);
+
+    /**
+     * Atomically increments view_count by 1 in a single UPDATE statement.
+     * This avoids the read-modify-write race condition that arises from
+     * loading the entity, calling setViewCount(count + 1), and saving.
+     */
+    @Modifying
+    @Query("UPDATE ProviderProfile p SET p.viewCount = COALESCE(p.viewCount, 0) + 1 WHERE p.id = :providerId")
+    int incrementViewCount(@Param("providerId") String providerId);
 }

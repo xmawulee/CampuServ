@@ -367,7 +367,7 @@ export default function RiderLiveTrackingScreen({ route, navigation }: any) {
           
           <TouchableOpacity
             style={[styles.chatBtn, { backgroundColor: colors.inputBackground }]}
-            onPress={() => navigation.navigate('Chat', { requestId })}
+            onPress={() => navigation.navigate('ChatList')}
           >
             <Ionicons name="chatbubbles" size={20} color={colors.text} />
           </TouchableOpacity>

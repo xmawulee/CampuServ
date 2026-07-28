@@ -67,13 +67,12 @@ export default function MyListingsScreen({ navigation }: any) {
 
         <View style={styles.cardContent}>
           <Text style={[styles.cardCategory, { color: catConfig.color }]}>
-            {item.category?.name || 'Service'}
+            Category: {item.category?.name || 'Service'}
           </Text>
-          <Text style={[styles.cardPrice, { color: colors.text }]}>
-            {Number(item.basePrice).toFixed(2)}{' '}
-            <Text style={[styles.cardPriceSub, { color: colors.textMuted }]}>GHS</Text>
+          <Text style={[styles.cardPrice, { color: colors.text, fontSize: 16, fontWeight: '700' }]}>
+            Contact for quote
           </Text>
-          <Text style={[styles.cardId, { color: colors.textMuted }]}>
+          <Text style={[styles.cardId, { color: colors.textMuted, marginTop: 4 }]}>
             ID: {item.id.slice(-6).toUpperCase()}
           </Text>
         </View>
@@ -86,14 +85,14 @@ export default function MyListingsScreen({ navigation }: any) {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={styles.header}>
-        <Text style={[styles.headerTitle, { color: colors.text }]}>My Services</Text>
+        <Text style={[styles.headerTitle, { color: colors.text }]}>My Listings</Text>
         <TouchableOpacity
           style={[styles.addBtn, { backgroundColor: colors.primary }]}
           onPress={() => navigation.navigate('CreateEditListing')}
           activeOpacity={0.85}
         >
           <Ionicons name="add" size={18} color="#FFF" />
-          <Text style={styles.addBtnText}>New</Text>
+          <Text style={styles.addBtnText}>Post Listing</Text>
         </TouchableOpacity>
       </View>
 

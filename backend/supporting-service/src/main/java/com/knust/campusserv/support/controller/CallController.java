@@ -190,11 +190,8 @@ public class CallController {
         if (threadOpt.isEmpty()) return null;
 
         ChatThread thread = threadOpt.get();
-        if (!thread.getClientId().equals(userId) && !thread.getProviderId().equals(userId)) {
-            return null;
-        }
-
-        if (!"OPEN".equals(thread.getStatus())) {
+        // New model uses studentId/providerId — threads are always open (no status field)
+        if (!thread.getStudentId().equals(userId) && !thread.getProviderId().equals(userId)) {
             return null;
         }
 

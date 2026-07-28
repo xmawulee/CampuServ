@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import {
   StyleSheet,
   Text,
@@ -10,60 +10,89 @@ import {
   Keyboard,
   KeyboardAvoidingView,
   Platform,
+  Modal,
+  ScrollView,
+  Switch,
 } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { CustomIonicons } from '../../components/CustomIcons';
+import { useSafeAreaInsets, SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '../../styles/ThemeContext';
 import { useAuthStore } from '../../store/authStore';
 import { api } from '../../services/api';
+import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
+import { getProviders, ProviderResponse } from '../../services/userService';
+import ProviderFeedCard from '../../components/ProviderFeedCard';
+import { Ionicons } from '@expo/vector-icons';
 
 const POPULAR_SEARCHES = ['Laundry', 'Cleaning', 'Tutoring', 'Errands', 'Tech Repair'];
-const RECENT_SEARCHES_KEY = '@recent_searches';
+const RECENT_SEARCHES_KEY = 'recent_searches';
+
+// Skeleton Loader Card for premium loading states
+const SkeletonCard = () => {
+  const { colors } = useTheme();
+  return (
+    <View style={[styles.skeletonCard, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
+      <View style={[styles.skeletonBanner, { backgroundColor: colors.inputBackground }]} />
+      <View style={styles.skeletonContent}>
+        <View style={[styles.skeletonTitle, { backgroundColor: colors.inputBackground }]} />
+        <View style={[styles.skeletonText, { backgroundColor: colors.inputBackground }]} />
+        <View style={[styles.skeletonTextShort, { backgroundColor: colors.inputBackground }]} />
+      </View>
+    </View>
+  );
+};
 
 export default function SearchScreen({ navigation }: any) {
-  const { colors, isDark } = useTheme();
+  const { colors } = useTheme();
   const insets = useSafeAreaInsets();
-  const { user, isProvider } = useAuthStore();
-  
+  const { accessToken } = useAuthStore();
+
+  // Search Input State
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedQuery, setDebouncedQuery] = useState('');
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
-  const [allRequests, setAllRequests] = useState<any[]>([]);
-  const [filteredRequests, setFilteredRequests] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  
+  const [isFocused, setIsFocused] = useState(false);
+
+  // Filter States
+  const [isFilterModalVisible, setIsFilterModalVisible] = useState(false);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [minRating, setMinRating] = useState<number>(0.0);
+  const [verifiedOnly, setVerifiedOnly] = useState<boolean>(false);
+  const [minPrice, setMinPrice] = useState<string>('');
+  const [maxPrice, setMaxPrice] = useState<string>('');
+  const [sortOrder, setSortOrder] = useState<string>('discover');
+
+  // Temporary States for Filter Modal (applied only when pressing "Apply")
+  const [tempCategories, setTempCategories] = useState<string[]>([]);
+  const [tempMinRating, setTempMinRating] = useState<number>(0.0);
+  const [tempVerifiedOnly, setTempVerifiedOnly] = useState<boolean>(false);
+  const [tempMinPrice, setTempMinPrice] = useState<string>('');
+  const [tempMaxPrice, setTempMaxPrice] = useState<string>('');
+  const [tempSortOrder, setTempSortOrder] = useState<string>('discover');
+
   const searchInputRef = useRef<TextInput>(null);
 
+  // Load categories from API
+  const { data: categories = [] } = useQuery<any[]>({
+    queryKey: ['categories'],
+    queryFn: async () => {
+      const res = await api.get('/categories');
+      return res.data || [];
+    }
+  });
+
+  // Load and manage recent searches
   useEffect(() => {
     loadRecentSearches();
-    fetchRequests();
-    
-    // Auto-focus the search bar when entering the screen
-    const timeout = setTimeout(() => {
-      searchInputRef.current?.focus();
-    }, 100);
-    return () => clearTimeout(timeout);
   }, []);
 
+  // Debounce search query
   useEffect(() => {
     const handler = setTimeout(() => {
       setDebouncedQuery(searchQuery);
-    }, 300);
+    }, 350);
     return () => clearTimeout(handler);
   }, [searchQuery]);
-
-  useEffect(() => {
-    if (debouncedQuery.trim()) {
-      const q = debouncedQuery.toLowerCase();
-      const list = allRequests.filter((r: any) =>
-        r.description?.toLowerCase().includes(q) || r.category?.name?.toLowerCase().includes(q)
-      );
-      setFilteredRequests(list);
-    } else {
-      setFilteredRequests([]);
-    }
-  }, [debouncedQuery, allRequests]);
 
   const loadRecentSearches = async () => {
     try {
@@ -75,10 +104,10 @@ export default function SearchScreen({ navigation }: any) {
   };
 
   const saveSearch = async (query: string) => {
-    if (!query.trim()) return;
+    const trimmed = query.trim();
+    if (!trimmed) return;
     try {
-      let searches = [query, ...recentSearches.filter(s => s.toLowerCase() !== query.toLowerCase())];
-      searches = searches.slice(0, 10); // Keep max 10
+      const searches = [trimmed, ...recentSearches.filter(s => s.toLowerCase() !== trimmed.toLowerCase())].slice(0, 5);
       setRecentSearches(searches);
       await SecureStore.setItemAsync(RECENT_SEARCHES_KEY, JSON.stringify(searches));
     } catch (e) {
@@ -96,137 +125,249 @@ export default function SearchScreen({ navigation }: any) {
     }
   };
 
-  const fetchRequests = async () => {
-    try {
-      const requestsRes = await api.get('/requests');
-      const allReqs = requestsRes.data?.content || [];
-      
-      if (isProvider) {
-        setAllRequests(allReqs);
-      } else {
-        setAllRequests(allReqs.filter((r: any) => r.requesterId === user?.id));
-      }
-    } catch (err) {
-      console.log('Failed to fetch requests', err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Check if any filter is active
+  const isAnyFilterActive = useMemo(() => {
+    return (
+      selectedCategories.length > 0 ||
+      minRating > 0.0 ||
+      verifiedOnly ||
+      !!minPrice ||
+      !!maxPrice ||
+      sortOrder !== 'discover'
+    );
+  }, [selectedCategories, minRating, verifiedOnly, minPrice, maxPrice, sortOrder]);
+
+  const activeFiltersCount = useMemo(() => {
+    let count = 0;
+    if (selectedCategories.length > 0) count += selectedCategories.length;
+    if (minRating > 0.0) count += 1;
+    if (verifiedOnly) count += 1;
+    if (minPrice || maxPrice) count += 1;
+    if (sortOrder !== 'discover') count += 1;
+    return count;
+  }, [selectedCategories, minRating, verifiedOnly, minPrice, maxPrice, sortOrder]);
+
+  // TanStack React Query: Infinite provider list querying
+  const {
+    data,
+    isLoading,
+    isFetching,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    refetch
+  } = useInfiniteQuery({
+    queryKey: [
+      'providers-search',
+      debouncedQuery,
+      selectedCategories,
+      minRating,
+      verifiedOnly,
+      minPrice,
+      maxPrice,
+      sortOrder,
+    ],
+    queryFn: async ({ pageParam = 0 }) => {
+      const minP = minPrice ? parseFloat(minPrice) : undefined;
+      const maxP = maxPrice ? parseFloat(maxPrice) : undefined;
+      return getProviders(
+        undefined, // categoryName (legacy)
+        minRating,
+        pageParam as number,
+        10, // size
+        sortOrder,
+        debouncedQuery.trim() || undefined,
+        verifiedOnly,
+        minP,
+        maxP,
+        selectedCategories.length > 0 ? selectedCategories : undefined
+      );
+    },
+    initialPageParam: 0,
+    getNextPageParam: (lastPage: any) => {
+      return lastPage.currentPage < lastPage.totalPages - 1 ? lastPage.currentPage + 1 : undefined;
+    },
+    enabled: true,
+  });
+
+  const providers = useMemo(() => {
+    return data?.pages.flatMap(page => page.content) || [];
+  }, [data]);
+
+  const totalResults = useMemo(() => {
+    return data?.pages[0]?.totalElements || 0;
+  }, [data]);
 
   const handleSearchSubmit = () => {
     saveSearch(searchQuery);
+    setIsFocused(false);
     Keyboard.dismiss();
   };
 
   const handleSelectTerm = (term: string) => {
     setSearchQuery(term);
     saveSearch(term);
-    searchInputRef.current?.focus();
+    setIsFocused(false);
+    Keyboard.dismiss();
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'OPEN': return colors.success;
-      case 'IN_PROGRESS': return colors.primary;
-      case 'COMPLETED': return colors.success;
-      case 'CANCELLED': return colors.error;
-      default: return colors.warning;
+  const openFilterModal = () => {
+    setTempCategories([...selectedCategories]);
+    setTempMinRating(minRating);
+    setTempVerifiedOnly(verifiedOnly);
+    setTempMinPrice(minPrice);
+    setTempMaxPrice(maxPrice);
+    setTempSortOrder(sortOrder);
+    setIsFilterModalVisible(true);
+  };
+
+  const applyFilters = () => {
+    setSelectedCategories([...tempCategories]);
+    setMinRating(tempMinRating);
+    setVerifiedOnly(tempVerifiedOnly);
+    setMinPrice(tempMinPrice);
+    setMaxPrice(tempMaxPrice);
+    setSortOrder(tempSortOrder);
+    setIsFilterModalVisible(false);
+  };
+
+  const clearAllFilters = () => {
+    setSelectedCategories([]);
+    setMinRating(0.0);
+    setVerifiedOnly(false);
+    setMinPrice('');
+    setMaxPrice('');
+    setSortOrder('discover');
+    setTempCategories([]);
+    setTempMinRating(0.0);
+    setTempVerifiedOnly(false);
+    setTempMinPrice('');
+    setTempMaxPrice('');
+    setTempSortOrder('discover');
+  };
+
+  const resetAll = () => {
+    setSearchQuery('');
+    clearAllFilters();
+  };
+
+  const toggleTempCategory = (catName: string) => {
+    if (tempCategories.includes(catName)) {
+      setTempCategories(tempCategories.filter(c => c !== catName));
+    } else {
+      setTempCategories([...tempCategories, catName]);
     }
   };
 
-  const getStatusBg = (status: string) => {
-    switch (status) {
-      case 'OPEN': return colors.successLight;
-      case 'IN_PROGRESS': return colors.warningLight;
-      case 'COMPLETED': return colors.successLight;
-      case 'CANCELLED': return colors.errorLight;
-      default: return colors.warningLight;
-    }
-  };
+  const renderProviderItem = useCallback(({ item }: { item: ProviderResponse }) => (
+    <ProviderFeedCard
+      provider={item}
+      onPress={() => navigation.navigate('ListingDetail', { providerId: (item as any).id || item.providerId })}
+    />
+  ), [navigation]);
 
-  const renderRequestCard = ({ item }: any) => {
-    const stripColor = getStatusColor(item.status);
-    return (
-      <TouchableOpacity
-        style={[styles.requestCard, { backgroundColor: colors.cardBackground }]}
-        onPress={() => navigation.navigate('RequestDetails', { requestId: item.id })}
-        activeOpacity={0.88}
-      >
-        <View style={[styles.cardStrip, { backgroundColor: stripColor }]} />
-        <View style={styles.cardBody}>
-          <View style={styles.cardTop}>
-            <Text style={[styles.cardCategory, { color: colors.textMuted }]}>
-              {item.category?.name || 'Service'}
-            </Text>
-            <View style={[styles.statusPill, { backgroundColor: getStatusBg(item.status) }]}>
-              <Text style={[styles.statusPillText, { color: getStatusColor(item.status) }]}>
-                {item.status?.replace('_', ' ')}
-              </Text>
-            </View>
-          </View>
-          <Text style={[styles.cardDesc, { color: colors.text }]} numberOfLines={2}>
-            {item.description || item.title || 'No description provided.'}
-          </Text>
-          <View style={styles.cardFooter}>
-            <View style={styles.cardMeta}>
-              <CustomIonicons name="location-outline" size={12} color={colors.textMuted} />
-              <Text style={[styles.cardMetaText, { color: colors.textMuted }]}>
-                {item.location || 'Campus'}
-              </Text>
-            </View>
-            <Text style={[styles.cardPrice, { color: colors.primary }]}>
-              {item.budget ? `GHS ${item.budget}` : 'Open bid'}
-            </Text>
-          </View>
-        </View>
-        <View style={[styles.cardChevron, { backgroundColor: colors.inputBackground }]}>
-          <CustomIonicons name="arrow-forward" size={14} color={colors.text} />
-        </View>
-      </TouchableOpacity>
-    );
-  };
+  const showRecentSuggestions = isFocused && searchQuery.trim() === '';
 
   return (
-    <View style={[styles.container, { backgroundColor: 'transparent' }]}>
-      <View style={[styles.header, { paddingTop: Math.max(insets.top, 16) }]}>
-        <View style={[styles.searchBar, { backgroundColor: colors.inputBackground }]}>
-          <CustomIonicons name="search-outline" size={18} color={colors.textMuted} style={{ marginRight: 8 }} />
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
+      {/* Search Header Bar */}
+      <View style={styles.header}>
+        <View style={[styles.searchBarContainer, { backgroundColor: colors.inputBackground }]}>
+          <Ionicons name="search-outline" size={18} color={colors.textMuted} style={{ marginRight: 8 }} />
           <TextInput
             ref={searchInputRef}
             style={[styles.searchInput, { color: colors.text }]}
-            placeholder="Search services, categories..."
+            placeholder="Search services, name, tags..."
             placeholderTextColor={colors.placeholderText}
             value={searchQuery}
             onChangeText={setSearchQuery}
+            onFocus={() => setIsFocused(true)}
+            onBlur={() => setTimeout(() => setIsFocused(false), 200)} // delay to allow clicks
             onSubmitEditing={handleSearchSubmit}
             returnKeyType="search"
           />
           {searchQuery.length > 0 && (
-            <TouchableOpacity onPress={() => setSearchQuery('')}>
-              <CustomIonicons name="close-circle" size={18} color={colors.textMuted} />
+            <TouchableOpacity onPress={() => setSearchQuery('')} style={{ marginRight: 8 }}>
+              <Ionicons name="close-circle" size={18} color={colors.textMuted} />
             </TouchableOpacity>
           )}
+          <TouchableOpacity
+            style={[styles.filterBtn, isAnyFilterActive ? { backgroundColor: colors.primary + '15' } : null]}
+            onPress={openFilterModal}
+          >
+            <Ionicons name="filter-outline" size={18} color={isAnyFilterActive ? colors.primary : colors.text} />
+            {activeFiltersCount > 0 && (
+              <View style={[styles.badge, { backgroundColor: colors.primary }]}>
+                <Text style={styles.badgeText}>{activeFiltersCount}</Text>
+              </View>
+            )}
+          </TouchableOpacity>
         </View>
       </View>
 
-      {loading ? (
-        <View style={styles.center}>
-          <ActivityIndicator size="large" color={colors.primary} />
+      {/* Active Filter Chips Scrollable Row */}
+      {isAnyFilterActive && (
+        <View style={styles.chipsWrapper}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipsContainer}>
+            {selectedCategories.map(cat => (
+              <TouchableOpacity
+                key={cat}
+                style={[styles.chip, { backgroundColor: colors.inputBackground, borderColor: colors.border }]}
+                onPress={() => setSelectedCategories(selectedCategories.filter(c => c !== cat))}
+              >
+                <Text style={[styles.chipText, { color: colors.text }]}>{cat}</Text>
+                <Ionicons name="close-outline" size={14} color={colors.textMuted} style={{ marginLeft: 4 }} />
+              </TouchableOpacity>
+            ))}
+            {minRating > 0 && (
+              <TouchableOpacity
+                style={[styles.chip, { backgroundColor: colors.inputBackground, borderColor: colors.border }]}
+                onPress={() => setMinRating(0.0)}
+              >
+                <Text style={[styles.chipText, { color: colors.text }]}>{minRating}+ ★</Text>
+                <Ionicons name="close-outline" size={14} color={colors.textMuted} style={{ marginLeft: 4 }} />
+              </TouchableOpacity>
+            )}
+            {verifiedOnly && (
+              <TouchableOpacity
+                style={[styles.chip, { backgroundColor: colors.inputBackground, borderColor: colors.border }]}
+                onPress={() => setVerifiedOnly(false)}
+              >
+                <Text style={[styles.chipText, { color: colors.text }]}>Verified Only</Text>
+                <Ionicons name="close-outline" size={14} color={colors.textMuted} style={{ marginLeft: 4 }} />
+              </TouchableOpacity>
+            )}
+            {(!!minPrice || !!maxPrice) && (
+              <TouchableOpacity
+                style={[styles.chip, { backgroundColor: colors.inputBackground, borderColor: colors.border }]}
+                onPress={() => { setMinPrice(''); setMaxPrice(''); }}
+              >
+                <Text style={[styles.chipText, { color: colors.text }]}>
+                  Price: GHS {minPrice || '0'} - {maxPrice || 'Any'}
+                </Text>
+                <Ionicons name="close-outline" size={14} color={colors.textMuted} style={{ marginLeft: 4 }} />
+              </TouchableOpacity>
+            )}
+            {sortOrder !== 'discover' && (
+              <TouchableOpacity
+                style={[styles.chip, { backgroundColor: colors.inputBackground, borderColor: colors.border }]}
+                onPress={() => setSortOrder('discover')}
+              >
+                <Text style={[styles.chipText, { color: colors.text }]}>
+                  Sort: {sortOrder.replace('-', ' ')}
+                </Text>
+                <Ionicons name="close-outline" size={14} color={colors.textMuted} style={{ marginLeft: 4 }} />
+              </TouchableOpacity>
+            )}
+            <TouchableOpacity onPress={clearAllFilters} style={styles.clearAllBtn}>
+              <Text style={[styles.clearAllText, { color: colors.primary }]}>Clear All</Text>
+            </TouchableOpacity>
+          </ScrollView>
         </View>
-      ) : searchQuery.trim().length > 0 ? (
-        <FlatList
-          data={filteredRequests}
-          keyExtractor={(item) => item.id}
-          renderItem={renderRequestCard}
-          contentContainerStyle={styles.listContainer}
-          ListEmptyComponent={
-            <View style={styles.emptyContainer}>
-              <CustomIonicons name="search-outline" size={48} color={colors.border} />
-              <Text style={[styles.emptyText, { color: colors.textMuted }]}>No results found for "{searchQuery}"</Text>
-            </View>
-          }
-        />
-      ) : (
+      )}
+
+      {/* Main Content Area */}
+      {showRecentSuggestions ? (
         <KeyboardAvoidingView style={styles.historyContainer} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
           {recentSearches.length > 0 && (
             <View style={styles.section}>
@@ -234,17 +375,17 @@ export default function SearchScreen({ navigation }: any) {
               {recentSearches.map((term, index) => (
                 <View key={index} style={styles.historyRow}>
                   <TouchableOpacity style={styles.historyTerm} onPress={() => handleSelectTerm(term)}>
-                    <CustomIonicons name="time-outline" size={16} color={colors.textMuted} />
+                    <Ionicons name="time-outline" size={16} color={colors.textMuted} style={{ marginRight: 8 }} />
                     <Text style={[styles.historyText, { color: colors.text }]}>{term}</Text>
                   </TouchableOpacity>
                   <TouchableOpacity onPress={() => removeRecentSearch(term)} style={styles.removeBtn}>
-                    <CustomIonicons name="close-outline" size={16} color={colors.textMuted} />
+                    <Ionicons name="close-outline" size={16} color={colors.textMuted} />
                   </TouchableOpacity>
                 </View>
               ))}
             </View>
           )}
-          
+
           <View style={styles.section}>
             <Text style={[styles.sectionTitle, { color: colors.text }]}>Popular Searches</Text>
             <View style={styles.popularTags}>
@@ -260,8 +401,207 @@ export default function SearchScreen({ navigation }: any) {
             </View>
           </View>
         </KeyboardAvoidingView>
+      ) : (
+        <View style={{ flex: 1 }}>
+          {/* Results Count Banner */}
+          {(debouncedQuery.trim() !== '' || isAnyFilterActive) && !isLoading && (
+            <View style={styles.resultsCountBanner}>
+              <Text style={[styles.resultsCountText, { color: colors.textMuted }]}>
+                {totalResults} {totalResults === 1 ? 'provider' : 'providers'} found
+              </Text>
+            </View>
+          )}
+
+          {isLoading ? (
+            <FlatList
+              data={[1, 2, 3]}
+              keyExtractor={(item) => item.toString()}
+              renderItem={() => <SkeletonCard />}
+              contentContainerStyle={styles.listContainer}
+            />
+          ) : (
+            <FlatList
+              data={providers}
+              keyExtractor={(item) => (item as any).id || item.providerId}
+              renderItem={renderProviderItem}
+              contentContainerStyle={styles.listContainer}
+              onEndReached={() => {
+                if (hasNextPage && !isFetchingNextPage) {
+                  fetchNextPage();
+                }
+              }}
+              onEndReachedThreshold={0.5}
+              ListFooterComponent={
+                isFetchingNextPage ? (
+                  <View style={{ paddingVertical: 16 }}>
+                    <ActivityIndicator size="small" color={colors.primary} />
+                  </View>
+                ) : null
+              }
+              ListEmptyComponent={
+                <View style={styles.emptyContainer}>
+                  <Ionicons name="search-outline" size={48} color={colors.border} />
+                  <Text style={[styles.emptyText, { color: colors.text }]}>No providers found</Text>
+                  <Text style={[styles.emptySubText, { color: colors.textMuted }]}>
+                    Try modifying your search query or reset filters to view all listings.
+                  </Text>
+                  <TouchableOpacity style={[styles.resetBtn, { backgroundColor: colors.primary }]} onPress={resetAll}>
+                    <Text style={styles.resetBtnText}>Reset Search & Filters</Text>
+                  </TouchableOpacity>
+                </View>
+              }
+            />
+          )}
+        </View>
       )}
-    </View>
+
+      {/* Elegant Slide-up Filter Modal */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={isFilterModalVisible}
+        onRequestClose={() => setIsFilterModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <TouchableOpacity style={styles.modalCloseArea} onPress={() => setIsFilterModalVisible(false)} />
+          <View style={[styles.modalContent, { backgroundColor: colors.cardBackground }]}>
+            <View style={styles.modalHeader}>
+              <Text style={[styles.modalTitle, { color: colors.text }]}>Filters</Text>
+              <TouchableOpacity onPress={clearAllFilters}>
+                <Text style={[styles.resetFiltersLink, { color: colors.primary }]}>Reset All</Text>
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView style={styles.modalScroll}>
+              {/* Category selector */}
+              <View style={styles.filterSection}>
+                <Text style={[styles.filterLabel, { color: colors.text }]}>Categories</Text>
+                <View style={styles.categoryPillsGrid}>
+                  {categories.map((cat: any) => {
+                    const isSelected = tempCategories.includes(cat.name);
+                    return (
+                      <TouchableOpacity
+                        key={cat.id}
+                        style={[
+                          styles.categoryPill,
+                          { borderColor: colors.border, backgroundColor: colors.inputBackground },
+                          isSelected ? { backgroundColor: colors.primary, borderColor: colors.primary } : null,
+                        ]}
+                        onPress={() => toggleTempCategory(cat.name)}
+                      >
+                        <Text style={[styles.categoryPillText, { color: colors.text }, isSelected ? { color: '#FFF' } : null]}>
+                          {cat.name}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+              </View>
+
+              {/* Sort Order Selector */}
+              <View style={styles.filterSection}>
+                <Text style={[styles.filterLabel, { color: colors.text }]}>Sort By</Text>
+                <View style={styles.sortPillsRow}>
+                  {[
+                    { id: 'discover', label: 'Discover' },
+                    { id: 'rating', label: 'Highest Rated' },
+                    { id: 'jobs', label: 'Most Reviewed' },
+                    { id: 'newest', label: 'Newest' },
+                    { id: 'price-low', label: 'Price: Low to High' },
+                    { id: 'price-high', label: 'Price: High to Low' },
+                  ].map(option => {
+                    const isSelected = tempSortOrder === option.id;
+                    return (
+                      <TouchableOpacity
+                        key={option.id}
+                        style={[
+                          styles.sortPill,
+                          { borderColor: colors.border, backgroundColor: colors.inputBackground },
+                          isSelected ? { backgroundColor: colors.primary, borderColor: colors.primary } : null,
+                        ]}
+                        onPress={() => setTempSortOrder(option.id)}
+                      >
+                        <Text style={[styles.sortPillText, { color: colors.text }, isSelected ? { color: '#FFF' } : null]}>
+                          {option.label}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+              </View>
+
+              {/* Minimum Rating Selector */}
+              <View style={styles.filterSection}>
+                <Text style={[styles.filterLabel, { color: colors.text }]}>Minimum Rating</Text>
+                <View style={styles.ratingRowSelect}>
+                  {[0.0, 3.0, 4.0, 4.5].map(ratingValue => {
+                    const isSelected = tempMinRating === ratingValue;
+                    return (
+                      <TouchableOpacity
+                        key={ratingValue}
+                        style={[
+                          styles.ratingPill,
+                          { borderColor: colors.border, backgroundColor: colors.inputBackground },
+                          isSelected ? { backgroundColor: colors.primary, borderColor: colors.primary } : null,
+                        ]}
+                        onPress={() => setTempMinRating(ratingValue)}
+                      >
+                        <Text style={[styles.ratingPillText, { color: colors.text }, isSelected ? { color: '#FFF' } : null]}>
+                          {ratingValue === 0.0 ? 'Any' : `${ratingValue} ★ & up`}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+              </View>
+
+              {/* Verified Badge Switch */}
+              <View style={[styles.filterSection, styles.toggleRow]}>
+                <View>
+                  <Text style={[styles.filterLabel, { color: colors.text, marginBottom: 2 }]}>Verified Pro Status</Text>
+                  <Text style={{ fontSize: 13, color: colors.textMuted }}>Show verified experts only</Text>
+                </View>
+                <Switch
+                  value={tempVerifiedOnly}
+                  onValueChange={setTempVerifiedOnly}
+                  trackColor={{ false: colors.border, true: colors.primary }}
+                  thumbColor={Platform.OS === 'android' ? '#FFF' : undefined}
+                />
+              </View>
+
+              {/* Price Range */}
+              <View style={styles.filterSection}>
+                <Text style={[styles.filterLabel, { color: colors.text }]}>Price Range (GHS)</Text>
+                <View style={styles.priceInputRow}>
+                  <TextInput
+                    style={[styles.priceInput, { color: colors.text, borderColor: colors.border, backgroundColor: colors.inputBackground }]}
+                    placeholder="Min Price"
+                    placeholderTextColor={colors.placeholderText}
+                    keyboardType="numeric"
+                    value={tempMinPrice}
+                    onChangeText={setTempMinPrice}
+                  />
+                  <Text style={{ marginHorizontal: 12, color: colors.textMuted }}>to</Text>
+                  <TextInput
+                    style={[styles.priceInput, { color: colors.text, borderColor: colors.border, backgroundColor: colors.inputBackground }]}
+                    placeholder="Max Price"
+                    placeholderTextColor={colors.placeholderText}
+                    keyboardType="numeric"
+                    value={tempMaxPrice}
+                    onChangeText={setTempMaxPrice}
+                  />
+                </View>
+              </View>
+            </ScrollView>
+
+            {/* Apply Button */}
+            <TouchableOpacity style={[styles.applyBtn, { backgroundColor: colors.primary }]} onPress={applyFilters}>
+              <Text style={styles.applyBtnText}>Apply Filters</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+    </SafeAreaView>
   );
 }
 
@@ -271,23 +611,71 @@ const styles = StyleSheet.create({
   },
   header: {
     paddingHorizontal: 16,
-    paddingBottom: 12,
+    paddingVertical: 12,
   },
-  searchBar: {
+  searchBarContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     borderRadius: 12,
     paddingHorizontal: 12,
-    height: 44,
+    height: 48,
   },
   searchInput: {
     flex: 1,
     fontSize: 15,
+    paddingVertical: 8,
   },
-  center: {
-    flex: 1,
-    justifyContent: 'center',
+  filterBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 8,
     alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
+  },
+  badge: {
+    position: 'absolute',
+    top: -2,
+    right: -2,
+    minWidth: 16,
+    height: 16,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 3,
+  },
+  badgeText: {
+    color: '#FFF',
+    fontSize: 9,
+    fontWeight: '700',
+  },
+  chipsWrapper: {
+    marginBottom: 8,
+  },
+  chipsContainer: {
+    paddingHorizontal: 16,
+    alignItems: 'center',
+    gap: 8,
+  },
+  chip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    borderWidth: 1,
+  },
+  chipText: {
+    fontSize: 13,
+    fontWeight: '500',
+  },
+  clearAllBtn: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+  clearAllText: {
+    fontSize: 13,
+    fontWeight: '600',
   },
   historyContainer: {
     flex: 1,
@@ -317,7 +705,6 @@ const styles = StyleSheet.create({
   },
   historyText: {
     fontSize: 15,
-    marginLeft: 12,
   },
   removeBtn: {
     padding: 4,
@@ -338,84 +725,193 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   listContainer: {
-    padding: 16,
     paddingBottom: 100,
+  },
+  resultsCountBanner: {
+    paddingHorizontal: 16,
+    paddingBottom: 8,
+  },
+  resultsCountText: {
+    fontSize: 14,
+    fontWeight: '500',
   },
   emptyContainer: {
     padding: 40,
     alignItems: 'center',
+    justifyContent: 'center',
   },
   emptyText: {
-    marginTop: 12,
-    fontSize: 15,
+    marginTop: 16,
+    fontSize: 18,
+    fontWeight: '700',
+  },
+  emptySubText: {
+    marginTop: 8,
+    fontSize: 14,
     textAlign: 'center',
+    lineHeight: 20,
+    marginBottom: 24,
   },
-  requestCard: {
-    flexDirection: 'row',
+  resetBtn: {
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 12,
+  },
+  resetBtnText: {
+    color: '#FFF',
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  // Skeleton styles
+  skeletonCard: {
+    marginHorizontal: 16,
+    marginVertical: 8,
     borderRadius: 16,
-    marginBottom: 12,
+    borderWidth: 1,
     overflow: 'hidden',
-    elevation: 3,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
+    height: 220,
   },
-  cardStrip: {
-    width: 6,
+  skeletonBanner: {
+    height: 120,
+    width: '100%',
   },
-  cardBody: {
-    flex: 1,
+  skeletonContent: {
     padding: 16,
-    justifyContent: 'center',
+    gap: 8,
   },
-  cardTop: {
+  skeletonTitle: {
+    height: 18,
+    width: '40%',
+    borderRadius: 4,
+  },
+  skeletonText: {
+    height: 12,
+    width: '85%',
+    borderRadius: 4,
+  },
+  skeletonTextShort: {
+    height: 12,
+    width: '60%',
+    borderRadius: 4,
+  },
+  // Modal styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+    justifyContent: 'flex-end',
+  },
+  modalCloseArea: {
+    flex: 1,
+  },
+  modalContent: {
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    maxHeight: '85%',
+    paddingBottom: 34,
+  },
+  modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8,
+    paddingHorizontal: 24,
+    paddingVertical: 20,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: 'rgba(0,0,0,0.08)',
   },
-  cardCategory: {
-    fontSize: 12,
-    fontWeight: '700',
-    letterSpacing: 0.5,
-    textTransform: 'uppercase',
-  },
-  statusPill: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 8,
-  },
-  statusPillText: {
-    fontSize: 10,
+  modalTitle: {
+    fontSize: 18,
     fontWeight: '700',
   },
-  cardDesc: {
+  resetFiltersLink: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  modalScroll: {
+    paddingHorizontal: 24,
+  },
+  filterSection: {
+    paddingVertical: 20,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: 'rgba(0,0,0,0.08)',
+  },
+  filterLabel: {
     fontSize: 15,
-    fontWeight: '500',
-    lineHeight: 22,
+    fontWeight: '700',
     marginBottom: 12,
   },
-  cardFooter: {
+  categoryPillsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  categoryPill: {
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 20,
+    borderWidth: 1,
+  },
+  categoryPillText: {
+    fontSize: 13,
+    fontWeight: '500',
+  },
+  sortPillsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  sortPill: {
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 20,
+    borderWidth: 1,
+  },
+  sortPillText: {
+    fontSize: 13,
+    fontWeight: '500',
+  },
+  ratingRowSelect: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  ratingPill: {
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 20,
+    borderWidth: 1,
+  },
+  ratingPillText: {
+    fontSize: 13,
+    fontWeight: '500',
+  },
+  toggleRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
   },
-  cardMeta: {
+  priceInputRow: {
     flexDirection: 'row',
     alignItems: 'center',
   },
-  cardMetaText: {
-    fontSize: 13,
-    marginLeft: 4,
-    fontWeight: '500',
+  priceInput: {
+    flex: 1,
+    height: 40,
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    fontSize: 14,
   },
-  cardPrice: {
-    fontSize: 15,
-    fontWeight: '700',
-  },
-  cardChevron: {
-    width: 40,
-    justifyContent: 'center',
+  applyBtn: {
+    marginHorizontal: 24,
+    marginTop: 16,
+    height: 48,
+    borderRadius: 12,
     alignItems: 'center',
+    justifyContent: 'center',
+  },
+  applyBtnText: {
+    color: '#FFF',
+    fontSize: 16,
+    fontWeight: '700',
   },
 });

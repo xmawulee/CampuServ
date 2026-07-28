@@ -120,8 +120,8 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
                                     throw new IllegalArgumentException("Unauthorized subscription to user specific topic");
                                 }
                             }
-                        } else if (destination != null && destination.startsWith("/topic/chat/")) {
-                            String threadId = destination.substring("/topic/chat/".length());
+                        } else if (destination != null && destination.startsWith("/topic/chat.thread.")) {
+                            String threadId = destination.substring("/topic/chat.thread.".length());
                             if (principal == null) {
                                 throw new IllegalArgumentException("Unauthorized subscription: User not authenticated");
                             }
@@ -129,7 +129,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
                             boolean isAuthorized = false;
                             try {
                                 Integer count = jdbcTemplate.queryForObject(
-                                    "SELECT COUNT(*) FROM chat_threads WHERE id = ? AND (client_id = ? OR provider_id = ?)",
+                                    "SELECT COUNT(*) FROM chat_threads WHERE id = ? AND (student_id = ? OR provider_id = ?)",
                                     Integer.class, threadId, userId, userId
                                 );
                                 isAuthorized = (count != null && count > 0);

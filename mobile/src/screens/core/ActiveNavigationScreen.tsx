@@ -20,6 +20,7 @@ import { useAuthStore } from '../../store/authStore';
 import { getDirections, getRequestLocation, notifyProviderArrived } from '../../services/locationService';
 import { stompClient } from '../../services/socket';
 import { api } from '../../services/api';
+import { startChatWithStudent } from '../../services/chatService';
 import { useToast } from '../../styles/ToastContext';
 import StatusDialog from '../../components/StatusDialog';
 
@@ -104,6 +105,8 @@ export default function ActiveNavigationScreen({ route, navigation }: any) {
   const [steps, setSteps] = useState<any[]>([]);
   const [requesterName, setRequesterName] = useState('Requester');
   const [requesterPhone, setRequesterPhone] = useState('');
+  const [requesterId, setRequesterId] = useState<string | null>(null);
+  const [loadingChat, setLoadingChat] = useState(false);
   
   const [loading, setLoading] = useState(true);
   const [arrived, setArrived] = useState(false);
@@ -150,8 +153,9 @@ export default function ActiveNavigationScreen({ route, navigation }: any) {
       // 2. Fetch Requester details (specifically name and phone for call/chat)
       try {
         const jobDetails = await api.get(`/jobs/${taskId}`);
-        const requesterId = jobDetails.data.requesterId;
-        const requesterRes = await api.get(`/users/${requesterId}`);
+        const reqId = jobDetails.data.requesterId;
+        setRequesterId(reqId);
+        const requesterRes = await api.get(`/users/${reqId}`);
         setRequesterName(requesterRes.data.fullName || 'Requester');
         setRequesterPhone(requesterRes.data.phoneNumber || '');
       } catch (err) {
@@ -426,6 +430,29 @@ export default function ActiveNavigationScreen({ route, navigation }: any) {
     Linking.openURL(`tel:${requesterPhone}`);
   };
 
+  const handleChat = async () => {
+    if (!requesterId) {
+      showToast({ status: 'error', title: 'Chat Unavailable', subtitle: 'Requester ID is not resolved yet.' });
+      return;
+    }
+    setLoadingChat(true);
+    try {
+      const thread = await startChatWithStudent(requesterId);
+      navigation.navigate('ChatThread', {
+        threadId: thread.id,
+        otherUser: {
+          id: requesterId,
+          fullName: requesterName || 'Student',
+          profilePictureUrl: null,
+        }
+      });
+    } catch (e: any) {
+      showToast({ status: 'error', title: 'Could not open chat', subtitle: e.message || 'Please try again.' });
+    } finally {
+      setLoadingChat(false);
+    }
+  };
+
   if (loading) {
     return (
       <View style={[styles.loading, { backgroundColor: colors.background }]}>
@@ -582,9 +609,14 @@ export default function ActiveNavigationScreen({ route, navigation }: any) {
           
           <TouchableOpacity
             style={[styles.chatBtn, { backgroundColor: colors.inputBackground }]}
-            onPress={() => navigation.navigate('Chat', { requestId })}
+            onPress={handleChat}
+            disabled={loadingChat}
           >
-            <Ionicons name="chatbubbles" size={20} color={colors.text} />
+            {loadingChat ? (
+              <ActivityIndicator size="small" color={colors.primary} />
+            ) : (
+              <Ionicons name="chatbubbles" size={20} color={colors.text} />
+            )}
           </TouchableOpacity>
 
           <TouchableOpacity

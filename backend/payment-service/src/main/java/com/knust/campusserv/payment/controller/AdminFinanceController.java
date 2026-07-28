@@ -245,4 +245,42 @@ public class AdminFinanceController {
 
         return ResponseEntity.badRequest().body("Invalid action: " + action);
     }
+
+    @GetMapping("/transactions/export/csv")
+    public void exportTransactionsToCsv(jakarta.servlet.http.HttpServletResponse response) throws java.io.IOException {
+        response.setContentType("text/csv");
+        response.setHeader("Content-Disposition", "attachment; filename=\"transactions.csv\"");
+        
+        java.io.PrintWriter writer = response.getWriter();
+        writer.println("ID,Job ID,Amount,Status,Escrow Status,Paystack Reference,Payer Name,Payer Email,Provider Name,Agreed Bid Amount,Platform Commission,Provider Payout,Created At");
+        
+        List<Transaction> transactions = transactionRepository.findAll(Sort.by(Sort.Direction.DESC, "createdAt"));
+        for (Transaction tx : transactions) {
+            writer.println(String.format("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s",
+                escapeCsv(tx.getId()),
+                escapeCsv(tx.getJobId()),
+                tx.getAmount() != null ? tx.getAmount().toString() : "0.00",
+                escapeCsv(tx.getStatus()),
+                escapeCsv(tx.getEscrowStatus()),
+                escapeCsv(tx.getPaystackReference()),
+                escapeCsv(tx.getPayerName()),
+                escapeCsv(tx.getPayerEmail()),
+                escapeCsv(tx.getProviderName()),
+                tx.getAgreedBidAmount() != null ? tx.getAgreedBidAmount().toString() : "0.00",
+                tx.getPlatformCommission() != null ? tx.getPlatformCommission().toString() : "0.00",
+                tx.getProviderPayout() != null ? tx.getProviderPayout().toString() : "0.00",
+                tx.getCreatedAt() != null ? tx.getCreatedAt().toString() : ""
+            ));
+        }
+        writer.flush();
+    }
+
+    private String escapeCsv(String val) {
+        if (val == null) return "";
+        if (val.contains(",") || val.contains("\"") || val.contains("\n") || val.contains("\r")) {
+            val = val.replace("\"", "\"\"");
+            return "\"" + val + "\"";
+        }
+        return val;
+    }
 }

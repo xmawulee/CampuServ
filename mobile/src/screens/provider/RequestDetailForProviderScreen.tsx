@@ -158,12 +158,7 @@ export default function RequestDetailForProviderScreen({ navigation, route }: an
     );
   }
 
-  const budgetText =
-    request.budgetMin && request.budgetMax
-      ? request.budgetMin === request.budgetMax
-        ? `${Number(request.budgetMin).toFixed(0)} GHS`
-        : `${Number(request.budgetMin).toFixed(0)} – ${Number(request.budgetMax).toFixed(0)} GHS`
-      : 'No budget specified';
+  const budgetText = 'Contact for quote';
 
   const bidWindowClose = request.bidWindowCloses ? new Date(request.bidWindowCloses) : null;
   const isBidOpen = !bidWindowClose || bidWindowClose > new Date();
@@ -193,7 +188,7 @@ export default function RequestDetailForProviderScreen({ navigation, route }: an
           <View style={styles.topRow}>
             <View style={[styles.badge, { backgroundColor: colors.primaryLight }]}>
               <Text style={[styles.badgeText, { color: colors.primary }]}>
-                {request.category?.name || 'Service'}
+                Category: {request.category?.name || 'Service'}
               </Text>
             </View>
             <View style={[styles.badge, { backgroundColor: requestIsOpen ? colors.successLight : colors.inputBackground }]}>

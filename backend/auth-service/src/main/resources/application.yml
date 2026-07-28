@@ -21,10 +21,29 @@ spring:
     multipart:
       max-file-size: 10MB
       max-request-size: 10MB
+  rabbitmq:
+    host: 127.0.0.1
+    port: 5672
+    username: guest
+    password: ${RABBITMQ_PASSWORD:guest}
+    connection-timeout: 3000ms
+    template:
+      retry:
+        enabled: true
+        max-attempts: 3
+        initial-interval: 1000ms
+        multiplier: 2.0
+    listener:
+      simple:
+        retry:
+          enabled: true
+          max-attempts: 3
+          initial-interval: 1000ms
+          multiplier: 2.0
 
 
 app:
-  upload-dir: ${UPLOAD_DIR:c:/Users/allen/Desktop/CampuServ/backend/uploads/}
+  upload-dir: ${UPLOAD_DIR:../uploads/}
 
 
 eureka:
@@ -32,6 +51,7 @@ eureka:
     serviceUrl:
       defaultZone: http://127.0.0.1:8761/eureka/
     registry-fetch-interval-seconds: 2
+    initial-instance-info-replication-interval-seconds: 5
   instance:
     preferIpAddress: true
     ip-address: 127.0.0.1
@@ -41,6 +61,18 @@ eureka:
 jwt:
   secret: ${JWT_SECRET}
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,circuitbreakers
+  endpoint:
+    health:
+      show-details: always
+  health:
+    circuitbreakers:
+      enabled: true
+
 ---
 spring:
   config:
@@ -48,7 +80,7 @@ spring:
       on-profile: local-dev
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: validate
 
 # INSECURE FALLBACK — override via JWT_SECRET and INTERNAL_SERVICE_SECRET env vars in all non-local environments
 jwt:

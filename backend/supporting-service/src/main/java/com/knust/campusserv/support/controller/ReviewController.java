@@ -91,6 +91,8 @@ public class ReviewController {
 
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (org.springframework.web.client.RestClientException e) {
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body("Unable to verify job completion status.");
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
         }
@@ -102,6 +104,12 @@ public class ReviewController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
         return ResponseEntity.ok(reviewRepository.findByRevieweeIdOrderByCreatedAtDesc(userId, PageRequest.of(page, size)));
+    }
+
+    @GetMapping("/provider/{providerId}")
+    public ResponseEntity<List<Review>> getProviderReviews(@PathVariable("providerId") String providerId) {
+        Page<Review> reviews = reviewRepository.findByRevieweeIdOrderByCreatedAtDesc(providerId, PageRequest.of(0, 100));
+        return ResponseEntity.ok(reviews.getContent());
     }
 
     @GetMapping("/job/{jobId}")

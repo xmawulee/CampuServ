@@ -126,13 +126,8 @@ public class User {
     public Boolean getPrimaryRoleVerified() { return primaryRoleVerified; }
     public void setPrimaryRoleVerified(Boolean primaryRoleVerified) { this.primaryRoleVerified = primaryRoleVerified; }
 
-    public Boolean getIsVerified() { 
-        if ("PROVIDER".equalsIgnoreCase(role)) {
-            return Boolean.TRUE.equals(primaryRoleVerified);
-        }
-        return true;
-    }
-    public void setIsVerified(Boolean verified) { isVerified = verified; }
+    public Boolean getIsVerified() { return this.isVerified; }
+    public void setIsVerified(Boolean verified) { this.isVerified = verified; }
 
     public String getVerificationStatus() { return verificationStatus; }
     public void setVerificationStatus(String verificationStatus) { this.verificationStatus = verificationStatus; }
@@ -190,16 +185,22 @@ public class User {
 
         this.isProvider = "PROVIDER".equalsIgnoreCase(this.role) || "PROVIDER".equalsIgnoreCase(this.primaryRole) || "PROVIDER".equalsIgnoreCase(this.secondaryRole);
 
+        // Determine isVerified and verificationStatus
         if ("PROVIDER".equalsIgnoreCase(this.primaryRole)) {
-            this.verificationStatus = Boolean.TRUE.equals(primaryRoleVerified) ? "APPROVED" : "PENDING_VERIFICATION";
             this.isVerified = Boolean.TRUE.equals(primaryRoleVerified);
+            this.verificationStatus = this.isVerified ? "APPROVED" : "PENDING_VERIFICATION";
+        } else if ("PROVIDER".equalsIgnoreCase(this.secondaryRole)) {
+            this.isVerified = "APPROVED".equalsIgnoreCase(secondaryRoleStatus);
+            this.verificationStatus = this.secondaryRoleStatus != null ? this.secondaryRoleStatus : "PENDING_VERIFICATION";
         } else {
-            this.verificationStatus = "APPROVED";
+            // Student-only
             this.isVerified = true;
+            this.verificationStatus = "UNVERIFIED";
         }
 
         if (!"SUSPENDED".equalsIgnoreCase(this.accountStatus) && 
             !"BANNED".equalsIgnoreCase(this.accountStatus) &&
+            !"DELETED".equalsIgnoreCase(this.accountStatus) &&
             !"INCOMPLETE".equalsIgnoreCase(this.accountStatus)) {
             this.accountStatus = Boolean.TRUE.equals(this.isVerified) ? "ACTIVE" : "PENDING_VERIFICATION";
         }

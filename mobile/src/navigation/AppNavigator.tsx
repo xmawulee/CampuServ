@@ -9,6 +9,7 @@ import { useAuthStore } from '../store/authStore';
 import { api } from '../services/api';
 import { stompClient } from '../services/socket';
 import { ToastProvider, useToast } from '../styles/ToastContext';
+import { OfflineBanner } from '../components/OfflineBanner';
 
 // ── Screens ────────────────────────────────────────────────────────────────
 import RoleSelectScreen from '../screens/auth/RoleSelectScreen';
@@ -40,17 +41,20 @@ import TransactionReceiptScreen from '../screens/wallet/TransactionReceiptScreen
 import SettingsScreen from '../screens/settings/SettingsScreen';
 import CategoryProvidersScreen from '../screens/core/CategoryProvidersScreen';
 import ProviderProfileScreen from '../screens/core/ProviderProfileScreen';
+import ListingDetailScreen from '../screens/provider/ListingDetailScreen';
 import ActiveJobScreen from '../screens/core/ActiveJobScreen';
 import RiderLiveTrackingScreen from '../screens/core/RiderLiveTrackingScreen';
 import { ReviewSubmissionScreen } from '../screens/core/ReviewSubmissionScreen';
 import NotificationCenterScreen from '../screens/core/NotificationCenterScreen';
 import AccountRestrictedScreen from '../screens/auth/AccountRestrictedScreen';
-import ChatScreen from '../screens/chat/ChatScreen';
+import ChatListScreen from '../screens/chat/ChatListScreen';
+import ChatThreadScreen from '../screens/chat/ChatThreadScreen';
 
 import ProviderDashboardHomeScreen from '../screens/provider/ProviderDashboardHomeScreen';
 import IncomingRequestsScreen from '../screens/provider/IncomingRequestsScreen';
 import ProviderJobListScreen from '../screens/provider/ProviderJobListScreen';
 import CreateEditListingScreen from '../screens/provider/CreateEditListingScreen';
+import MyListingsScreen from '../screens/provider/MyListingsScreen';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -97,7 +101,7 @@ function CustomTabBar({ state, descriptors, navigation, colors, isDark }: any) {
           });
 
           if (!isFocused && !event.defaultPrevented) {
-            navigation.navigate({ name: route.name, merge: true });
+            (navigation as any).navigate(route.name, route.params, { merge: true });
           }
         };
 
@@ -109,6 +113,7 @@ function CustomTabBar({ state, descriptors, navigation, colors, isDark }: any) {
         let iconName = 'help-outline';
         if (route.name === 'ProviderDashboardHome') iconName = isFocused ? 'grid' : 'grid-outline';
         else if (route.name === 'IncomingRequests') iconName = isFocused ? 'flash' : 'flash-outline';
+        else if (route.name === 'Listings') iconName = isFocused ? 'list' : 'list-outline';
         else if (route.name === 'ProviderJobList') iconName = isFocused ? 'briefcase' : 'briefcase-outline';
         else if (route.name === 'Wallet') iconName = isFocused ? 'wallet' : 'wallet-outline';
         else if (route.name === 'Settings') iconName = isFocused ? 'person' : 'person-outline';
@@ -120,6 +125,7 @@ function CustomTabBar({ state, descriptors, navigation, colors, isDark }: any) {
         let displayLabel = label;
         if (route.name === 'ProviderDashboardHome') displayLabel = 'Dashboard';
         else if (route.name === 'IncomingRequests') displayLabel = 'Requests';
+        else if (route.name === 'Listings') displayLabel = 'Listings';
         else if (route.name === 'ProviderJobList') displayLabel = 'Jobs';
         else if (route.name === 'Wallet') displayLabel = 'Wallet';
         else if (route.name === 'Settings') displayLabel = 'Account';
@@ -170,12 +176,11 @@ function ProviderNavigator() {
       <Tab.Navigator
         tabBar={(props) => <CustomTabBar {...props} colors={colors} isDark={isDark} />}
         screenOptions={{ headerShown: false }}
-        sceneContainerStyle={{ backgroundColor: 'transparent' }}
       >
         <Tab.Screen name="ProviderDashboardHome" component={ProviderDashboardHomeScreen} />
         <Tab.Screen name="IncomingRequests" component={IncomingRequestsScreen} />
+        <Tab.Screen name="Listings" component={MyListingsScreen} />
         <Tab.Screen name="ProviderJobList" component={ProviderJobListScreen} />
-        <Tab.Screen name="Wallet" component={ProviderWalletScreen} />
         <Tab.Screen name="Settings" component={SettingsScreen} />
       </Tab.Navigator>
     </View>
@@ -191,7 +196,6 @@ function AppTabs() {
       <Tab.Navigator
         tabBar={(props) => <CustomTabBar {...props} colors={colors} isDark={isDark} />}
         screenOptions={{ headerShown: false }}
-        sceneContainerStyle={{ backgroundColor: 'transparent' }}
       >
         <Tab.Screen name="Home" component={HomeScreen} />
         <Tab.Screen name="Search" component={SearchScreen} />
@@ -231,6 +235,8 @@ export function validateDeepLinkForRole(targetRoute: string, userRole: string): 
     'SelectProvider',
     'RateProvider',
     'ClientTabs',
+    'ListingDetail',
+    'ProviderProfile',
   ];
 
   const providerOnlyRoutes = [
@@ -394,7 +400,8 @@ function AppNavigatorInner() {
   // Shared sub-screens
   const sharedScreens = (
     <>
-      <Stack.Screen name="Chat" component={ChatScreen} options={{ title: 'Live Chat' }} />
+      <Stack.Screen name="ChatList" component={ChatListScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="ChatThread" component={ChatThreadScreen} options={{ headerShown: false }} />
       <Stack.Screen name="ActiveJob" component={ActiveJobScreen} options={{ headerShown: false }} />
       <Stack.Screen name="RiderLiveTracking" component={RiderLiveTrackingScreen} options={{ title: 'Track Provider', headerShown: false }} />
       <Stack.Screen name="ReviewSubmission" component={ReviewSubmissionScreen} options={{ title: 'Submit Review', presentation: 'modal' }} />
@@ -467,6 +474,8 @@ function AppNavigatorInner() {
         <>
           <Stack.Screen name="Main" component={ProviderNavigator} options={{ headerShown: false }} />
           <Stack.Screen name="ProviderJobs" component={ProviderJobListScreen} options={{ headerShown: false }} />
+          <Stack.Screen name="Listings" component={MyListingsScreen} options={{ headerShown: false }} />
+          <Stack.Screen name="Wallet" component={ProviderWalletScreen} options={{ headerShown: false }} />
           <Stack.Screen name="RequestDetailForProvider" component={RequestDetailForProviderScreen} options={{ headerShown: false }} />
           <Stack.Screen name="CreateEditListing" component={CreateEditListingScreen} options={{ headerShown: false, presentation: 'modal' }} />
           <Stack.Screen name="TransactionReceipt" component={TransactionReceiptScreen} options={{ presentation: 'modal', headerShown: false }} />
@@ -481,7 +490,8 @@ function AppNavigatorInner() {
           <Stack.Screen name="RequestDetails" component={RequestDetailsScreen} options={{ title: 'Request Details' }} />
           <Stack.Screen name="PostRequest" component={PostRequestScreen} options={{ headerShown: false, presentation: 'modal' }} />
           <Stack.Screen name="CategoryProviders" component={CategoryProvidersScreen} options={{ headerShown: false }} />
-          <Stack.Screen name="ProviderProfile" component={ProviderProfileScreen} options={{ headerShown: false }} />
+          <Stack.Screen name="ProviderProfile" component={ListingDetailScreen} options={{ headerShown: false }} />
+          <Stack.Screen name="ListingDetail" component={ListingDetailScreen} options={{ headerShown: false }} />
           <Stack.Screen name="SelectProvider" component={SelectProviderScreen} options={{ title: 'Select Provider', presentation: 'card' }} />
           <Stack.Screen name="RateProvider" component={RateProviderScreen} options={{ headerShown: false, presentation: 'modal' }} />
           <Stack.Screen name="TransactionReceipt" component={TransactionReceiptScreen} options={{ presentation: 'modal', headerShown: false }} />
@@ -495,6 +505,7 @@ function AppNavigatorInner() {
 export default function AppNavigator() {
   return (
     <ToastProvider>
+      <OfflineBanner />
       <AppNavigatorInner />
     </ToastProvider>
   );

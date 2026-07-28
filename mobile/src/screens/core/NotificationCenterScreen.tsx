@@ -31,7 +31,8 @@ type NotifType =
   | 'DISPUTE_UPDATE'
   | 'REVIEW_REQUEST'
   | 'SYSTEM'
-  | 'ANNOUNCEMENT';
+  | 'ANNOUNCEMENT'
+  | 'CHAT_MESSAGE';
 
 interface Notification {
   id: string;
@@ -59,6 +60,7 @@ const NOTIF_META: Record<NotifType, { icon: string; color: string }> = {
   REVIEW_REQUEST: { icon: 'star-outline', color: '#F59E0B' },
   SYSTEM: { icon: 'information-circle-outline', color: '#6B7280' },
   ANNOUNCEMENT: { icon: 'megaphone-outline', color: '#3B82F6' },
+  CHAT_MESSAGE: { icon: 'chatbubble-outline', color: '#7C3AED' },
 };
 
 const getMeta = (type: NotifType) =>
@@ -96,6 +98,8 @@ function resolveNavigationTarget(notification: Notification): { screen: string; 
       return { screen: 'DisputeThread', params: { disputeId: referenceId } };
     case 'REVIEW_REQUEST':
       return { screen: 'RateProvider', params: { jobId: referenceId } };
+    case 'CHAT_MESSAGE':
+      return { screen: 'ChatList', params: {} };
     default:
       return null;
   }

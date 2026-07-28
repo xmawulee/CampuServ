@@ -148,9 +148,16 @@ export default function RequestCard({
           <View style={[styles.iconBg, { backgroundColor: catStyle.bg }]}>
             <CategoryIcon name={catName} size={16} color={catStyle.iconColor} />
           </View>
-          <Text style={[styles.cardTitle, { color: colors.text }]} numberOfLines={1}>
-            {request.title}
-          </Text>
+          <View style={{ flex: 1 }}>
+            <Text style={[styles.cardTitle, { color: colors.text }]} numberOfLines={1}>
+              {request.title}
+            </Text>
+            {!!catName && (
+              <Text style={{ fontSize: 11, color: colors.primary, fontWeight: '700', marginTop: 2 }}>
+                Category: {catName}
+              </Text>
+            )}
+          </View>
           {request.serviceMode === 'REMOTE' && (
             <View style={{ backgroundColor: 'rgba(139, 92, 246, 0.15)', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4, marginLeft: 6 }}>
               <Text style={{ color: '#8B5CF6', fontSize: 10, fontWeight: '700', textTransform: 'uppercase' }}>Remote</Text>
@@ -260,21 +267,9 @@ export default function RequestCard({
       {/* Bottom Row */}
       <View style={styles.bottomRow}>
         <View style={styles.priceWrap}>
-          {request.acceptedOffer ? (
-            <>
-              <Text style={[styles.priceText, { color: colors.text, textDecorationLine: 'line-through', opacity: 0.5, marginRight: 6 }]}>
-                ₵{request.budgetMax || request.budgetMin}
-              </Text>
-              <Text style={[styles.priceText, { color: colors.text, fontWeight: '700' }]}>
-                ₵{request.acceptedOffer.amount}
-              </Text>
-            </>
-          ) : (
-            <Text style={[styles.priceText, { color: colors.text, fontWeight: '700' }]}>
-              ₵{request.budgetMin}
-              {request.budgetMax && request.budgetMax !== request.budgetMin ? ` – ₵${request.budgetMax}` : ''}
-            </Text>
-          )}
+          <Text style={[styles.priceText, { color: colors.text, fontWeight: '700' }]}>
+            Contact for quote
+          </Text>
         </View>
         <View style={styles.timeWrap}>
           {variant === 'completed' && request.status === 'COMPLETED' && !request.isReviewed && request.jobCompletedAt && (

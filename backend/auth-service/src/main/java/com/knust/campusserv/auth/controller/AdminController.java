@@ -450,5 +450,36 @@ public class AdminController {
         return ResponseEntity.ok(resp);
     }
 
+    @GetMapping("/users/export/csv")
+    public void exportUsersToCsv(jakarta.servlet.http.HttpServletResponse response) throws java.io.IOException {
+        response.setContentType("text/csv");
+        response.setHeader("Content-Disposition", "attachment; filename=\"users.csv\"");
+        
+        java.io.PrintWriter writer = response.getWriter();
+        writer.println("ID,Email,Full Name,Role,Primary Role,Secondary Role,Account Status,Created At");
+        
+        List<User> users = userRepository.findAll();
+        for (User user : users) {
+            writer.println(String.format("%s,%s,%s,%s,%s,%s,%s,%s",
+                escapeCsv(user.getId()),
+                escapeCsv(user.getEmail()),
+                escapeCsv(user.getFullName()),
+                escapeCsv(user.getRole()),
+                escapeCsv(user.getPrimaryRole()),
+                escapeCsv(user.getSecondaryRole()),
+                escapeCsv(user.getAccountStatus()),
+                user.getCreatedAt() != null ? user.getCreatedAt().toString() : ""
+            ));
+        }
+        writer.flush();
+    }
 
+    private String escapeCsv(String val) {
+        if (val == null) return "";
+        if (val.contains(",") || val.contains("\"") || val.contains("\n") || val.contains("\r")) {
+            val = val.replace("\"", "\"\"");
+            return "\"" + val + "\"";
+        }
+        return val;
+    }
 }

@@ -3,6 +3,8 @@ package com.knust.campusserv.user.model;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.ArrayList;
 
 @Entity
 @Table(name = "provider_profiles")
@@ -50,6 +52,14 @@ public class ProviderProfile {
     @Column(name = "whatsapp_number")
     private String whatsappNumber;
 
+    @Column(name = "view_count")
+    private Long viewCount = 0L;
+
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "provider_key_services", joinColumns = @JoinColumn(name = "provider_id"))
+    @Column(name = "service_tag")
+    private List<String> keyServices = new ArrayList<>();
+
     // Getters and Setters
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
@@ -92,4 +102,10 @@ public class ProviderProfile {
 
     public String getWhatsappNumber() { return whatsappNumber; }
     public void setWhatsappNumber(String whatsappNumber) { this.whatsappNumber = whatsappNumber; }
+
+    public Long getViewCount() { return viewCount != null ? viewCount : 0L; }
+    public void setViewCount(Long viewCount) { this.viewCount = viewCount; }
+
+    public List<String> getKeyServices() { return keyServices != null ? keyServices : new ArrayList<>(); }
+    public void setKeyServices(List<String> keyServices) { this.keyServices = keyServices; }
 }

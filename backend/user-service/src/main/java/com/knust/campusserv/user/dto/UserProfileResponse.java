@@ -21,6 +21,16 @@ public class UserProfileResponse {
     private List<ProviderService> services;
     private String serviceCategory;
     private String whatsappNumber;
+    private Long viewCount;
+    private List<String> keyServices;
+    private String approvedAt;
+    private String createdAt;
+    private Boolean isSaved;
+    private String heroImageUrl;
+    private String priceOrQuote;
+    private BigDecimal basePrice;
+    private String location;
+    private String availabilityStatus;
 
     // Getters and Setters
     public String getId() { return id; }
@@ -64,4 +74,34 @@ public class UserProfileResponse {
 
     public String getWhatsappNumber() { return whatsappNumber; }
     public void setWhatsappNumber(String whatsappNumber) { this.whatsappNumber = whatsappNumber; }
+
+    public Long getViewCount() { return viewCount; }
+    public void setViewCount(Long viewCount) { this.viewCount = viewCount; }
+
+    public List<String> getKeyServices() { return keyServices; }
+    public void setKeyServices(List<String> keyServices) { this.keyServices = keyServices; }
+
+    public String getApprovedAt() { return approvedAt; }
+    public void setApprovedAt(String approvedAt) { this.approvedAt = approvedAt; }
+
+    public String getCreatedAt() { return createdAt; }
+    public void setCreatedAt(String createdAt) { this.createdAt = createdAt; }
+
+    public Boolean getIsSaved() { return isSaved; }
+    public void setIsSaved(Boolean isSaved) { this.isSaved = isSaved; }
+
+    public String getHeroImageUrl() { return heroImageUrl; }
+    public void setHeroImageUrl(String heroImageUrl) { this.heroImageUrl = heroImageUrl; }
+
+    public String getPriceOrQuote() { return priceOrQuote; }
+    public void setPriceOrQuote(String priceOrQuote) { this.priceOrQuote = priceOrQuote; }
+
+    public BigDecimal getBasePrice() { return basePrice; }
+    public void setBasePrice(BigDecimal basePrice) { this.basePrice = basePrice; }
+
+    public String getLocation() { return location; }
+    public void setLocation(String location) { this.location = location; }
+
+    public String getAvailabilityStatus() { return availabilityStatus; }
+    public void setAvailabilityStatus(String availabilityStatus) { this.availabilityStatus = availabilityStatus; }
 }

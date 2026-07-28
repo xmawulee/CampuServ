@@ -11,6 +11,9 @@ public class User {
     
     private String email;
     
+    @Column(name = "password_hash")
+    private String passwordHash = "dummy_hash";
+    
     @Column(name = "full_name")
     private String fullName;
     
@@ -106,4 +109,7 @@ public class User {
 
     public Boolean getPrimaryRoleVerified() { return primaryRoleVerified; }
     public void setPrimaryRoleVerified(Boolean primaryRoleVerified) { this.primaryRoleVerified = primaryRoleVerified; }
+
+    public String getPasswordHash() { return passwordHash; }
+    public void setPasswordHash(String passwordHash) { this.passwordHash = passwordHash; }
 }

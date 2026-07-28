@@ -19,10 +19,9 @@ spring:
     hibernate:
       ddl-auto: validate
   flyway:
-    enabled: true
-    locations: classpath:db/migration
-    baseline-on-migrate: true
-    validate-on-migrate: false
+    # Flyway disabled in supporting-service — all schema managed by the main database migration sequence.
+    # The V1/V2 SQL files in db/migration are kept for reference only.
+    enabled: false
   servlet:
     multipart:
       max-file-size: 10MB
@@ -33,13 +32,28 @@ spring:
     port: 5672
     username: guest
     password: ${RABBITMQ_PASSWORD:guest}
+    connection-timeout: 3000ms
+    template:
+      retry:
+        enabled: true
+        max-attempts: 3
+        initial-interval: 1000ms
+        multiplier: 2.0
+    listener:
+      simple:
+        retry:
+          enabled: true
+          max-attempts: 3
+          initial-interval: 1000ms
+          multiplier: 2.0
+        default-requeue-rejected: false
   data:
     redis:
       host: ${REDIS_HOST:127.0.0.1}
       port: ${REDIS_PORT:6379}
 
 app:
-  upload-dir: ${UPLOAD_DIR:c:/Users/allen/Desktop/CampuServ/backend/uploads/}
+  upload-dir: ${UPLOAD_DIR:../uploads/}
 
 
 google:
@@ -53,9 +67,23 @@ eureka:
   client:
     serviceUrl:
       defaultZone: http://127.0.0.1:8761/eureka/
+    registry-fetch-interval-seconds: 5
+    initial-instance-info-replication-interval-seconds: 5
   instance:
     preferIpAddress: true
     ip-address: 127.0.0.1
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,circuitbreakers
+  endpoint:
+    health:
+      show-details: always
+  health:
+    circuitbreakers:
+      enabled: true
 
 ---
 spring:
@@ -64,7 +92,7 @@ spring:
       on-profile: local-dev
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: validate
 
 google:
   api:

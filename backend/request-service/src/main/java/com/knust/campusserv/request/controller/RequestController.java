@@ -26,6 +26,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.*;
+import org.springframework.transaction.annotation.Transactional;
 
 @RestController
 @RequestMapping({"/requests", "/api/requests"})
@@ -486,6 +487,7 @@ public class RequestController {
         return ResponseEntity.ok(Map.of("status", "CANCELLED", "requestId", requestId));
     }
 
+    @Transactional
     @PatchMapping("/{requestId}/counter-offer/accept")
     public ResponseEntity<?> acceptOffer(
             @PathVariable String requestId,
@@ -542,8 +544,8 @@ public class RequestController {
         } catch (org.springframework.web.client.HttpClientErrorException e) {
             return ResponseEntity.status(e.getStatusCode()).body(e.getResponseBodyAsString());
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body("Failed to secure escrow payment: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                .body("Unable to lock escrow funds. Job cannot be started at this time.");
         }
 
         // Accept this offer
@@ -590,6 +592,21 @@ public class RequestController {
             restTemplate.postForEntity("http://job-service/jobs", jobPayload, Object.class);
         } catch (Exception e) {
             System.err.println("Job creation via job-service failed: " + e.getMessage());
+            request.setStatus("OPEN");
+            request.setEscrowHeld(false);
+            request.setUpdatedAt(LocalDateTime.now());
+            serviceRequestRepository.save(request);
+            if (latestPending != null) {
+                latestPending.setStatus("PENDING");
+                offerRepository.save(latestPending);
+            }
+            try {
+                restTemplate.put("http://payment-service/payments/refund?jobId=" + requestId, null);
+            } catch (Exception ex) {
+                System.err.println("Failed to refund escrow after job creation failure: " + ex.getMessage());
+            }
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                .body("Job service is currently unavailable. Escrow has been refunded and offer remains pending.");
         }
 
         // Publish offer-accepted event
@@ -673,6 +690,7 @@ public class RequestController {
 
     // ── Per-offer accept/decline (used by the mobile app's RequestDetailsScreen) ──
 
+    @Transactional
     @PutMapping("/{requestId}/offers/{offerId}/accept")
     public ResponseEntity<?> acceptSpecificOffer(
             @PathVariable String requestId,
@@ -723,8 +741,8 @@ public class RequestController {
         } catch (org.springframework.web.client.HttpClientErrorException e) {
             return ResponseEntity.status(e.getStatusCode()).body(e.getResponseBodyAsString());
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body("Failed to secure escrow payment: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                .body("Unable to lock escrow funds. Job cannot be started at this time.");
         }
 
         // Accept this offer
@@ -771,6 +789,21 @@ public class RequestController {
             restTemplate.postForEntity("http://job-service/jobs", jobPayload, Object.class);
         } catch (Exception e) {
             System.err.println("Job creation via job-service failed: " + e.getMessage());
+            request.setStatus("OPEN");
+            request.setEscrowHeld(false);
+            request.setUpdatedAt(LocalDateTime.now());
+            serviceRequestRepository.save(request);
+            if (offer != null) {
+                offer.setStatus("PENDING");
+                offerRepository.save(offer);
+            }
+            try {
+                restTemplate.put("http://payment-service/payments/refund?jobId=" + requestId, null);
+            } catch (Exception ex) {
+                System.err.println("Failed to refund escrow after job creation failure: " + ex.getMessage());
+            }
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                .body("Job service is currently unavailable. Escrow has been refunded and offer remains pending.");
         }
 
         // Publish offer-accepted event

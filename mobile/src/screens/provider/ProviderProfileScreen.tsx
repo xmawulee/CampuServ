@@ -199,6 +199,21 @@ export default function ProviderProfileScreen({ navigation }: any) {
           <View style={[styles.settingsCard, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
             <TouchableOpacity 
               style={[styles.settingRow, { borderBottomWidth: 1, borderBottomColor: colors.border }]} 
+              onPress={() => navigation.navigate('Listings')} 
+              activeOpacity={0.7}
+            >
+              <View style={[styles.settingIconWrap, { backgroundColor: 'rgba(0, 150, 255, 0.1)' }]}>
+                <Ionicons name="sparkles" size={18} color="#0096FF" />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.settingTitle, { color: colors.text }]}>Post & Manage Listings</Text>
+                <Text style={[styles.settingSub, { color: colors.textMuted }]}>Create services, edit prices & upload photos</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={[styles.settingRow, { borderBottomWidth: 1, borderBottomColor: colors.border }]} 
               onPress={handleLogout} 
               activeOpacity={0.7}
             >

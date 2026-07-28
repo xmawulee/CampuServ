@@ -31,6 +31,7 @@ export function useGlobalStompListener() {
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
       queryClient.invalidateQueries({ queryKey: ['providerJobSummary'] });
       queryClient.invalidateQueries({ queryKey: ['wallet'] });
+      queryClient.invalidateQueries({ queryKey: ['chat-list'] });
       
       // If a specific job status changes, invalidate the job cache.
       // Often notifications contain jobId or requestId

@@ -79,12 +79,7 @@ export default function IncomingRequestsScreen({ navigation }: any) {
   };
 
   const renderItem = ({ item }: { item: OpenRequest }) => {
-    const budgetText =
-      item.budgetMin && item.budgetMax
-        ? item.budgetMin === item.budgetMax
-          ? `${Number(item.budgetMin).toFixed(0)} GHS`
-          : `${Number(item.budgetMin).toFixed(0)}–${Number(item.budgetMax).toFixed(0)} GHS`
-        : 'Open Budget';
+    const budgetText = 'Contact for quote';
 
     const deadline = item.bidWindowCloses
       ? new Date(item.bidWindowCloses)
@@ -104,7 +99,7 @@ export default function IncomingRequestsScreen({ navigation }: any) {
           <View style={styles.cardTop}>
             <View style={[styles.cardBadge, { backgroundColor: colors.primaryLight }]}>
               <Text style={[styles.cardBadgeText, { color: colors.primary }]}>
-                {item.category?.name || 'Service'}
+                Category: {item.category?.name || 'Service'}
               </Text>
             </View>
             {isExpired ? (

@@ -13,41 +13,46 @@ public class ChatMessage {
     @Column(name = "thread_id", nullable = false)
     private String threadId;
 
-    @Column(name = "sender_id", nullable = true)
+    @Column(name = "sender_id")
     private String senderId;
-
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private MessageType type = MessageType.TEXT;
 
     @Column(columnDefinition = "TEXT")
     private String content;
 
-    // Kept for future media-sharing feature — not used by text-chat flow
-    @Column(name = "media_url")
-    private String mediaUrl;
+    // URL for image messages (nullable)
+    @Column(name = "image_url")
+    private String imageUrl;
 
-    @Column(name = "media_duration_seconds")
-    private Integer mediaDurationSeconds;
+    // Primary timestamp for new messages
+    @Column(name = "sent_at", nullable = false)
+    private LocalDateTime sentAt = LocalDateTime.now();
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private MessageStatus status = MessageStatus.SENT;
-
-    @Column(name = "created_at")
-    private LocalDateTime createdAt = LocalDateTime.now();
-
-    // Client-generated temp ID echoed back for optimistic-send reconciliation.
-    // Nullable — absent on system messages.
-    @Column(name = "client_temp_id")
-    private String clientTempId;
-
-    // Timestamp at which the other participant read this message.
-    // Nullable — null means unread. Adequate for 1:1 threads.
+    // Null = unread; set when the recipient opens the thread
     @Column(name = "read_at")
     private LocalDateTime readAt;
 
-    // Getters and Setters
+    // ── Legacy columns: DB has NOT NULL defaults; marked read-only so Hibernate
+    //    schema validation passes without our code needing to set them.
+    @Column(name = "type", insertable = false, updatable = false)
+    private String type;
+
+    @Column(name = "status", insertable = false, updatable = false)
+    private String status;
+
+    @Column(name = "created_at", insertable = false, updatable = false)
+    private LocalDateTime createdAt;
+
+    @Column(name = "media_url", insertable = false, updatable = false)
+    private String mediaUrl;
+
+    @Column(name = "media_duration_seconds", insertable = false, updatable = false)
+    private Integer mediaDurationSeconds;
+
+    @Column(name = "client_temp_id", insertable = false, updatable = false)
+    private String clientTempId;
+
+    // ── Getters and Setters ───────────────────────────────────────────────────
+
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
 
@@ -57,27 +62,20 @@ public class ChatMessage {
     public String getSenderId() { return senderId; }
     public void setSenderId(String senderId) { this.senderId = senderId; }
 
-    public MessageType getType() { return type; }
-    public void setType(MessageType type) { this.type = type; }
-
     public String getContent() { return content; }
     public void setContent(String content) { this.content = content; }
 
-    public String getMediaUrl() { return mediaUrl; }
-    public void setMediaUrl(String mediaUrl) { this.mediaUrl = mediaUrl; }
+    public String getImageUrl() { return imageUrl; }
+    public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
 
-    public Integer getMediaDurationSeconds() { return mediaDurationSeconds; }
-    public void setMediaDurationSeconds(Integer mediaDurationSeconds) { this.mediaDurationSeconds = mediaDurationSeconds; }
-
-    public MessageStatus getStatus() { return status; }
-    public void setStatus(MessageStatus status) { this.status = status; }
-
-    public LocalDateTime getCreatedAt() { return createdAt; }
-    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
-
-    public String getClientTempId() { return clientTempId; }
-    public void setClientTempId(String clientTempId) { this.clientTempId = clientTempId; }
+    public LocalDateTime getSentAt() { return sentAt; }
+    public void setSentAt(LocalDateTime sentAt) { this.sentAt = sentAt; }
 
     public LocalDateTime getReadAt() { return readAt; }
     public void setReadAt(LocalDateTime readAt) { this.readAt = readAt; }
+
+    // Legacy read-only getters
+    public String getType() { return type; }
+    public String getStatus() { return status; }
+    public LocalDateTime getCreatedAt() { return createdAt; }
 }
