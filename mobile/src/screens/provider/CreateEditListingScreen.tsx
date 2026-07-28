@@ -11,7 +11,7 @@ import Toast from '../../components/Toast';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { ServiceCategory } from '../../types/provider';
 import * as ImagePicker from 'expo-image-picker';
-import { uploadPortfolioPhoto, deletePortfolioPhoto, updateProviderService, deleteProviderService } from '../../services/userService';
+import { uploadPortfolioPhoto, updateProviderService, deleteProviderService } from '../../services/userService';
 import { BASE_URL } from '../../services/api';
 import { Image } from 'react-native';
 
@@ -43,9 +43,6 @@ export default function CreateEditListingScreen({ navigation, route }: any) {
   const user = useAuthStore((s) => s.user);
   const existingListing = route.params?.listing;
 
-  const [basePrice, setBasePrice] = useState(
-    existingListing?.basePrice?.toString() || ''
-  );
   const [categoryId, setCategoryId] = useState(
     existingListing?.category?.id || ''
   );
@@ -53,17 +50,23 @@ export default function CreateEditListingScreen({ navigation, route }: any) {
   const [loadingCategories, setLoadingCategories] = useState(true);
   const [saving, setSaving] = useState(false);
   const [deletingListing, setDeletingListing] = useState(false);
-  const [photos, setPhotos] = useState<string[]>(user?.portfolio || []);
+  // Per-listing photos — loaded from the listing itself, not the shared provider portfolio
+  const [photos, setPhotos] = useState<string[]>(
+    existingListing?.portfolioList ?? []
+  );
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
 
-  const [whatsappNumber, setWhatsappNumber] = useState(
-    existingListing?.whatsappNumber || user?.whatsappNumber || ''
+  // Per-listing title
+  const [listingTitle, setListingTitle] = useState<string>(
+    existingListing?.title || ''
   );
+  // Per-listing description
   const [bio, setBio] = useState(
-    existingListing?.bio || user?.bio || ''
+    existingListing?.description || ''
   );
+  // Per-listing key services/tags — loaded from listing, not shared profile
   const [keyServices, setKeyServices] = useState<string[]>(
-    existingListing?.keyServices || user?.keyServices || ['Express Delivery', 'Doorstep Pickup']
+    existingListing?.keyServicesList ?? []
   );
   const [customTagInput, setCustomTagInput] = useState('');
 
@@ -151,8 +154,8 @@ export default function CreateEditListingScreen({ navigation, route }: any) {
       const payload = {
         categoryId,
         basePrice: price,
-        whatsappNumber: whatsappNumber.trim(),
-        bio: bio.trim(),
+        title: listingTitle.trim(),
+        description: bio.trim(),
         keyServices,
         portfolio: photos,
       };
@@ -163,13 +166,6 @@ export default function CreateEditListingScreen({ navigation, route }: any) {
         await api.post(`/providers/${user.id}/services`, payload);
         showToast('Service listing created successfully!', 'success');
       }
-      const { updateUser } = useAuthStore.getState();
-      await updateUser({
-        bio: bio.trim(),
-        whatsappNumber: whatsappNumber.trim(),
-        keyServices,
-        portfolio: photos,
-      });
       setTimeout(() => navigation.goBack(), 800);
     } catch (e: any) {
       const msg = e.response?.data || 'Failed to save listing.';
@@ -239,15 +235,12 @@ export default function CreateEditListingScreen({ navigation, route }: any) {
       } as any;
       formData.append('file', fileObj);
 
+      // Upload to the server and get back the permanent URL
       const res = await uploadPortfolioPhoto(user.id, formData);
-      setPhotos(res.portfolio || []);
-      const { accessToken, refreshToken, setAuth } = useAuthStore.getState();
-      if (accessToken && refreshToken) {
-        await setAuth(accessToken, refreshToken, {
-          ...user,
-          portfolio: res.portfolio || [],
-        });
-      }
+      // Extract the newly uploaded URL (the last one added) and append it to this listing's photos only
+      const uploadedUrls: string[] = res.portfolio || [];
+      const newUrl = uploadedUrls.length > 0 ? uploadedUrls[uploadedUrls.length - 1] : null;
+      if (newUrl) setPhotos((prev) => [...prev, newUrl]);
       showToast('Photo uploaded successfully!', 'success');
     } catch (e: any) {
       showToast(e.message || 'Failed to upload photo.', 'error');
@@ -256,22 +249,10 @@ export default function CreateEditListingScreen({ navigation, route }: any) {
     }
   };
 
-  const handleDeletePhoto = async (url: string) => {
-    if (!user) return;
-    try {
-      const res = await deletePortfolioPhoto(user.id, url);
-      setPhotos(res.portfolio || []);
-      const { accessToken, refreshToken, setAuth } = useAuthStore.getState();
-      if (accessToken && refreshToken) {
-        await setAuth(accessToken, refreshToken, {
-          ...user,
-          portfolio: res.portfolio || [],
-        });
-      }
-      showToast('Photo removed.', 'success');
-    } catch (e: any) {
-      showToast(e.message || 'Failed to remove photo.', 'error');
-    }
+  const handleDeletePhoto = (url: string) => {
+    // Remove from this listing's local state — the deletion from storage happens when the listing is saved
+    setPhotos((prev) => prev.filter((u) => u !== url));
+    showToast('Photo removed.', 'success');
   };
 
 
@@ -303,12 +284,26 @@ export default function CreateEditListingScreen({ navigation, route }: any) {
           <View style={[styles.infoBanner, { backgroundColor: 'rgba(0, 150, 255, 0.08)', borderColor: 'rgba(0, 150, 255, 0.3)' }]}>
             <Ionicons name="create-outline" size={18} color="#0096FF" />
             <Text style={[styles.infoBannerText, { color: colors.text }]}>
-              Editing existing service listing. Price or category updates and photo uploads take effect immediately across all student feeds.
+              Editing this listing. Changes are independent — updating one listing does not affect your other listings.
             </Text>
           </View>
         )}
 
-        {/* Price */}
+        {/* Listing Title */}
+        <View style={styles.formGroup}>
+          <Text style={[styles.label, { color: colors.textMuted }]}>Listing Title</Text>
+          <TextInput
+            style={[styles.input, { backgroundColor: colors.inputBackground, color: colors.text, borderColor: colors.border }]}
+            placeholder="e.g. Professional Tutoring – Maths & Science"
+            placeholderTextColor={colors.placeholderText}
+            value={listingTitle}
+            onChangeText={setListingTitle}
+          />
+          <Text style={[styles.hint, { color: colors.textMuted }]}>
+            Give this listing a descriptive name so students know exactly what you offer.
+          </Text>
+        </View>
+
         {/* Price indicator */}
         <View style={styles.formGroup}>
           <Text style={[styles.label, { color: colors.textMuted }]}>Pricing Model</Text>
@@ -334,8 +329,6 @@ export default function CreateEditListingScreen({ navigation, route }: any) {
             {categories.map((cat) => {
               const config = CATEGORY_ICONS[cat.name] || {
                 icon: 'apps-outline',
-                bg: colors.inputBackground,
-                iconColor: colors.textMuted,
               };
               const isSelected = categoryId === cat.id;
               const allowed = isCategoryAllowed(cat.name, cat.id);
@@ -344,8 +337,13 @@ export default function CreateEditListingScreen({ navigation, route }: any) {
                   key={cat.id}
                   style={[
                     styles.catCard,
-                    { backgroundColor: config.bg, width: 110, opacity: allowed ? 1 : 0.45 },
-                    isSelected && { borderWidth: 2.5, borderColor: colors.primary },
+                    {
+                      width: 112,
+                      opacity: allowed ? 1 : 0.5,
+                      borderColor: isSelected ? '#FF7846' : '#E2E8F0',
+                      backgroundColor: isSelected ? 'rgba(255, 120, 70, 0.08)' : '#FFFFFF',
+                      borderWidth: isSelected ? 2 : 1.5,
+                    },
                   ]}
                   onPress={() => {
                     if (!allowed) {
@@ -354,20 +352,20 @@ export default function CreateEditListingScreen({ navigation, route }: any) {
                     }
                     setCategoryId(cat.id);
                   }}
-                  activeOpacity={0.8}
+                  activeOpacity={0.85}
                 >
-                  <View style={[styles.catIconWrap, { backgroundColor: '#FFFFFF' }]}>
+                  <View style={[styles.catIconWrap, { backgroundColor: isSelected ? '#FFFFFF' : '#F8FAFC' }]}>
                     <Ionicons
                       name={allowed ? (config.icon as any) : "lock-closed"}
                       size={20}
-                      color={isSelected ? colors.primary : config.iconColor}
+                      color={isSelected ? '#FF7846' : '#64748B'}
                     />
                   </View>
-                  <Text style={[styles.catLabel, { color: isSelected ? colors.primary : '#444' }]}>
+                  <Text style={[styles.catLabel, { color: isSelected ? '#FF7846' : '#475569' }]}>
                     {cat.name}
                   </Text>
                   {isSelected && (
-                    <View style={[styles.catCheck, { backgroundColor: colors.primary }]}>
+                    <View style={[styles.catCheck, { backgroundColor: '#FF7846' }]}>
                       <Ionicons name="checkmark" size={10} color="#FFF" />
                     </View>
                   )}
@@ -377,23 +375,7 @@ export default function CreateEditListingScreen({ navigation, route }: any) {
           </ScrollView>
         )}
 
-        {/* Contact / WhatsApp Number */}
-        <View style={styles.formGroup}>
-          <Text style={[styles.label, { color: colors.textMuted }]}>Contact / WhatsApp Number</Text>
-          <TextInput
-            style={[styles.input, { backgroundColor: colors.inputBackground, color: colors.text, borderColor: colors.border }]}
-            placeholder="e.g. 0241234567 or +233241234567"
-            placeholderTextColor={colors.placeholderText}
-            keyboardType="phone-pad"
-            value={whatsappNumber}
-            onChangeText={setWhatsappNumber}
-          />
-          <Text style={[styles.hint, { color: colors.textMuted }]}>
-            Used when students tap the "Call Now" or WhatsApp buttons on your marketplace listing.
-          </Text>
-        </View>
-
-        {/* Detailed Service Description / Bio */}
+        {/* Detailed Service Description – per-listing */}
         <View style={styles.formGroup}>
           <Text style={[styles.label, { color: colors.textMuted }]}>Detailed Service Description</Text>
           <TextInput
@@ -408,7 +390,7 @@ export default function CreateEditListingScreen({ navigation, route }: any) {
                 textAlignVertical: 'top',
               },
             ]}
-            placeholder="Describe your service guarantees, turnaround times, delivery rules, pricing breakdown, or special offers..."
+            placeholder="Describe what makes this specific listing unique: guarantees, turnaround times, rates, or special offers..."
             placeholderTextColor={colors.placeholderText}
             multiline
             numberOfLines={4}
@@ -416,7 +398,7 @@ export default function CreateEditListingScreen({ navigation, route }: any) {
             onChangeText={setBio}
           />
           <Text style={[styles.hint, { color: colors.textMuted }]}>
-            Appears under "About This Service & Seller" on your full marketplace detail screen.
+            This description is unique to this listing and appears when students view it in the marketplace.
           </Text>
         </View>
 
@@ -556,7 +538,7 @@ export default function CreateEditListingScreen({ navigation, route }: any) {
       </ScrollView>
 
       {/* Footer */}
-      <View style={[styles.footer, { backgroundColor: colors.background, borderTopColor: colors.border, paddingBottom: Math.max(insets.bottom, 24) }]}>
+      <View style={[styles.footer, { backgroundColor: colors.cardBackground, borderTopColor: colors.border, paddingBottom: Math.max(insets.bottom, 24) }]}>
         <TouchableOpacity
           style={[styles.saveBtn, { backgroundColor: colors.primary }, saving && { opacity: 0.7 }]}
           onPress={handleSave}
@@ -598,64 +580,283 @@ export default function CreateEditListingScreen({ navigation, route }: any) {
 
 const styles = StyleSheet.create({
   header: {
-    paddingTop: Platform.OS === 'ios' ? 50 : 20,
+    paddingTop: Platform.OS === 'ios' ? 54 : 24,
     paddingBottom: 16,
-    paddingHorizontal: 16,
+    paddingHorizontal: 20,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    backgroundColor: '#FFFFFF',
     borderBottomWidth: 1,
+    borderBottomColor: '#F1F5F9',
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.03,
+    shadowRadius: 8,
+    elevation: 2,
   },
-  backBtn: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
-  headerTitle: { fontSize: 18, fontWeight: '700' },
-  content: { padding: 24, paddingBottom: 100 },
+  backBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#F8FAFC',
+  },
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#0F172A',
+    fontFamily: 'System',
+  },
+  content: {
+    padding: 20,
+    paddingBottom: 100,
+    backgroundColor: '#F8FAFC',
+  },
 
   infoBanner: {
-    flexDirection: 'row', alignItems: 'flex-start', gap: 10,
-    padding: 12, borderRadius: 12, borderWidth: 1, marginBottom: 20,
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 10,
+    padding: 14,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 120, 70, 0.25)',
+    backgroundColor: 'rgba(255, 120, 70, 0.06)',
+    marginBottom: 24,
   },
-  infoBannerText: { fontSize: 12, lineHeight: 17, flex: 1 },
+  infoBannerText: {
+    fontSize: 13,
+    lineHeight: 18,
+    color: '#D9663C',
+    fontWeight: '500',
+  },
 
-  formGroup: { marginBottom: 24 },
-  label: { fontSize: 12, fontWeight: '700', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.5 },
-  input: { height: 52, borderRadius: 14, borderWidth: 1, paddingHorizontal: 16, fontSize: 16 },
-  hint: { fontSize: 12, marginTop: 6, lineHeight: 16 },
+  formGroup: {
+    marginBottom: 24,
+  },
+  label: {
+    fontSize: 13,
+    fontWeight: '700',
+    marginBottom: 8,
+    color: '#334155',
+    textTransform: 'uppercase',
+    letterSpacing: 0.8,
+  },
+  input: {
+    height: 54,
+    borderRadius: 16,
+    borderWidth: 1.5,
+    borderColor: '#E2E8F0',
+    paddingHorizontal: 16,
+    fontSize: 15,
+    color: '#0F172A',
+    backgroundColor: '#FFFFFF',
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.02,
+    shadowRadius: 4,
+    elevation: 1,
+  },
+  hint: {
+    fontSize: 12,
+    marginTop: 6,
+    lineHeight: 17,
+    color: '#64748B',
+  },
 
   catCard: {
-    borderRadius: 14, padding: 12, alignItems: 'center',
-    gap: 8, minHeight: 80, justifyContent: 'center', position: 'relative',
+    borderRadius: 16,
+    padding: 12,
+    alignItems: 'center',
+    gap: 8,
+    minHeight: 84,
+    justifyContent: 'center',
+    position: 'relative',
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1.5,
+    borderColor: '#E2E8F0',
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.03,
+    shadowRadius: 6,
+    elevation: 2,
   },
-  catIconWrap: { width: 40, height: 40, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
-  catLabel: { fontSize: 10, fontWeight: '700', textAlign: 'center' },
+  catIconWrap: {
+    width: 42,
+    height: 42,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#F8FAFC',
+  },
+  catLabel: {
+    fontSize: 11,
+    fontWeight: '700',
+    textAlign: 'center',
+    color: '#334155',
+  },
   catCheck: {
-    position: 'absolute', top: -5, right: -5,
-    width: 18, height: 18, borderRadius: 9, alignItems: 'center', justifyContent: 'center',
+    position: 'absolute',
+    top: -4,
+    right: -4,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
   },
 
   tipCard: {
-    flexDirection: 'row', alignItems: 'flex-start', gap: 12,
-    padding: 14, borderRadius: 16, borderWidth: 1,
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 12,
+    padding: 16,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 120, 70, 0.15)',
+    backgroundColor: 'rgba(255, 120, 70, 0.04)',
+    marginTop: 8,
+    marginBottom: 24,
   },
-  tipTitle: { fontSize: 13, fontWeight: '700', marginBottom: 4 },
-  tipText: { fontSize: 12, lineHeight: 17 },
+  tipTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    marginBottom: 4,
+    color: '#FF7846',
+  },
+  tipText: {
+    fontSize: 13,
+    lineHeight: 18,
+    color: '#475569',
+  },
 
-  footer: { padding: 24, paddingTop: 16, borderTopWidth: 1 },
+  footer: {
+    padding: 20,
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: '#F1F5F9',
+    backgroundColor: '#FFFFFF',
+  },
   saveBtn: {
-    height: 56, borderRadius: 16, alignItems: 'center', justifyContent: 'center',
-    shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 8, elevation: 4,
+    height: 56,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#FF7846',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 10,
+    elevation: 4,
   },
-  saveBtnText: { color: '#FFF', fontSize: 16, fontWeight: '800' },
+  saveBtnText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '800',
+    letterSpacing: 0.5,
+  },
 
-  addPhotoBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12, backgroundColor: 'rgba(0, 150, 255, 0.1)' },
-  addPhotoText: { fontSize: 12, fontWeight: '700' },
-  uploadingBox: { flexDirection: 'row', alignItems: 'center', padding: 12, borderRadius: 12, borderWidth: 1, marginBottom: 12 },
-  photoThumbWrap: { width: 100, height: 100, borderRadius: 12, borderWidth: 1, overflow: 'hidden', position: 'relative' },
-  photoThumb: { width: '100%', height: '100%', resizeMode: 'cover' },
-  deletePhotoBtn: { position: 'absolute', top: 6, right: 6, width: 22, height: 22, borderRadius: 11, backgroundColor: 'rgba(0,0,0,0.6)', alignItems: 'center', justifyContent: 'center' },
-  emptyPhotoBox: { alignItems: 'center', justifyContent: 'center', padding: 24, borderRadius: 14, borderWidth: 1, borderStyle: 'dashed' },
-  deleteBtn: { height: 50, borderRadius: 16, alignItems: 'center', justifyContent: 'center', marginTop: 12, borderWidth: 1, borderColor: '#FF3B30' },
-  deleteBtnText: { color: '#FF3B30', fontSize: 15, fontWeight: '700' },
-  tagChip: { paddingHorizontal: 12, paddingVertical: 7, borderRadius: 20, borderWidth: 1 },
-  tagChipText: { fontSize: 12, fontWeight: '600' },
-  addTagBtn: { paddingHorizontal: 18, borderRadius: 14, alignItems: 'center', justifyContent: 'center', height: 46 },
+  addPhotoBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
+    backgroundColor: 'rgba(255, 120, 70, 0.1)',
+  },
+  addPhotoText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#FF7846',
+  },
+  uploadingBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 14,
+    borderRadius: 14,
+    borderWidth: 1.5,
+    borderColor: '#E2E8F0',
+    backgroundColor: '#FFFFFF',
+    marginBottom: 12,
+  },
+  photoThumbWrap: {
+    width: 96,
+    height: 96,
+    borderRadius: 14,
+    borderWidth: 1.5,
+    borderColor: '#E2E8F0',
+    overflow: 'hidden',
+    position: 'relative',
+    backgroundColor: '#FFFFFF',
+  },
+  photoThumb: {
+    width: '100%',
+    height: '100%',
+    resizeMode: 'cover',
+  },
+  deletePhotoBtn: {
+    position: 'absolute',
+    top: 4,
+    right: 4,
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: 'rgba(15, 23, 42, 0.75)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  emptyPhotoBox: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 28,
+    borderRadius: 16,
+    borderWidth: 1.5,
+    borderColor: '#CBD5E1',
+    borderStyle: 'dashed',
+    backgroundColor: '#FFFFFF',
+  },
+  deleteBtn: {
+    height: 52,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 12,
+    borderWidth: 1.5,
+    borderColor: '#EF4444',
+    backgroundColor: '#FFFFFF',
+  },
+  deleteBtnText: {
+    color: '#EF4444',
+    fontSize: 15,
+    fontWeight: '700',
+  },
+  tagChip: {
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 24,
+    borderWidth: 1.5,
+    backgroundColor: '#FFFFFF',
+    borderColor: '#E2E8F0',
+  },
+  tagChipText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#475569',
+  },
+  addTagBtn: {
+    paddingHorizontal: 20,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: 48,
+    shadowColor: '#FF7846',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 2,
+  },
 });

@@ -67,12 +67,20 @@ export default function CategoryProvidersScreen({ route, navigation }: any) {
     setSortOption(nextSort);
   };
 
-  const renderItem = useCallback(({ item }: { item: ProviderResponse }) => (
-    <ProviderFeedCard
-      provider={item}
-      onPress={() => navigation.navigate('ListingDetail', { providerId: (item as any).id || item.providerId })}
-    />
-  ), [navigation]);
+  const renderItem = useCallback(({ item }: { item: ProviderResponse }) => {
+    const matchedService = item.services?.find(
+      (svc: any) => svc.category?.name?.toLowerCase() === categoryName?.toLowerCase()
+    );
+    return (
+      <ProviderFeedCard
+        provider={item}
+        onPress={() => navigation.navigate('ListingDetail', { 
+          providerId: (item as any).id || item.providerId,
+          selectedListing: matchedService
+        })}
+      />
+    );
+  }, [navigation, categoryName]);
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>

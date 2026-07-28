@@ -33,6 +33,15 @@ export default function ListingDetailScreen({ route, navigation }: any) {
   const [refreshing, setRefreshing] = useState(false);
   const [activeTab, setActiveTab] = useState<'about' | 'services' | 'reviews'>('about');
 
+  // Active selected listing state
+  const [currentListing, setCurrentListing] = useState<any>(route.params?.selectedListing || null);
+
+  useEffect(() => {
+    if (route.params?.selectedListing) {
+      setCurrentListing(route.params.selectedListing);
+    }
+  }, [route.params?.selectedListing]);
+
   // Hero image carousel state
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const flatListRef = useRef<FlatList>(null);
@@ -63,10 +72,14 @@ export default function ListingDetailScreen({ route, navigation }: any) {
       const res = await getProviderProfile(providerId);
       setProfile(res);
       setIsSaved(!!res.isSaved);
+      // Automatically default to the first listing/service if no listing was explicitly selected
+      if (!currentListing && res.services && res.services.length > 0) {
+        setCurrentListing(res.services[0]);
+      }
     } catch (e: any) {
       console.error('Failed to load listing details:', e);
     }
-  }, [providerId]);
+  }, [providerId, currentListing]);
 
   const loadReviews = useCallback(async () => {
     try {
@@ -193,7 +206,7 @@ export default function ListingDetailScreen({ route, navigation }: any) {
           </TouchableOpacity>
         </View>
         <View style={styles.center}>
-          <ActivityIndicator size="large" color="#0056D2" />
+          <ActivityIndicator size="large" color={colors.primary} />
         </View>
       </SafeAreaView>
     );
@@ -220,15 +233,24 @@ export default function ListingDetailScreen({ route, navigation }: any) {
     return `${BASE_URL}${url.startsWith('/') ? '' : '/'}${url}`;
   };
 
-  // Compile carousel images
+  // Compile carousel images — prefer per-listing photos if a specific listing was selected
   const images: string[] = [];
   const addImage = (u?: string | null) => {
     const full = getFullImageUrl(u);
     if (full && !images.includes(full)) images.push(full);
   };
-  addImage(profile.heroImageUrl);
-  if (profile.portfolio && Array.isArray(profile.portfolio)) {
-    profile.portfolio.forEach(url => addImage(url));
+  if (currentListing?.portfolioList && Array.isArray(currentListing.portfolioList) && currentListing.portfolioList.length > 0) {
+    // Per-listing photos from the selected listing
+    currentListing.portfolioList.forEach((url: string) => addImage(url));
+  } else if (currentListing?.listingPortfolio) {
+    // Fallback: comma-separated string from the entity
+    String(currentListing.listingPortfolio).split(',').forEach((url: string) => addImage(url.trim()));
+  } else {
+    // No listing selected — use provider's shared heroImage and portfolio
+    addImage(profile.heroImageUrl);
+    if (profile.portfolio && Array.isArray(profile.portfolio)) {
+      profile.portfolio.forEach(url => addImage(url));
+    }
   }
   const currentImage = images[selectedImageIndex] || null;
 
@@ -243,21 +265,21 @@ export default function ListingDetailScreen({ route, navigation }: any) {
         </TouchableOpacity>
         <View style={styles.breadcrumbWrap}>
           <Text style={styles.breadcrumbText} numberOfLines={1}>
-            {profile.serviceCategory || 'Service Listing'} • {profile.fullName}
+            {(currentListing?.category?.name) || profile.serviceCategory || 'Service Listing'} • {profile.fullName}
           </Text>
         </View>
         <TouchableOpacity onPress={handleToggleSave} style={styles.iconBtn}>
           <Ionicons 
             name={isSaved ? "bookmark" : "bookmark-outline"} 
             size={24} 
-            color={isSaved ? "#0056D2" : "#64748B"} 
+            color={isSaved ? colors.primary : "#64748B"} 
           />
         </TouchableOpacity>
       </View>
 
       <ScrollView
         contentContainerStyle={styles.scrollContent}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#0056D2" />}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}
       >
         {/* Hero Image / Carousel */}
         <View style={styles.heroSection}>
@@ -319,9 +341,9 @@ export default function ListingDetailScreen({ route, navigation }: any) {
               <Text style={styles.verifiedText}>Verified Pro</Text>
             </View>
             {!!profile.serviceCategory && (
-              <View style={[styles.verifiedBadge, { backgroundColor: '#EEF2FF', borderColor: '#DBEAFE', borderWidth: 1, marginLeft: 8 }]}>
-                <Ionicons name="pricetag-outline" size={12} color="#0056D2" style={{ marginRight: 4 }} />
-                <Text style={[styles.verifiedText, { color: '#0056D2' }]}>Category: {profile.serviceCategory}</Text>
+              <View style={[styles.verifiedBadge, { backgroundColor: 'rgba(255, 120, 70, 0.08)', borderColor: 'rgba(255, 120, 70, 0.25)', borderWidth: 1.5, marginLeft: 8 }]}>
+                <Ionicons name="pricetag-outline" size={12} color={colors.primary} style={{ marginRight: 4 }} />
+                <Text style={[styles.verifiedText, { color: colors.primary }]}>Category: {profile.serviceCategory}</Text>
               </View>
             )}
             <View style={styles.priceTagWrap}>
@@ -342,8 +364,8 @@ export default function ListingDetailScreen({ route, navigation }: any) {
           {/* 3 Contact CTAs */}
           <View style={styles.ctaContainer}>
             <TouchableOpacity style={[styles.ctaBtn, styles.ctaBtnSecondary]} onPress={handleChat}>
-              <Ionicons name="chatbubbles-outline" size={18} color="#0056D2" />
-              <Text style={[styles.ctaBtnText, { color: '#0056D2' }]}>Chat</Text>
+              <Ionicons name="chatbubbles-outline" size={18} color={colors.primary} />
+              <Text style={[styles.ctaBtnText, { color: colors.primary }]}>Chat</Text>
             </TouchableOpacity>
 
             <TouchableOpacity style={[styles.ctaBtn, styles.ctaBtnSecondary]} onPress={handleCallNow}>
@@ -360,7 +382,7 @@ export default function ListingDetailScreen({ route, navigation }: any) {
                     targetProviderName: profile.fullName,
                     targetProviderAvatarUrl: profile.profilePictureUrl,
                     targetProviderRating: profile.rating,
-                    categoryId: profile.serviceCategory || (profile.services && profile.services.length > 0 ? (profile.services[0].category?.id || profile.services[0].category?.name) : undefined),
+                    categoryId: currentListing?.category?.id || currentListing?.category?.name || profile.serviceCategory || (profile.services && profile.services.length > 0 ? (profile.services[0].category?.id || profile.services[0].category?.name) : undefined),
                   });
                 }
               }}
@@ -402,16 +424,26 @@ export default function ListingDetailScreen({ route, navigation }: any) {
           <View style={styles.tabContentCard}>
             <Text style={styles.sectionHeading}>About this Service</Text>
             <Text style={styles.bioText}>
-              {profile.bio || 'This seller has not provided a detailed biography yet. Contact them directly to inquire about their services, turnaround times, and rates.'}
+              {(currentListing?.description) ||
+               (currentListing?.listingDescription) ||
+               profile.bio ||
+               'This seller has not provided a detailed biography yet. Contact them directly to inquire about their services, turnaround times, and rates.'}
             </Text>
 
-            {profile.keyServices && profile.keyServices.length > 0 && (
+            {((): string[] => {
+              const tags: string[] = currentListing?.keyServicesList ||
+                (currentListing?.listingKeyServices ? String(currentListing.listingKeyServices).split(',').map((s: string) => s.trim()).filter(Boolean) : null) ||
+                profile.keyServices || [];
+              return tags;
+            })().length > 0 && (
               <>
                 <Text style={[styles.sectionHeading, { marginTop: 20 }]}>Service Highlights</Text>
                 <View style={styles.tagsContainer}>
-                  {profile.keyServices.map((tag, idx) => (
+                  {(currentListing?.keyServicesList ||
+                    (currentListing?.listingKeyServices ? String(currentListing.listingKeyServices).split(',').map((s: string) => s.trim()).filter(Boolean) : null) ||
+                    profile.keyServices || []).map((tag: string, idx: number) => (
                     <View key={idx} style={styles.tagPill}>
-                      <Ionicons name="pricetag-outline" size={12} color="#0056D2" style={{ marginRight: 4 }} />
+                      <Ionicons name="pricetag-outline" size={12} color={colors.primary} style={{ marginRight: 4 }} />
                       <Text style={styles.tagText}>{tag}</Text>
                     </View>
                   ))}
@@ -466,16 +498,22 @@ export default function ListingDetailScreen({ route, navigation }: any) {
             <View style={{ marginTop: 24 }}>
               <Text style={styles.sectionHeading}>More Listings by this Seller</Text>
               {loadingListings ? (
-                <ActivityIndicator size="small" color="#0056D2" />
+                <ActivityIndicator size="small" color={colors.primary} />
               ) : sellerListings && sellerListings.length > 0 ? (
                 sellerListings.map((ad: any, idx: number) => (
-                  <View key={idx} style={styles.sellerAdCard}>
-                    <Ionicons name="megaphone-outline" size={20} color="#0056D2" />
+                  <TouchableOpacity
+                    key={idx}
+                    style={styles.sellerAdCard}
+                    onPress={() => navigation.push('ListingDetail', { providerId, selectedListing: ad })}
+                    activeOpacity={0.8}
+                  >
+                    <Ionicons name="megaphone-outline" size={20} color={colors.primary} />
                     <View style={{ flex: 1, marginLeft: 12 }}>
                       <Text style={styles.sellerAdTitle}>{ad.title || ad.category?.name || 'Campus Listing'}</Text>
                       <Text style={styles.sellerAdPrice}>{ad.basePrice ? `From GHS ${ad.basePrice}` : 'Negotiable'}</Text>
                     </View>
-                  </View>
+                    <Ionicons name="chevron-forward" size={16} color="#94A3B8" />
+                  </TouchableOpacity>
                 ))
               ) : (
                 <Text style={styles.emptyText}>No additional active listings.</Text>
@@ -489,7 +527,7 @@ export default function ListingDetailScreen({ route, navigation }: any) {
           <View style={styles.tabContentCard}>
             <Text style={styles.sectionHeading}>Student Reviews ({reviews.length})</Text>
             {loadingReviews ? (
-              <ActivityIndicator size="small" color="#0056D2" style={{ marginVertical: 20 }} />
+              <ActivityIndicator size="small" color={colors.primary} style={{ marginVertical: 20 }} />
             ) : reviews && reviews.length > 0 ? (
               reviews.map((rev: any, idx: number) => (
                 <View key={idx} style={styles.reviewItem}>
@@ -602,13 +640,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     height: 56,
     borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
+    borderBottomColor: '#F1F5F9',
   },
   iconBtn: {
     width: 40,
     height: 40,
+    borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: '#F8FAFC',
   },
   breadcrumbWrap: {
     flex: 1,
@@ -617,14 +657,15 @@ const styles = StyleSheet.create({
   },
   breadcrumbText: {
     fontSize: 14,
-    fontFamily: 'Inter-SemiBold',
+    fontFamily: 'System',
+    fontWeight: '700',
     color: '#0F172A',
   },
   scrollContent: {
     paddingBottom: 40,
   },
   heroSection: {
-    backgroundColor: '#F1F5F9',
+    backgroundColor: '#F8FAFC',
     position: 'relative',
   },
   heroImage: {
@@ -633,16 +674,17 @@ const styles = StyleSheet.create({
   },
   heroPlaceholder: {
     width: '100%',
-    height: 200,
+    height: 220,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#E2E8F0',
+    backgroundColor: 'rgba(255, 120, 70, 0.05)',
   },
   heroPlaceholderText: {
     marginTop: 8,
     fontSize: 14,
-    fontFamily: 'Inter-Medium',
-    color: '#64748B',
+    fontFamily: 'System',
+    fontWeight: '600',
+    color: '#FF7846',
   },
   thumbnailsContainer: {
     flexDirection: 'row',
@@ -655,13 +697,13 @@ const styles = StyleSheet.create({
   thumbWrap: {
     width: 60,
     height: 60,
-    borderRadius: 8,
+    borderRadius: 12,
     overflow: 'hidden',
     borderWidth: 2,
     borderColor: 'transparent',
   },
   thumbWrapActive: {
-    borderColor: '#0056D2',
+    borderColor: '#FF7846',
   },
   thumbImage: {
     width: '100%',
@@ -671,38 +713,45 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     padding: 20,
     borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
+    borderBottomColor: '#F1F5F9',
   },
   verifiedRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: 10,
   },
   verifiedBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+    backgroundColor: '#EAF6F0',
   },
   verifiedText: {
-    fontSize: 13,
-    fontFamily: 'Inter-Medium',
-    color: '#10B981',
+    fontSize: 12,
+    fontFamily: 'System',
+    fontWeight: '700',
+    color: '#1B8A55',
   },
   priceTagWrap: {
-    backgroundColor: '#EFF6FF',
+    backgroundColor: 'rgba(255, 120, 70, 0.08)',
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 16,
   },
   priceTagText: {
-    fontSize: 15,
-    fontFamily: 'Inter-Bold',
-    color: '#0056D2',
+    fontSize: 14,
+    fontFamily: 'System',
+    fontWeight: '800',
+    color: '#FF7846',
   },
   listingTitle: {
     fontSize: 22,
-    fontFamily: 'Inter-Bold',
+    fontFamily: 'System',
+    fontWeight: '800',
     color: '#0F172A',
     marginBottom: 10,
   },
@@ -719,7 +768,8 @@ const styles = StyleSheet.create({
   },
   metaText: {
     fontSize: 13,
-    fontFamily: 'Inter-Regular',
+    fontFamily: 'System',
+    fontWeight: '500',
     color: '#64748B',
   },
   ctaContainer: {
@@ -730,48 +780,57 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 12,
+    paddingVertical: 14,
     paddingHorizontal: 14,
-    borderRadius: 12,
+    borderRadius: 16,
     gap: 6,
   },
   ctaBtnSecondary: {
     flex: 1,
-    backgroundColor: '#F1F5F9',
+    backgroundColor: '#F8FAFC',
+    borderWidth: 1.5,
+    borderColor: '#E2E8F0',
   },
   ctaBtnPrimary: {
     flex: 1.5,
-    backgroundColor: '#0056D2',
+    backgroundColor: '#FF7846',
+    shadowColor: '#FF7846',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 4,
   },
   ctaBtnText: {
     fontSize: 14,
-    fontFamily: 'Inter-SemiBold',
+    fontFamily: 'System',
+    fontWeight: '700',
   },
   tabsBar: {
     flexDirection: 'row',
     backgroundColor: '#FFFFFF',
     marginTop: 10,
     borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
+    borderBottomColor: '#F1F5F9',
   },
   tabItem: {
     flex: 1,
-    paddingVertical: 14,
+    paddingVertical: 16,
     alignItems: 'center',
-    borderBottomWidth: 2,
+    borderBottomWidth: 3,
     borderBottomColor: 'transparent',
   },
   tabItemActive: {
-    borderBottomColor: '#0056D2',
+    borderBottomColor: '#FF7846',
   },
   tabText: {
     fontSize: 14,
-    fontFamily: 'Inter-Medium',
+    fontFamily: 'System',
+    fontWeight: '600',
     color: '#64748B',
   },
   tabTextActive: {
-    fontFamily: 'Inter-Bold',
-    color: '#0056D2',
+    fontWeight: '800',
+    color: '#FF7846',
   },
   tabContentCard: {
     backgroundColor: '#FFFFFF',
@@ -780,13 +839,15 @@ const styles = StyleSheet.create({
   },
   sectionHeading: {
     fontSize: 16,
-    fontFamily: 'Inter-Bold',
+    fontFamily: 'System',
+    fontWeight: '800',
     color: '#0F172A',
     marginBottom: 12,
+    letterSpacing: -0.2,
   },
   bioText: {
     fontSize: 14,
-    fontFamily: 'Inter-Regular',
+    fontFamily: 'System',
     color: '#334155',
     lineHeight: 22,
   },
@@ -798,27 +859,31 @@ const styles = StyleSheet.create({
   tagPill: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#EFF6FF',
+    backgroundColor: 'rgba(255, 120, 70, 0.06)',
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 120, 70, 0.15)',
   },
   tagText: {
     fontSize: 13,
-    fontFamily: 'Inter-Medium',
-    color: '#1E3A8A',
+    fontFamily: 'System',
+    fontWeight: '600',
+    color: '#FF7846',
   },
   sellerInfoBox: {
     marginTop: 24,
     backgroundColor: '#F8FAFC',
     padding: 16,
-    borderRadius: 12,
-    borderWidth: 1,
+    borderRadius: 16,
+    borderWidth: 1.5,
     borderColor: '#E2E8F0',
   },
   sellerInfoTitle: {
     fontSize: 14,
-    fontFamily: 'Inter-Bold',
+    fontFamily: 'System',
+    fontWeight: '700',
     color: '#0F172A',
     marginBottom: 12,
   },
@@ -826,12 +891,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
-    marginBottom: 8,
+    marginBottom: 10,
   },
   sellerInfoText: {
     fontSize: 13,
-    fontFamily: 'Inter-Regular',
-    color: '#334155',
+    fontFamily: 'System',
+    fontWeight: '500',
+    color: '#475569',
   },
   serviceItem: {
     flexDirection: 'row',
@@ -843,49 +909,60 @@ const styles = StyleSheet.create({
   },
   serviceTitle: {
     fontSize: 15,
-    fontFamily: 'Inter-SemiBold',
+    fontFamily: 'System',
+    fontWeight: '700',
     color: '#0F172A',
   },
   serviceDesc: {
     fontSize: 13,
-    fontFamily: 'Inter-Regular',
+    fontFamily: 'System',
     color: '#64748B',
     marginTop: 2,
   },
   servicePriceTag: {
-    backgroundColor: '#F1F5F9',
+    backgroundColor: '#F8FAFC',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: 8,
   },
   servicePriceText: {
     fontSize: 13,
-    fontFamily: 'Inter-Bold',
-    color: '#0F172A',
+    fontFamily: 'System',
+    fontWeight: '700',
+    color: '#334155',
   },
   sellerAdCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 12,
-    backgroundColor: '#F8FAFC',
-    borderRadius: 10,
-    marginBottom: 8,
-    borderWidth: 1,
+    padding: 14,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    marginBottom: 10,
+    borderWidth: 1.5,
     borderColor: '#E2E8F0',
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.02,
+    shadowRadius: 4,
+    elevation: 1,
   },
   sellerAdTitle: {
     fontSize: 14,
-    fontFamily: 'Inter-SemiBold',
+    fontFamily: 'System',
+    fontWeight: '700',
     color: '#0F172A',
   },
   sellerAdPrice: {
-    fontSize: 12,
-    fontFamily: 'Inter-Medium',
-    color: '#0056D2',
+    fontSize: 13,
+    fontFamily: 'System',
+    fontWeight: '600',
+    color: '#FF7846',
     marginTop: 2,
   },
   reviewItem: {
-    paddingVertical: 14,
+    paddingVertical: 16,
     borderBottomWidth: 1,
     borderBottomColor: '#F1F5F9',
   },
@@ -895,26 +972,28 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   reviewerAvatar: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: '#E2E8F0',
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: '#F1F5F9',
     alignItems: 'center',
     justifyContent: 'center',
   },
   reviewerAvatarText: {
     fontSize: 16,
-    fontFamily: 'Inter-Bold',
-    color: '#334155',
+    fontFamily: 'System',
+    fontWeight: '700',
+    color: '#475569',
   },
   reviewerName: {
     fontSize: 14,
-    fontFamily: 'Inter-SemiBold',
+    fontFamily: 'System',
+    fontWeight: '700',
     color: '#0F172A',
   },
   reviewComment: {
     fontSize: 13,
-    fontFamily: 'Inter-Regular',
+    fontFamily: 'System',
     color: '#475569',
     lineHeight: 20,
   },
@@ -925,7 +1004,7 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 13,
-    fontFamily: 'Inter-Regular',
+    fontFamily: 'System',
     color: '#64748B',
     textAlign: 'center',
   },
@@ -941,12 +1020,13 @@ const styles = StyleSheet.create({
   },
   reportBtnText: {
     fontSize: 13,
-    fontFamily: 'Inter-Medium',
+    fontFamily: 'System',
+    fontWeight: '600',
     color: '#EF4444',
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: 'rgba(15, 23, 42, 0.4)',
     justifyContent: 'flex-end',
   },
   modalContent: {
@@ -964,31 +1044,33 @@ const styles = StyleSheet.create({
   },
   modalTitle: {
     fontSize: 18,
-    fontFamily: 'Inter-Bold',
+    fontFamily: 'System',
+    fontWeight: '800',
     color: '#0F172A',
   },
   modalSubtitle: {
     fontSize: 13,
-    fontFamily: 'Inter-Regular',
+    fontFamily: 'System',
     color: '#64748B',
     marginBottom: 16,
   },
   inputLabel: {
     fontSize: 13,
-    fontFamily: 'Inter-SemiBold',
+    fontFamily: 'System',
+    fontWeight: '700',
     color: '#334155',
     marginBottom: 6,
     marginTop: 12,
   },
   textInput: {
     backgroundColor: '#F8FAFC',
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: '#E2E8F0',
-    borderRadius: 10,
+    borderRadius: 12,
     paddingHorizontal: 14,
     paddingVertical: 10,
     fontSize: 14,
-    fontFamily: 'Inter-Regular',
+    fontFamily: 'System',
     color: '#0F172A',
   },
   textArea: {
@@ -996,15 +1078,16 @@ const styles = StyleSheet.create({
     textAlignVertical: 'top',
   },
   modalSubmitBtn: {
-    backgroundColor: '#0056D2',
+    backgroundColor: '#FF7846',
     paddingVertical: 14,
-    borderRadius: 12,
+    borderRadius: 16,
     alignItems: 'center',
     marginTop: 24,
   },
   modalSubmitBtnText: {
     fontSize: 15,
-    fontFamily: 'Inter-Bold',
+    fontFamily: 'System',
+    fontWeight: '700',
     color: '#FFFFFF',
   },
   reasonsContainer: {
@@ -1027,11 +1110,12 @@ const styles = StyleSheet.create({
   },
   reasonChipText: {
     fontSize: 13,
-    fontFamily: 'Inter-Medium',
+    fontFamily: 'System',
+    fontWeight: '600',
     color: '#475569',
   },
   reasonChipTextActive: {
     color: '#EF4444',
-    fontFamily: 'Inter-Bold',
+    fontWeight: '800',
   },
 });

@@ -98,6 +98,7 @@ export default function PostRequestScreen({ route, navigation }: any) {
   const [locationDetail, setLocationDetail] = useState('');
   const [deliveryMode, setDeliveryMode] = useState<'broadcast' | 'targeted'>('broadcast');
   const [targetProvider, setTargetProvider] = useState<any>(null);
+  const [isTargetProviderLocked, setIsTargetProviderLocked] = useState(false);
 
   // Location Picker States
   const [locationCoords, setLocationCoords] = useState<{ latitude: number; longitude: number } | null>(null);
@@ -282,6 +283,7 @@ export default function PostRequestScreen({ route, navigation }: any) {
         rating: route.params.targetProviderRating || 5.0,
       });
       setDeliveryMode('targeted');
+      setIsTargetProviderLocked(true);
       if (route.params?.categoryId) {
         const matched = categoriesList.find((c: any) => 
           (c.id && c.id.toLowerCase() === route.params.categoryId.toLowerCase()) || 
@@ -810,17 +812,19 @@ export default function PostRequestScreen({ route, navigation }: any) {
         {/* ── Audience / Visibility ── */}
         <View style={styles.section}>
           <Text style={[styles.sectionLabel, { color: colors.text, marginBottom: 12 }]}>Visibility</Text>
-          <View style={[styles.segmentedControl, { backgroundColor: colors.inputBackground, borderColor: colors.border }]}>
+          <View style={[styles.segmentedControl, { backgroundColor: colors.inputBackground, borderColor: colors.border, opacity: isTargetProviderLocked ? 0.75 : 1 }]}>
             <TouchableOpacity
               style={[
                 styles.segmentBtn,
-                deliveryMode === 'broadcast' && [styles.segmentBtnActive, { backgroundColor: colors.cardBackground, shadowColor: isDark ? '#000' : '#000' }]
+                deliveryMode === 'broadcast' && [styles.segmentBtnActive, { backgroundColor: colors.cardBackground, shadowColor: isDark ? '#000' : '#000' }],
+                isTargetProviderLocked && { opacity: 0.5 }
               ]}
               onPress={() => {
+                if (isTargetProviderLocked) return;
                 setDeliveryMode('broadcast');
                 setTargetProvider(null);
               }}
-              disabled={isSubmitting}
+              disabled={isSubmitting || isTargetProviderLocked}
             >
               <Text style={[
                 styles.segmentText,
@@ -833,10 +837,11 @@ export default function PostRequestScreen({ route, navigation }: any) {
                 deliveryMode === 'targeted' && [styles.segmentBtnActive, { backgroundColor: colors.cardBackground, shadowColor: isDark ? '#000' : '#000' }]
               ]}
               onPress={() => {
+                if (isTargetProviderLocked) return;
                 setDeliveryMode('targeted');
                 if (!targetProvider) handleOpenProviderPicker();
               }}
-              disabled={isSubmitting}
+              disabled={isSubmitting || isTargetProviderLocked}
             >
               <Text style={[
                 styles.segmentText,
@@ -869,12 +874,14 @@ export default function PostRequestScreen({ route, navigation }: any) {
                       <Text style={[styles.targetProviderRatingText, { color: colors.text }]}>{targetProvider.rating.toFixed(1)}</Text>
                     </View>
                   </View>
-                  <TouchableOpacity
-                    onPress={() => { setTargetProvider(null); setDeliveryMode('broadcast'); }}
-                    style={styles.targetProviderRemove}
-                  >
-                    <Ionicons name="close-circle" size={24} color={colors.textMuted} />
-                  </TouchableOpacity>
+                  {!isTargetProviderLocked && (
+                    <TouchableOpacity
+                      onPress={() => { setTargetProvider(null); setDeliveryMode('broadcast'); }}
+                      style={styles.targetProviderRemove}
+                    >
+                      <Ionicons name="close-circle" size={24} color={colors.textMuted} />
+                    </TouchableOpacity>
+                  )}
                 </View>
               ) : (
                 <TouchableOpacity

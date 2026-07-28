@@ -11,6 +11,8 @@ import {
   ActivityIndicator,
   Image,
   Alert,
+  Modal,
+  SafeAreaView,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
@@ -25,7 +27,23 @@ import {
   sendImageMessage,
   ChatMessage,
 } from '../../services/chatService';
+import { BASE_URL } from '../../services/api';
 import * as ImagePicker from 'expo-image-picker';
+
+function getFullImageUrl(url?: string | null) {
+  if (!url) return null;
+  if (
+    url.startsWith('http://') ||
+    url.startsWith('https://') ||
+    url.startsWith('file://') ||
+    url.startsWith('content://') ||
+    url.startsWith('ph://') ||
+    url.startsWith('data:')
+  ) {
+    return url;
+  }
+  return `${BASE_URL}${url.startsWith('/') ? '' : '/'}${url}`;
+}
 
 function timeLabel(dateStr: string): string {
   const d = new Date(dateStr);
@@ -34,10 +52,11 @@ function timeLabel(dateStr: string): string {
 
 function Avatar({ uri, name, size = 36 }: { uri?: string | null; name?: string | null; size?: number }) {
   const initials = (name || '?').split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase();
-  if (uri) {
+  const imageUri = getFullImageUrl(uri);
+  if (imageUri) {
     return (
       <Image
-        source={{ uri }}
+        source={{ uri: imageUri }}
         style={{ width: size, height: size, borderRadius: size / 2, backgroundColor: '#ddd' }}
         resizeMode="cover"
       />
@@ -57,9 +76,10 @@ interface MessageBubbleProps {
   showAvatar: boolean;
   otherUserAvatar?: string | null;
   otherUserName?: string | null;
+  onImagePress?: (url: string) => void;
 }
 
-function MessageBubble({ msg, isMine, colors, showAvatar, otherUserAvatar, otherUserName }: MessageBubbleProps) {
+function MessageBubble({ msg, isMine, colors, showAvatar, otherUserAvatar, otherUserName, onImagePress }: MessageBubbleProps) {
   return (
     <View style={[styles.bubbleRow, isMine ? styles.bubbleRowMine : styles.bubbleRowOther]}>
       {!isMine && (
@@ -74,11 +94,16 @@ function MessageBubble({ msg, isMine, colors, showAvatar, otherUserAvatar, other
           : [styles.bubbleOther, { backgroundColor: colors.cardBackground, borderColor: colors.border }],
       ]}>
         {msg.imageUrl ? (
-          <Image
-            source={{ uri: msg.imageUrl }}
-            style={styles.imageMsg}
-            resizeMode="cover"
-          />
+          <TouchableOpacity 
+            activeOpacity={0.9} 
+            onPress={() => onImagePress?.(getFullImageUrl(msg.imageUrl)!)}
+          >
+            <Image
+              source={{ uri: getFullImageUrl(msg.imageUrl) || undefined }}
+              style={styles.imageMsg}
+              resizeMode="cover"
+            />
+          </TouchableOpacity>
         ) : null}
         {msg.content ? (
           <Text style={[styles.bubbleText, { color: isMine ? '#fff' : colors.text }]}>
@@ -113,6 +138,7 @@ export default function ChatThreadScreen({ route, navigation }: any) {
   const [text, setText] = useState('');
   const [sending, setSending] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [imageModalUrl, setImageModalUrl] = useState<string | null>(null);
 
   // Load initial messages
   const loadMessages = useCallback(async (p = 0) => {
@@ -207,7 +233,10 @@ export default function ChatThreadScreen({ route, navigation }: any) {
     try {
       const asset = result.assets[0];
       const formData = new FormData();
-      formData.append('file', { uri: asset.uri, name: 'chat_image.jpg', type: 'image/jpeg' } as any);
+      const mimeType = asset.mimeType || 'image/jpeg';
+      const fileExt = mimeType.includes('png') ? 'png' : mimeType.includes('webp') ? 'webp' : 'jpg';
+      const filename = `chat_${Date.now()}.${fileExt}`;
+      formData.append('file', { uri: asset.uri, name: filename, type: mimeType } as any);
       const sent = await sendImageMessage(threadId, formData);
       setMessages(prev => {
         if (prev.some(m => m.id === sent.id)) return prev;
@@ -241,6 +270,7 @@ export default function ChatThreadScreen({ route, navigation }: any) {
         showAvatar={showAvatar}
         otherUserAvatar={otherUserAvatar}
         otherUserName={otherUserName}
+        onImagePress={setImageModalUrl}
       />
     );
   };
@@ -323,6 +353,38 @@ export default function ChatThreadScreen({ route, navigation }: any) {
           }
         </TouchableOpacity>
       </View>
+
+      {/* Full Screen Image Viewer Modal */}
+      <Modal
+        visible={!!imageModalUrl}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setImageModalUrl(null)}
+      >
+        <TouchableOpacity 
+          style={styles.modalOverlayViewer}
+          activeOpacity={1}
+          onPress={() => setImageModalUrl(null)}
+        >
+          <SafeAreaView style={styles.viewerContainer}>
+            {/* Close Button */}
+            <TouchableOpacity 
+              style={styles.viewerCloseBtn} 
+              onPress={() => setImageModalUrl(null)}
+            >
+              <Ionicons name="close" size={28} color="#FFFFFF" />
+            </TouchableOpacity>
+
+            {imageModalUrl ? (
+              <Image
+                source={{ uri: imageModalUrl }}
+                style={styles.fullImage}
+                resizeMode="contain"
+              />
+            ) : null}
+          </SafeAreaView>
+        </TouchableOpacity>
+      </Modal>
     </KeyboardAvoidingView>
   );
 }
@@ -385,5 +447,34 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 1,
+  },
+  modalOverlayViewer: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.95)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  viewerContainer: {
+    width: '100%',
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+    position: 'relative',
+  },
+  viewerCloseBtn: {
+    position: 'absolute',
+    top: Platform.OS === 'ios' ? 20 : 40,
+    right: 20,
+    zIndex: 10,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  fullImage: {
+    width: '100%',
+    height: '80%',
   },
 });

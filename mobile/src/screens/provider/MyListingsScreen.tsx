@@ -67,13 +67,13 @@ export default function MyListingsScreen({ navigation }: any) {
 
         <View style={styles.cardContent}>
           <Text style={[styles.cardCategory, { color: catConfig.color }]}>
-            Category: {item.category?.name || 'Service'}
+            {item.category?.name || 'Service'}
           </Text>
-          <Text style={[styles.cardPrice, { color: colors.text, fontSize: 16, fontWeight: '700' }]}>
-            Contact for quote
+          <Text style={[styles.cardPrice, { color: colors.text, fontSize: 15, fontWeight: '700' }]} numberOfLines={2}>
+            {(item as any).title || `${item.category?.name || 'Service'} Listing`}
           </Text>
           <Text style={[styles.cardId, { color: colors.textMuted, marginTop: 4 }]}>
-            ID: {item.id.slice(-6).toUpperCase()}
+            Quote-based · ID: {item.id.slice(-6).toUpperCase()}
           </Text>
         </View>
 

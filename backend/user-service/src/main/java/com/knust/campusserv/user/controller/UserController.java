@@ -439,7 +439,31 @@ public class UserController {
         ps.setCategory(categoryOpt.get());
         ps.setBasePrice(basePrice);
         ps.setCreatedAt(java.time.LocalDateTime.now());
-        
+
+        // Per-listing independent fields
+        if (body.containsKey("title") && body.get("title") != null) {
+            ps.setTitle(body.get("title").toString());
+        }
+        if (body.containsKey("description") && body.get("description") != null) {
+            ps.setDescription(body.get("description").toString());
+        }
+        if (body.containsKey("keyServices") && body.get("keyServices") != null) {
+            Object ksObj = body.get("keyServices");
+            if (ksObj instanceof List) {
+                ps.setListingKeyServices(((List<?>) ksObj).stream().map(Object::toString).collect(java.util.stream.Collectors.joining(",")));
+            } else if (ksObj instanceof String) {
+                ps.setListingKeyServices((String) ksObj);
+            }
+        }
+        if (body.containsKey("portfolio") && body.get("portfolio") != null) {
+            Object portObj = body.get("portfolio");
+            if (portObj instanceof List) {
+                ps.setListingPortfolio(((List<?>) portObj).stream().map(Object::toString).collect(java.util.stream.Collectors.joining(",")));
+            } else if (portObj instanceof String) {
+                ps.setListingPortfolio((String) portObj);
+            }
+        }
+
         providerServiceRepository.save(ps);
         updateProviderProfileFields(providerId, body);
         return ResponseEntity.status(HttpStatus.CREATED).body(ps);
@@ -483,6 +507,30 @@ public class UserController {
                 ps.setCategory(targetCat);
             }
         }
+        // Per-listing independent fields update
+        if (body.containsKey("title") && body.get("title") != null) {
+            ps.setTitle(body.get("title").toString());
+        }
+        if (body.containsKey("description") && body.get("description") != null) {
+            ps.setDescription(body.get("description").toString());
+        }
+        if (body.containsKey("keyServices") && body.get("keyServices") != null) {
+            Object ksObj = body.get("keyServices");
+            if (ksObj instanceof List) {
+                ps.setListingKeyServices(((List<?>) ksObj).stream().map(Object::toString).collect(java.util.stream.Collectors.joining(",")));
+            } else if (ksObj instanceof String) {
+                ps.setListingKeyServices((String) ksObj);
+            }
+        }
+        if (body.containsKey("portfolio") && body.get("portfolio") != null) {
+            Object portObj = body.get("portfolio");
+            if (portObj instanceof List) {
+                ps.setListingPortfolio(((List<?>) portObj).stream().map(Object::toString).collect(java.util.stream.Collectors.joining(",")));
+            } else if (portObj instanceof String) {
+                ps.setListingPortfolio((String) portObj);
+            }
+        }
+
         providerServiceRepository.save(ps);
         updateProviderProfileFields(providerId, body);
         return ResponseEntity.ok(ps);

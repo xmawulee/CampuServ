@@ -259,12 +259,28 @@ export default function SearchScreen({ navigation }: any) {
     }
   };
 
-  const renderProviderItem = useCallback(({ item }: { item: ProviderResponse }) => (
-    <ProviderFeedCard
-      provider={item}
-      onPress={() => navigation.navigate('ListingDetail', { providerId: (item as any).id || item.providerId })}
-    />
-  ), [navigation]);
+  const renderProviderItem = useCallback(({ item }: { item: ProviderResponse }) => {
+    const matchedService = item.services?.find((svc: any) => {
+      if (selectedCategories.length > 0) {
+        return selectedCategories.some(cat => svc.category?.name?.toLowerCase() === cat.toLowerCase());
+      }
+      if (searchQuery.trim().length > 0) {
+        const q = searchQuery.toLowerCase();
+        return svc.category?.name?.toLowerCase().includes(q) || (svc.title && svc.title.toLowerCase().includes(q));
+      }
+      return false;
+    }) || item.services?.[0];
+
+    return (
+      <ProviderFeedCard
+        provider={item}
+        onPress={() => navigation.navigate('ListingDetail', { 
+          providerId: (item as any).id || item.providerId,
+          selectedListing: matchedService
+        })}
+      />
+    );
+  }, [navigation, selectedCategories, searchQuery]);
 
   const showRecentSuggestions = isFocused && searchQuery.trim() === '';
 

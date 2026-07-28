@@ -16,6 +16,22 @@ import { CustomIonicons as Ionicons } from '../../components/CustomIcons';
 import { useTheme } from '../../styles/ThemeContext';
 import { useAuthStore } from '../../store/authStore';
 import { getChats, ChatThread } from '../../services/chatService';
+import { BASE_URL } from '../../services/api';
+
+function getFullImageUrl(url?: string | null) {
+  if (!url) return null;
+  if (
+    url.startsWith('http://') ||
+    url.startsWith('https://') ||
+    url.startsWith('file://') ||
+    url.startsWith('content://') ||
+    url.startsWith('ph://') ||
+    url.startsWith('data:')
+  ) {
+    return url;
+  }
+  return `${BASE_URL}${url.startsWith('/') ? '' : '/'}${url}`;
+}
 
 function timeAgo(dateStr: string): string {
   const now = new Date();
@@ -33,10 +49,11 @@ function timeAgo(dateStr: string): string {
 
 function Avatar({ uri, name, size = 48 }: { uri?: string | null; name?: string | null; size?: number }) {
   const initials = (name || '?').split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
-  if (uri) {
+  const imageUri = getFullImageUrl(uri);
+  if (imageUri) {
     return (
       <Image
-        source={{ uri }}
+        source={{ uri: imageUri }}
         style={{ width: size, height: size, borderRadius: size / 2, backgroundColor: '#ddd' }}
         resizeMode="cover"
       />
