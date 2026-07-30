@@ -82,7 +82,11 @@ class StompClient {
     };
 
     wsInstance.onmessage = (event: any) => {
-      this.handleMessage(event.data as string);
+      if (typeof event.data === 'string') {
+        this.handleMessage(event.data);
+      } else if (event.data && typeof event.data.text === 'function') {
+        event.data.text().then((txt: string) => this.handleMessage(txt));
+      }
     };
 
     wsInstance.onerror = (error: any) => {
@@ -126,11 +130,14 @@ class StompClient {
     this.subscriptions.set(subId, { destination, callback });
 
     if (this.connected) {
+      console.log(`STOMP: Sending SUBSCRIBE for ${destination} (subId: ${subId})`);
       this.sendFrame('SUBSCRIBE', {
         id: subId,
         destination: destination,
         ack: 'auto',
       });
+    } else {
+      console.log(`STOMP: Queued SUBSCRIBE for ${destination} until CONNECTED`);
     }
 
     return subId;
@@ -138,8 +145,10 @@ class StompClient {
 
   public unsubscribe(subId: string) {
     if (this.subscriptions.has(subId)) {
+      const sub = this.subscriptions.get(subId);
       this.subscriptions.delete(subId);
-      if (this.connected) {
+      if (this.connected && sub) {
+        console.log(`STOMP: Sending UNSUBSCRIBE for ${sub.destination} (subId: ${subId})`);
         this.sendFrame('UNSUBSCRIBE', { id: subId });
       }
     }
@@ -158,18 +167,55 @@ class StompClient {
       return;
     }
 
-    let frame = `${command}\n`;
+    let frameStr = `${command}\n`;
     for (const [key, value] of Object.entries(headers)) {
-      frame += `${key}:${value}\n`;
+      frameStr += `${key}:${value}\n`;
     }
-    frame += `\n${body}\x00`;
-    this.ws.send(frame);
+    frameStr += `\n${body}`;
+
+    // Convert text part to UTF-8 bytes
+    let strBytes: Uint8Array;
+    if (typeof TextEncoder !== 'undefined') {
+      strBytes = new TextEncoder().encode(frameStr);
+    } else {
+      // Polyfill UTF-8 encoding for React Native environments without global TextEncoder
+      const utf8: number[] = [];
+      for (let i = 0; i < frameStr.length; i++) {
+        let charcode = frameStr.charCodeAt(i);
+        if (charcode < 0x80) utf8.push(charcode);
+        else if (charcode < 0x800) {
+          utf8.push(0xc0 | (charcode >> 6), 0x80 | (charcode & 0x3f));
+        } else if (charcode < 0xd800 || charcode >= 0xe000) {
+          utf8.push(0xe0 | (charcode >> 12), 0x80 | ((charcode >> 6) & 0x3f), 0x80 | (charcode & 0x3f));
+        } else {
+          i++;
+          charcode = 0x10000 + (((charcode & 0x33f) << 10) | (frameStr.charCodeAt(i) & 0x33f));
+          utf8.push(
+            0xf0 | (charcode >> 18),
+            0x80 | ((charcode >> 12) & 0x3f),
+            0x80 | ((charcode >> 6) & 0x3f),
+            0x80 | (charcode & 0x3f)
+          );
+        }
+      }
+      strBytes = new Uint8Array(utf8);
+    }
+
+    // Append literal NUL octet (0x00) for STOMP frame termination
+    const frameBytes = new Uint8Array(strBytes.length + 1);
+    frameBytes.set(strBytes, 0);
+    frameBytes[strBytes.length] = 0;
+
+    // Send as ArrayBuffer to bypass React Native JNI C-string null truncation
+    this.ws.send(frameBytes.buffer);
   }
 
+
   private handleMessage(data: string) {
-    // Parse STOMP Frame
-    const nullByteIndex = data.indexOf('\x00');
-    const cleanData = nullByteIndex !== -1 ? data.substring(0, nullByteIndex) : data;
+    if (!data) return;
+
+    // Normalize CRLF to LF and strip NUL bytes
+    const cleanData = data.replace(/\0/g, '').replace(/\r\n/g, '\n');
     
     const doubleNewlineIndex = cleanData.indexOf('\n\n');
     if (doubleNewlineIndex === -1) return;
@@ -178,7 +224,7 @@ class StompClient {
     const bodyPart = cleanData.substring(doubleNewlineIndex + 2);
 
     const lines = headerPart.split('\n');
-    const command = lines[0];
+    const command = lines[0].trim();
     
     const headers: Record<string, string> = {};
     for (let i = 1; i < lines.length; i++) {
@@ -192,12 +238,13 @@ class StompClient {
     }
 
     if (command === 'CONNECTED') {
-      console.log('STOMP: Connected successfully!');
+      console.log('STOMP: Connected successfully! Flushing subscriptions...');
       this.connected = true;
       if (this.onConnectCallback) this.onConnectCallback();
 
       // Resubscribe to all active subscriptions
       this.subscriptions.forEach((sub, subId) => {
+        console.log(`STOMP: Flushing SUBSCRIBE for ${sub.destination} (subId: ${subId})`);
         this.sendFrame('SUBSCRIBE', {
           id: subId,
           destination: sub.destination,
@@ -240,6 +287,7 @@ class StompClient {
       }
     }
   }
+
 
   private scheduleReconnect() {
     if (this.reconnectTimer) return;

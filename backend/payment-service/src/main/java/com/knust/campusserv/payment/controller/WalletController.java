@@ -35,6 +35,22 @@ public class WalletController {
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
+    @Autowired
+    private org.springframework.amqp.rabbit.core.RabbitTemplate rabbitTemplate;
+
+    private void notifyWalletUpdate(String userId, String summary) {
+        if (userId == null || userId.isBlank()) return;
+        try {
+            Map<String, Object> payload = new HashMap<>();
+            payload.put("type", "wallet.updated");
+            payload.put("entityId", userId);
+            payload.put("summary", summary != null ? summary : "Wallet updated");
+            rabbitTemplate.convertAndSend("admin.notifications", "", payload);
+        } catch (Exception e) {
+            log.warn("Failed to publish wallet.updated event for userId={}: {}", userId, e.getMessage());
+        }
+    }
+
     /**
      * Checks whether a user is an approved provider by querying the users table.
      * This MUST be used instead of trusting the X-User-Role header, which only
@@ -130,6 +146,7 @@ public class WalletController {
         wTx.setCreatedAt(LocalDateTime.now());
 
         studentWalletTransactionRepository.save(wTx);
+        notifyWalletUpdate(userId, "Student wallet deposit successful");
 
         Map<String, String> response = new HashMap<>();
         response.put("walletTxnId", walletTxnId);
@@ -230,6 +247,7 @@ public class WalletController {
         wTx.setCreatedAt(LocalDateTime.now());
 
         providerWalletTransactionRepository.save(wTx);
+        notifyWalletUpdate(userId, "Provider earnings withdrawal successful");
 
         Map<String, String> response = new HashMap<>();
         response.put("walletTxnId", walletTxnId);
@@ -296,6 +314,7 @@ public class WalletController {
         wTx.setCreatedAt(LocalDateTime.now());
 
         studentWalletTransactionRepository.save(wTx);
+        notifyWalletUpdate(userId, "Student wallet withdrawal successful");
 
         Map<String, String> response = new HashMap<>();
         response.put("walletTxnId", walletTxnId);

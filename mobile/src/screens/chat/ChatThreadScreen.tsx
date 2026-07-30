@@ -12,9 +12,8 @@ import {
   Image,
   Alert,
   Modal,
-  SafeAreaView,
 } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { CustomIonicons as Ionicons } from '../../components/CustomIcons';
 import { useTheme } from '../../styles/ThemeContext';
@@ -179,9 +178,12 @@ export default function ChatThreadScreen({ route, navigation }: any) {
           senderId: raw.senderId,
           content: raw.content ?? null,
           imageUrl: raw.imageUrl ?? null,
-          sentAt: raw.sentAt ?? new Date().toISOString(),
+          sentAt: Array.isArray(raw.sentAt)
+            ? new Date(Date.UTC(raw.sentAt[0], raw.sentAt[1] - 1, raw.sentAt[2], raw.sentAt[3] || 0, raw.sentAt[4] || 0, raw.sentAt[5] || 0)).toISOString()
+            : (raw.sentAt ?? new Date().toISOString()),
           readAt: raw.readAt ?? null,
         };
+
         // Deduplicate
         setMessages(prev => {
           if (prev.some(m => m.id === incoming.id)) return prev;

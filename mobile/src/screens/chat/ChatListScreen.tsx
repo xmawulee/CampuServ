@@ -1,4 +1,4 @@
-import React, { useCallback, useRef } from 'react';
+import React, { useCallback, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -15,6 +15,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { CustomIonicons as Ionicons } from '../../components/CustomIcons';
 import { useTheme } from '../../styles/ThemeContext';
 import { useAuthStore } from '../../store/authStore';
+import { stompClient } from '../../services/socket';
 import { getChats, ChatThread } from '../../services/chatService';
 import { BASE_URL } from '../../services/api';
 
@@ -131,6 +132,29 @@ export default function ChatListScreen({ navigation }: any) {
 
   // Refresh on focus
   useFocusEffect(useCallback(() => { refetch(); }, [refetch]));
+
+  // Live update: subscribe to the user's notification topic.
+  // The backend already publishes a CHAT_MESSAGE notification for every new
+  // incoming message. When we receive one, invalidate the chat-list query so
+  // React Query refetches the thread list with updated preview + unread count.
+  useEffect(() => {
+    const { accessToken, user: authUser } = useAuthStore.getState();
+    if (!accessToken || !authUser?.id) return;
+
+    stompClient.connect(accessToken);
+    const subId = stompClient.subscribe(
+      `/topic/user/${authUser.id}/notifications`,
+      (payload: any) => {
+        if (payload?.type === 'CHAT_MESSAGE') {
+          qc.invalidateQueries({ queryKey: ['chat-list'] });
+        }
+      }
+    );
+
+    return () => {
+      stompClient.unsubscribe(subId);
+    };
+  }, [qc]);
 
   const renderItem = ({ item }: { item: ChatThread }) => (
     <ThreadRow

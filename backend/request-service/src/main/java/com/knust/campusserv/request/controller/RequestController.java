@@ -323,6 +323,21 @@ public class RequestController {
             }
         }
 
+        // Publish request.created event for live provider feed broadcast
+        try {
+            Map<String, Object> reqEvent = new HashMap<>();
+            reqEvent.put("type", "request.created");
+            reqEvent.put("entityId", savedRequest.getId());
+            if (savedRequest.getTargetProviderId() != null) {
+                reqEvent.put("summary", "TARGET:" + savedRequest.getTargetProviderId());
+            } else {
+                reqEvent.put("summary", "CATEGORY:" + savedRequest.getCategory().getId());
+            }
+            rabbitTemplate.convertAndSend("admin.notifications", "", reqEvent);
+        } catch (Exception e) {
+            log.warn("Failed to publish request.created event for request {}: {}", savedRequest.getId(), e.getMessage());
+        }
+
         Map<String, Object> resp = new HashMap<>();
         resp.put("id", savedRequest.getId());
         resp.put("requesterId", savedRequest.getRequesterId());
@@ -476,6 +491,7 @@ public class RequestController {
         Map<String, String> event = new HashMap<>();
         event.put("type", "request.cancelled");
         event.put("requestId", requestId);
+        event.put("entityId", requestId);
         event.put("requesterId", request.getRequesterId());
         event.put("previousStatus", previousStatus);
         try {
@@ -890,18 +906,7 @@ public class RequestController {
         }
         String providerId = userId.trim();
 
-        // Defense in depth: verify email verification status directly in DB
-        try {
-            Boolean isVerified = jdbcTemplate.queryForObject(
-                "SELECT is_verified FROM users WHERE id = ?", Boolean.class, providerId);
-            if (Boolean.FALSE.equals(isVerified)) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(Map.of("error", "EMAIL_UNVERIFIED", "message", "Email verification is required to submit an offer."));
-            }
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                .body(Map.of("error", "EMAIL_UNVERIFIED", "message", "Email verification status check failed."));
-        }
+
 
         Optional<ServiceRequest> reqOpt = serviceRequestRepository.findById(requestId);
         if (reqOpt.isEmpty()) {
@@ -950,6 +955,23 @@ public class RequestController {
         offer.setCreatedAt(LocalDateTime.now());
 
         com.knust.campusserv.request.model.Offer savedOffer = offerRepository.save(offer);
+
+        // Publish bid.placed event so supporting-service can broadcast via STOMP
+        // to the student's RequestDetailsScreen subscription (/topic/request.{requestId}.bids)
+        try {
+            Map<String, Object> bidEvent = new HashMap<>();
+            bidEvent.put("type", "bid.placed");
+            bidEvent.put("requestId", requestId);
+            bidEvent.put("requesterId", request.getRequesterId());
+            bidEvent.put("offerId", savedOffer.getId());
+            bidEvent.put("providerId", providerId);
+            bidEvent.put("price", price);
+            bidEvent.put("eta", savedOffer.getEta());
+            rabbitTemplate.convertAndSend("bid.placed", "", bidEvent);
+        } catch (Exception e) {
+            // Non-fatal: bid is saved; real-time notification is best-effort
+            log.warn("Failed to publish bid.placed event for offer {}: {}", savedOffer.getId(), e.getMessage());
+        }
 
         return ResponseEntity.status(HttpStatus.CREATED).body(savedOffer);
     }

@@ -176,7 +176,7 @@ export default function StatusDialog({
                 onPress={handleCancel}
                 activeOpacity={0.75}
               >
-                <Text style={[styles.secondaryBtnText, { color: colors.textMuted }]}>
+                <Text style={[styles.secondaryBtnText, { color: colors.textMuted }]} numberOfLines={1} adjustsFontSizeToFit>
                   {cancelLabel}
                 </Text>
               </TouchableOpacity>
@@ -196,9 +196,10 @@ export default function StatusDialog({
               onPress={onConfirm}
               activeOpacity={0.82}
             >
-              <Text style={[styles.primaryBtnText, { color: tokens.actionText }]}>
+              <Text style={[styles.primaryBtnText, { color: tokens.actionText }]} numberOfLines={1} adjustsFontSizeToFit>
                 {confirmLabel}
               </Text>
+
             </TouchableOpacity>
           </View>
         </Animated.View>

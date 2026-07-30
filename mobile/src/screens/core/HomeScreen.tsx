@@ -67,7 +67,7 @@ const HomeScreenRequestCard = React.memo(({ item, colors, onPress }: { item: any
       <View style={[styles.cardStrip, { backgroundColor: stripColor }]} />
       <View style={styles.cardBody}>
         <View style={styles.cardTop}>
-          <Text style={[styles.cardCategory, { color: colors.textMuted }]}>
+          <Text style={[styles.cardCategory, { color: colors.textMuted, flex: 1, marginRight: 8 }]} numberOfLines={1}>
             Category: {item.category?.name || 'Service'}
           </Text>
           <View style={[styles.statusPill, { backgroundColor: getStatusBg(item.status, colors) }]}>
@@ -80,16 +80,17 @@ const HomeScreenRequestCard = React.memo(({ item, colors, onPress }: { item: any
           {item.description}
         </Text>
         <View style={styles.cardFooter}>
-          <View style={styles.cardMeta}>
+          <View style={[styles.cardMeta, { flex: 1, marginRight: 8 }]}>
             <CustomIonicons name="location-outline" size={12} color={colors.textMuted} />
-            <Text style={[styles.cardMetaText, { color: colors.textMuted }]}>
+            <Text style={[styles.cardMetaText, { color: colors.textMuted, flex: 1 }]} numberOfLines={1} ellipsizeMode="tail">
               {item.location || 'Campus'}
             </Text>
           </View>
-          <Text style={[styles.cardPrice, { color: colors.primary }]}>
+          <Text style={[styles.cardPrice, { color: colors.primary, flexShrink: 0 }]} numberOfLines={1}>
             Contact for quote
           </Text>
         </View>
+
       </View>
       <View style={[styles.cardChevron, { backgroundColor: colors.inputBackground }]}>
         <CustomIonicons name="arrow-forward" size={14} color={colors.text} />

@@ -540,10 +540,12 @@ public class JobController {
     private void publishJobEvent(String type, Job job) {
         Map<String, Object> event = new HashMap<>();
         event.put("type", type);
+        event.put("entityId", job.getId());
         event.put("jobId", job.getId());
         event.put("requestId", job.getRequestId());
         event.put("requesterId", job.getRequesterId());
         event.put("providerId", job.getProviderId());
+        event.put("summary", "PROVIDER:" + job.getProviderId() + "|STUDENT:" + job.getRequesterId());
         event.put("status", job.getStatus());
         try {
             rabbitTemplate.convertAndSend("admin.notifications", "", event);
@@ -551,6 +553,7 @@ public class JobController {
             System.err.println("Failed to publish " + type + " event: " + e.getMessage());
         }
     }
+
 
     private void populateTransientFields(Job job) {
         if (job == null) return;

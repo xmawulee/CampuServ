@@ -112,8 +112,9 @@ const ProviderFeedCard = React.memo(function ProviderFeedCard({ provider, onPres
               return (
                 <View key={index} style={styles.categoryBadge}>
                   <Ionicons name="pricetag-outline" size={10} color="#0056D2" style={{ marginRight: 4 }} />
-                  <Text style={styles.categoryBadgeText}>Category: {trimmedCat}</Text>
+                  <Text style={styles.categoryBadgeText} numberOfLines={1}>Category: {trimmedCat}</Text>
                 </View>
+
               );
             })}
           </View>

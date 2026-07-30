@@ -712,12 +712,13 @@ export default function RequestDetailsScreen({ route, navigation }: any) {
 
             <View style={styles.sheetActions}>
               <TouchableOpacity style={[styles.sheetBtn, styles.sheetBtnCancel, { borderColor: colors.border }]} onPress={() => setAcceptDialogVisible(false)}>
-                <Text style={[styles.sheetBtnCancelText, { color: colors.text }]}>Cancel</Text>
+                <Text style={[styles.sheetBtnCancelText, { color: colors.text }]} numberOfLines={1}>Cancel</Text>
               </TouchableOpacity>
               <TouchableOpacity style={[styles.sheetBtn, styles.sheetBtnConfirm, { backgroundColor: colors.primary, shadowColor: colors.primary }]} onPress={confirmAcceptOffer}>
-                <Text style={styles.sheetBtnConfirmText}>Accept & Lock Funds</Text>
+                <Text style={styles.sheetBtnConfirmText} numberOfLines={1} adjustsFontSizeToFit>Accept & Lock Funds</Text>
               </TouchableOpacity>
             </View>
+
           </View>
         </View>
       </Modal>
@@ -1018,10 +1019,11 @@ const styles = StyleSheet.create({
   sheetTotalValue: { fontSize: 24, fontWeight: '900' },
   escrowInfo: { flexDirection: 'row', padding: 20, borderRadius: 16, alignItems: 'center', marginBottom: 32, gap: 16 },
   escrowInfoText: { flex: 1, fontSize: 14, lineHeight: 22, fontWeight: '700' },
-  sheetActions: { flexDirection: 'row', gap: 16 },
-  sheetBtn: { flex: 1, height: 56, borderRadius: 100, alignItems: 'center', justifyContent: 'center' },
-  sheetBtnCancel: { borderWidth: 1.5 },
-  sheetBtnCancelText: { fontSize: 16, fontWeight: '800' },
-  sheetBtnConfirm: { shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.25, shadowRadius: 8, elevation: 4 },
-  sheetBtnConfirmText: { color: '#FFF', fontSize: 16, fontWeight: '800' },
+  sheetActions: { flexDirection: 'row', gap: 12, alignItems: 'center' },
+  sheetBtn: { height: 52, borderRadius: 100, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 12 },
+  sheetBtnCancel: { flex: 0.35, borderWidth: 1.5 },
+  sheetBtnCancelText: { fontSize: 14, fontWeight: '800' },
+  sheetBtnConfirm: { flex: 0.65, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.25, shadowRadius: 8, elevation: 4 },
+  sheetBtnConfirmText: { color: '#FFF', fontSize: 14, fontWeight: '800', letterSpacing: -0.2 },
 });
+

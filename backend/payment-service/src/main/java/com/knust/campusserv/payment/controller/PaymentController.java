@@ -46,6 +46,9 @@ public class PaymentController {
     private JdbcTemplate jdbcTemplate;
 
     @Autowired
+    private org.springframework.amqp.rabbit.core.RabbitTemplate rabbitTemplate;
+
+    @Autowired
     private WithdrawalService withdrawalService;
 
     @Value("${paystack.secret.key:placeholder_secret}")
@@ -56,6 +59,19 @@ public class PaymentController {
 
     @Autowired
     private com.knust.campusserv.payment.service.PaystackService paystackService;
+
+    private void notifyWalletUpdate(String userId, String summary) {
+        if (userId == null || userId.isBlank()) return;
+        try {
+            Map<String, Object> payload = new HashMap<>();
+            payload.put("type", "wallet.updated");
+            payload.put("entityId", userId);
+            payload.put("summary", summary != null ? summary : "Wallet updated");
+            rabbitTemplate.convertAndSend("admin.notifications", "", payload);
+        } catch (Exception e) {
+            log.warn("Failed to publish wallet.updated event for userId={}: {}", userId, e.getMessage());
+        }
+    }
 
     @PostMapping("/initiate")
     public ResponseEntity<?> initiatePayment(@RequestBody Map<String, Object> body,
@@ -186,6 +202,7 @@ public class PaymentController {
             wTx.setBalanceAfter(wallet.getBalance());
 
             studentWalletTransactionRepository.save(wTx);
+            notifyWalletUpdate(wTx.getUserId(), "Student wallet deposit webhook completed");
             return ResponseEntity.ok("Wallet deposit webhook processed successfully.");
         }
 
@@ -218,6 +235,7 @@ public class PaymentController {
             wallet.setBalance(wallet.getBalance().add(tx.getAmount()));
             wallet.setUpdatedAt(LocalDateTime.now());
             studentWalletRepository.save(wallet);
+            notifyWalletUpdate(userId, "Deposit confirmed");
         } else {
             String requesterId = null;
             try {

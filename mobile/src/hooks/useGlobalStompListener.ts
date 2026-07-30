@@ -35,8 +35,9 @@ export function useGlobalStompListener() {
       
       // If a specific job status changes, invalidate the job cache.
       // Often notifications contain jobId or requestId
-      if (msg.jobId) {
-        queryClient.invalidateQueries({ queryKey: ['job', msg.jobId] });
+      const targetJobId = msg.jobId || msg.referenceId;
+      if (targetJobId) {
+        queryClient.invalidateQueries({ queryKey: ['job', targetJobId] });
       }
     });
 
@@ -46,9 +47,11 @@ export function useGlobalStompListener() {
       console.log('[Global STOMP] Provider Job update received:', msg);
       queryClient.invalidateQueries({ queryKey: ['providerJobSummary'] });
       queryClient.invalidateQueries({ queryKey: ['wallet'] });
+      queryClient.invalidateQueries({ queryKey: ['myRequests'] });
       
-      if (msg.jobId) {
-        queryClient.invalidateQueries({ queryKey: ['job', msg.jobId] });
+      const targetJobId = msg.jobId || msg.referenceId;
+      if (targetJobId) {
+        queryClient.invalidateQueries({ queryKey: ['job', targetJobId] });
       }
     });
 

@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity, FlatList,
   ActivityIndicator, RefreshControl,
@@ -9,6 +9,8 @@ import { useTheme } from '../../styles/ThemeContext';
 import { useFocusEffect } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { api } from '../../services/api';
+import { stompClient } from '../../services/socket';
+import { useAuthStore } from '../../store/authStore';
 import type { OpenRequest } from '../../types/provider';
 
 const PAGE_SIZE = 20;
@@ -55,6 +57,21 @@ export default function IncomingRequestsScreen({ navigation }: any) {
       fetchRequests(0, true);
     }, [fetchRequests])
   );
+
+  // STOMP live update for new requests posted to the open feed
+  useEffect(() => {
+    const token = useAuthStore.getState().accessToken;
+    if (token) stompClient.connect(token);
+
+    const subId = stompClient.subscribe('/topic/requests.feed', () => {
+      console.log('[IncomingRequestsScreen] New request posted — refreshing feed live');
+      fetchRequests(0, true);
+    });
+
+    return () => {
+      stompClient.unsubscribe(subId);
+    };
+  }, [fetchRequests]);
 
   const onRefresh = () => {
     setRefreshing(true);

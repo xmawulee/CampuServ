@@ -1,5 +1,6 @@
 package com.knust.campusserv.support.model;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
@@ -24,10 +25,12 @@ public class ChatMessage {
     private String imageUrl;
 
     // Primary timestamp for new messages
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
     @Column(name = "sent_at", nullable = false)
     private LocalDateTime sentAt = LocalDateTime.now();
 
     // Null = unread; set when the recipient opens the thread
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
     @Column(name = "read_at")
     private LocalDateTime readAt;
 

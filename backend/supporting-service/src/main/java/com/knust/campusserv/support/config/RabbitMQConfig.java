@@ -15,6 +15,9 @@ public class RabbitMQConfig {
     public static final String PROVIDER_VERIFICATION_EXCHANGE = "provider.verification";
     public static final String PROVIDER_VERIFICATION_QUEUE = "provider_verification_queue";
 
+    public static final String BID_PLACED_EXCHANGE = "bid.placed";
+    public static final String BID_PLACED_QUEUE = "bid_placed_queue";
+
     @Bean
     public DirectExchange deadLetterExchange() {
         return new DirectExchange("dlx");
@@ -59,6 +62,34 @@ public class RabbitMQConfig {
     @Bean
     public Binding jobStatusDlqBinding(Queue jobStatusDlq, DirectExchange deadLetterExchange) {
         return BindingBuilder.bind(jobStatusDlq).to(deadLetterExchange).with("job-status-queue.dlq");
+    }
+
+    @Bean
+    public TopicExchange bidPlacedExchange() {
+        return new TopicExchange(BID_PLACED_EXCHANGE, true, false);
+    }
+
+    @Bean
+    public Queue bidPlacedQueue() {
+        return QueueBuilder.durable(BID_PLACED_QUEUE)
+                .withArgument("x-dead-letter-exchange", "dlx")
+                .withArgument("x-dead-letter-routing-key", BID_PLACED_QUEUE + ".dlq")
+                .build();
+    }
+
+    @Bean
+    public Queue bidPlacedDlq() {
+        return QueueBuilder.durable(BID_PLACED_QUEUE + ".dlq").build();
+    }
+
+    @Bean
+    public Binding bidPlacedDlqBinding(Queue bidPlacedDlq, DirectExchange deadLetterExchange) {
+        return BindingBuilder.bind(bidPlacedDlq).to(deadLetterExchange).with(BID_PLACED_QUEUE + ".dlq");
+    }
+
+    @Bean
+    public Binding bidPlacedQueueBinding(Queue bidPlacedQueue, TopicExchange bidPlacedExchange) {
+        return BindingBuilder.bind(bidPlacedQueue).to(bidPlacedExchange).with("#");
     }
 
     @Bean

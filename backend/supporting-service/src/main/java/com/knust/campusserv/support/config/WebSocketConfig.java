@@ -183,6 +183,26 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
                             if (!isAuthorized) {
                                 throw new IllegalArgumentException("Unauthorized subscription to job status: not party to job " + jobId);
                             }
+                        } else if (destination != null && destination.startsWith("/topic/request.") && destination.endsWith(".bids")) {
+                            // Only the requester (student) who owns this service request may subscribe
+                            String requestId = destination.substring("/topic/request.".length(), destination.length() - ".bids".length());
+                            if (principal == null) {
+                                throw new IllegalArgumentException("Unauthorized subscription: User not authenticated");
+                            }
+                            String userId = principal.getName();
+                            boolean isAuthorized = false;
+                            try {
+                                Integer count = jdbcTemplate.queryForObject(
+                                    "SELECT COUNT(*) FROM service_requests WHERE id = ? AND requester_id = ?",
+                                    Integer.class, requestId, userId
+                                );
+                                isAuthorized = (count != null && count > 0);
+                            } catch (Exception e) {
+                                System.err.println("WebSocket bid-updates auth error: " + e.getMessage());
+                            }
+                            if (!isAuthorized) {
+                                throw new IllegalArgumentException("Unauthorized subscription to bid updates for request " + requestId);
+                            }
                         }
                     }
                 }

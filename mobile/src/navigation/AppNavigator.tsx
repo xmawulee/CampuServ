@@ -10,6 +10,7 @@ import { api } from '../services/api';
 import { stompClient } from '../services/socket';
 import { ToastProvider, useToast } from '../styles/ToastContext';
 import { OfflineBanner } from '../components/OfflineBanner';
+import { useGlobalStompListener } from '../hooks/useGlobalStompListener';
 
 // ── Screens ────────────────────────────────────────────────────────────────
 import RoleSelectScreen from '../screens/auth/RoleSelectScreen';
@@ -323,6 +324,9 @@ function AppNavigatorInner() {
   const { colors } = useTheme();
   const { showToast } = useToast();
   const sessionExpiredShown = useRef(false);
+
+  // Activate global STOMP listener for notifications, job updates, and query cache invalidations
+  useGlobalStompListener();
 
   // Re-fetch user status from server on auth boot via authoritative resolver
   useEffect(() => {
