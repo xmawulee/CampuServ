@@ -24,6 +24,7 @@ import StatusDialog from '../../components/StatusDialog';
 import ImageViewerModal from '../../components/ImageViewerModal';
 import * as Location from 'expo-location';
 import { getRequestLocation, getDistanceEstimate, getStaticMapUrl } from '../../services/locationService';
+import AnimatedBackground from '../../components/AnimatedBackground';
 
 export default function RequestDetailsScreen({ route, navigation }: any) {
   const { requestId } = route.params;
@@ -273,7 +274,7 @@ export default function RequestDetailsScreen({ route, navigation }: any) {
   const providerReceives = parseFloat((offerPrice - providerFee).toFixed(2));
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.background }}>
+    <AnimatedBackground style={{ flex: 1 }}>
       {/* ── Fixed Header ── */}
       <View style={[styles.header, { backgroundColor: colors.cardBackground }]}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.closeBtn}>
@@ -313,7 +314,13 @@ export default function RequestDetailsScreen({ route, navigation }: any) {
             <View style={styles.heroStatIconWrap}>
               <Ionicons name="wallet" size={12} color={colors.primary} />
             </View>
-            <Text style={styles.heroStatText}>Contact for quote</Text>
+            {(() => {
+              const rawPrice = request.agreedPrice ?? request.acceptedOffer?.price ?? request.finalBudget ?? request.price ?? request.budgetMin ?? request.budgetMax;
+              const priceText = rawPrice != null && !isNaN(Number(rawPrice)) && Number(rawPrice) > 0
+                ? `GHS ${Number(rawPrice).toFixed(2)}`
+                : 'Contact for quote';
+              return <Text style={styles.heroStatText}>{priceText}</Text>;
+            })()}
           </View>
         </View>
       </View>
@@ -743,7 +750,7 @@ export default function RequestDetailsScreen({ route, navigation }: any) {
         onCancel={() => setCancelDialog(false)}
         onClose={() => setCancelDialog(false)}
       />
-    </View>
+    </AnimatedBackground>
   );
 }
 

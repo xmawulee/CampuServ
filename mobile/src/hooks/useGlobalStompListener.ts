@@ -41,24 +41,29 @@ export function useGlobalStompListener() {
       }
     });
 
-    // Subscribe to provider-specific job updates
-    const providerTopic = `/topic/provider/${user.id}/job-updates`;
-    const providerSubId = stompClient.subscribe(providerTopic, (msg: any) => {
-      console.log('[Global STOMP] Provider Job update received:', msg);
-      queryClient.invalidateQueries({ queryKey: ['providerJobSummary'] });
-      queryClient.invalidateQueries({ queryKey: ['wallet'] });
-      queryClient.invalidateQueries({ queryKey: ['myRequests'] });
-      
-      const targetJobId = msg.jobId || msg.referenceId;
-      if (targetJobId) {
-        queryClient.invalidateQueries({ queryKey: ['job', targetJobId] });
-      }
-    });
+    // Subscribe to provider-specific job updates if provider
+    let providerSubId: string | null = null;
+    if (user.isProvider || user.role === 'PROVIDER') {
+      const providerTopic = `/topic/provider/${user.id}/job-updates`;
+      providerSubId = stompClient.subscribe(providerTopic, (msg: any) => {
+        console.log('[Global STOMP] Provider Job update received:', msg);
+        queryClient.invalidateQueries({ queryKey: ['providerJobSummary'] });
+        queryClient.invalidateQueries({ queryKey: ['wallet'] });
+        queryClient.invalidateQueries({ queryKey: ['myRequests'] });
+        
+        const targetJobId = msg.jobId || msg.referenceId;
+        if (targetJobId) {
+          queryClient.invalidateQueries({ queryKey: ['job', targetJobId] });
+        }
+      });
+    }
 
     return () => {
       // Unsubscribe on cleanup
       stompClient.unsubscribe(notifSubId);
-      stompClient.unsubscribe(providerSubId);
+      if (providerSubId) {
+        stompClient.unsubscribe(providerSubId);
+      }
     };
-  }, [accessToken, user?.id, queryClient]);
+  }, [accessToken, user?.id, user?.isProvider, user?.role, queryClient]);
 }

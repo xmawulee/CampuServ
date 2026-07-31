@@ -23,6 +23,7 @@ import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { getProviders, ProviderResponse } from '../../services/userService';
 import ProviderFeedCard from '../../components/ProviderFeedCard';
 import { Ionicons } from '@expo/vector-icons';
+import AnimatedBackground from '../../components/AnimatedBackground';
 
 const POPULAR_SEARCHES = ['Laundry', 'Cleaning', 'Tutoring', 'Errands', 'Tech Repair'];
 const RECENT_SEARCHES_KEY = 'recent_searches';
@@ -285,7 +286,7 @@ export default function SearchScreen({ navigation }: any) {
   const showRecentSuggestions = isFocused && searchQuery.trim() === '';
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
+    <AnimatedBackground style={styles.container}>
       {/* Search Header Bar */}
       <View style={styles.header}>
         <View style={[styles.searchBarContainer, { backgroundColor: colors.inputBackground }]}>
@@ -617,7 +618,7 @@ export default function SearchScreen({ navigation }: any) {
           </View>
         </View>
       </Modal>
-    </SafeAreaView>
+    </AnimatedBackground>
   );
 }
 

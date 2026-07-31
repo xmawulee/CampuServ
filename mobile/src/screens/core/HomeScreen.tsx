@@ -86,9 +86,17 @@ const HomeScreenRequestCard = React.memo(({ item, colors, onPress }: { item: any
               {item.location || 'Campus'}
             </Text>
           </View>
-          <Text style={[styles.cardPrice, { color: colors.primary, flexShrink: 0 }]} numberOfLines={1}>
-            Contact for quote
-          </Text>
+          {(() => {
+            const rawPrice = item.agreedPrice ?? item.acceptedOffer?.price ?? item.finalBudget ?? item.price ?? item.counterOffer?.price ?? item.budgetMin ?? item.budgetMax;
+            const priceText = rawPrice != null && !isNaN(Number(rawPrice)) && Number(rawPrice) > 0
+              ? `GHS ${Number(rawPrice).toFixed(2)}`
+              : 'Contact for quote';
+            return (
+              <Text style={[styles.cardPrice, { color: colors.primary, flexShrink: 0 }]} numberOfLines={1}>
+                {priceText}
+              </Text>
+            );
+          })()}
         </View>
 
       </View>
@@ -519,7 +527,7 @@ export default function HomeScreen({ route, navigation }: any) {
         {/* Center: App Logo */}
         <View style={{ flex: 1, alignItems: 'center' }}>
           <Text style={{ fontSize: 24, fontWeight: '900', color: colors.text, letterSpacing: -0.5 }}>
-            Campus<Text style={{ color: colors.primary }}>Serve.</Text>
+            Campu<Text style={{ color: colors.primary }}>Serv</Text>
           </Text>
         </View>
 

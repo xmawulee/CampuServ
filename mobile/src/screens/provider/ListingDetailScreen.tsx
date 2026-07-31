@@ -18,6 +18,7 @@ import { stompClient } from '../../services/socket';
 import { useAuthStore } from '../../store/authStore';
 import { startChat } from '../../services/chatService';
 import { useToast } from '../../styles/ToastContext';
+import AnimatedBackground from '../../components/AnimatedBackground';
 
 const { width } = Dimensions.get('window');
 
@@ -257,7 +258,7 @@ export default function ListingDetailScreen({ route, navigation }: any) {
   const memberSince = profile.createdAt ? new Date(profile.createdAt).getFullYear() : '2026';
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: '#F8FAFC' }]} edges={['top']}>
+    <AnimatedBackground style={styles.container}>
       {/* Top Header / Breadcrumb */}
       <View style={[styles.topHeader, { backgroundColor: '#FFFFFF' }]}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.iconBtn}>
@@ -626,7 +627,7 @@ export default function ListingDetailScreen({ route, navigation }: any) {
           </View>
         </View>
       </Modal>
-    </SafeAreaView>
+    </AnimatedBackground>
   );
 }
 

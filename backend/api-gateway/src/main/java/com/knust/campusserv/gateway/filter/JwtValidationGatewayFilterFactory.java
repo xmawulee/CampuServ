@@ -76,10 +76,8 @@ public class JwtValidationGatewayFilterFactory extends AbstractGatewayFilterFact
                 
                 if (redisTemplate != null) {
                     try {
-                        redisTemplate.opsForValue().set("revoked:user:" + userId, "true", Duration.ofMinutes(15)).block(Duration.ofMillis(500));
-                    } catch (Exception e) {
                         redisTemplate.opsForValue().set("revoked:user:" + userId, "true", Duration.ofMinutes(15)).subscribe();
-                    }
+                    } catch (Exception e) {}
                 }
                 
                 System.out.println(">>> JwtValidationGatewayFilterFactory: Added user " + userId + " to deny-list (memory + redis)");
@@ -99,10 +97,8 @@ public class JwtValidationGatewayFilterFactory extends AbstractGatewayFilterFact
                 
                 if (redisTemplate != null) {
                     try {
-                        redisTemplate.delete("revoked:user:" + userId).block(Duration.ofMillis(500));
-                    } catch (Exception e) {
                         redisTemplate.delete("revoked:user:" + userId).subscribe();
-                    }
+                    } catch (Exception e) {}
                 }
                 
                 System.out.println(">>> JwtValidationGatewayFilterFactory: Removed user " + userId + " from deny-list (memory + redis)");
@@ -139,23 +135,9 @@ public class JwtValidationGatewayFilterFactory extends AbstractGatewayFilterFact
                     return onError(exchange, "Forbidden: Email verification pending", HttpStatus.FORBIDDEN);
                 }
 
-                // Check if user is in deny-list (revoked/deleted) via in-memory map or Redis
-                boolean isRevoked = false;
+                // Check if user is in deny-list (revoked/deleted) via in-memory map
                 Long revokeExpiry = revokedUsers.get(userId);
                 if (revokeExpiry != null && System.currentTimeMillis() < revokeExpiry) {
-                    isRevoked = true;
-                } else if (redisTemplate != null) {
-                    try {
-                        Boolean hasKey = redisTemplate.hasKey("revoked:user:" + userId).block(java.time.Duration.ofMillis(500));
-                        if (Boolean.TRUE.equals(hasKey)) {
-                            isRevoked = true;
-                        }
-                    } catch (Exception e) {
-                        System.err.println("Redis deny-list check fallback: " + e.getMessage());
-                    }
-                }
-
-                if (isRevoked) {
                     System.out.println(">>> JwtValidationGatewayFilterFactory: Blocked revoked/restricted user: " + userId);
                     return onAccountRestricted(exchange);
                 }

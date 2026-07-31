@@ -11,6 +11,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { CustomIonicons as Ionicons } from '../../components/CustomIcons';
 import WalletTxnCard from '../../components/wallet/WalletTxnCard';
 import WalletEmptyState from '../../components/wallet/WalletEmptyState';
+import AnimatedBackground from '../../components/AnimatedBackground';
 
 export default function ProviderWalletScreen() {
   const { user } = useAuthStore();
@@ -56,8 +57,9 @@ export default function ProviderWalletScreen() {
   const txnList = Array.isArray(transactions) ? transactions : [];
 
   return (
-    <ScrollView
-      style={[styles.container, { backgroundColor: colors.background }]}
+    <AnimatedBackground style={{ flex: 1 }}>
+      <ScrollView
+        style={[styles.container, { backgroundColor: 'transparent' }]}
       contentContainerStyle={{ paddingBottom: 40 + insets.bottom }}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}
       showsVerticalScrollIndicator={false}
@@ -104,8 +106,8 @@ export default function ProviderWalletScreen() {
         ))
       )}
 
-      <View style={{ height: 40 }} />
-    </ScrollView>
+      </ScrollView>
+    </AnimatedBackground>
   );
 }
 

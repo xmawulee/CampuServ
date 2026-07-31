@@ -10,6 +10,7 @@ import { useTheme } from '../../styles/ThemeContext';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AvatarUploader from '../../components/AvatarUploader';
 import { useToast } from '../../styles/ToastContext';
+import AnimatedBackground from '../../components/AnimatedBackground';
 
 export default function SettingsScreen({ navigation }: any) {
   const { user, roleMode, logout, setAuth } = useAuthStore();
@@ -77,7 +78,7 @@ export default function SettingsScreen({ navigation }: any) {
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: 'transparent' }}>
+    <AnimatedBackground style={{ flex: 1 }}>
       <ScrollView
         style={[styles.container, { backgroundColor: 'transparent' }]}
         showsVerticalScrollIndicator={false}
@@ -219,7 +220,7 @@ export default function SettingsScreen({ navigation }: any) {
           <View style={{ height: 40 }} />
         </View>
       </ScrollView>
-    </View>
+    </AnimatedBackground>
   );
 }
 

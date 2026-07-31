@@ -90,35 +90,69 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   logout: async () => {
     stompClient.disconnect();
     const currentRefToken = get().refreshToken;
+    const currentUser = get().user;
+
+    // 1. Immediately reset state to unblock UI navigation (< 1ms)
+    set({
+      accessToken: null,
+      refreshToken: null,
+      user: null,
+      isAuthenticated: false,
+      roleMode: null,
+      sessionExpired: false
+    });
+
+    // 2. Fire backend revocation asynchronously without blocking UI
     if (currentRefToken) {
-      try {
-        const { api } = await import('../services/api');
-        await api.post('/auth/logout', { refreshToken: currentRefToken });
-      } catch (e) {
-        // Silently catch network errors on logout
-      }
+      import('../services/api').then(({ api }) => {
+        api.post('/auth/logout', 
+          { refreshToken: currentRefToken }, 
+          { headers: currentUser?.id ? { 'X-User-Id': currentUser.id } : {} }
+        ).catch(() => {});
+      }).catch(() => {});
     }
-    await SecureStore.deleteItemAsync('accessToken');
-    await SecureStore.deleteItemAsync('refreshToken');
-    await SecureStore.deleteItemAsync('user');
-    await SecureStore.deleteItemAsync('roleMode');
-    set({ accessToken: null, refreshToken: null, user: null, isAuthenticated: false, roleMode: null, sessionExpired: false });
+
+    // 3. Clear SecureStore in parallel
+    Promise.all([
+      SecureStore.deleteItemAsync('accessToken'),
+      SecureStore.deleteItemAsync('refreshToken'),
+      SecureStore.deleteItemAsync('user'),
+      SecureStore.deleteItemAsync('roleMode'),
+    ]).catch((err) => console.warn('[authStore] SecureStore clear error:', err));
   },
   clearAuth: async () => {
     stompClient.disconnect();
-    await SecureStore.deleteItemAsync('accessToken');
-    await SecureStore.deleteItemAsync('refreshToken');
-    await SecureStore.deleteItemAsync('user');
-    await SecureStore.deleteItemAsync('roleMode');
-    set({ accessToken: null, refreshToken: null, user: null, isAuthenticated: false, roleMode: null, sessionExpired: false });
+    set({
+      accessToken: null,
+      refreshToken: null,
+      user: null,
+      isAuthenticated: false,
+      roleMode: null,
+      sessionExpired: false
+    });
+    Promise.all([
+      SecureStore.deleteItemAsync('accessToken'),
+      SecureStore.deleteItemAsync('refreshToken'),
+      SecureStore.deleteItemAsync('user'),
+      SecureStore.deleteItemAsync('roleMode'),
+    ]).catch((err) => console.warn('[authStore] SecureStore clear error:', err));
   },
   setSessionExpired: async () => {
     stompClient.disconnect();
-    await SecureStore.deleteItemAsync('accessToken');
-    await SecureStore.deleteItemAsync('refreshToken');
-    await SecureStore.deleteItemAsync('user');
-    await SecureStore.deleteItemAsync('roleMode');
-    set({ accessToken: null, refreshToken: null, user: null, isAuthenticated: false, roleMode: null, sessionExpired: true });
+    set({
+      accessToken: null,
+      refreshToken: null,
+      user: null,
+      isAuthenticated: false,
+      roleMode: null,
+      sessionExpired: true
+    });
+    Promise.all([
+      SecureStore.deleteItemAsync('accessToken'),
+      SecureStore.deleteItemAsync('refreshToken'),
+      SecureStore.deleteItemAsync('user'),
+      SecureStore.deleteItemAsync('roleMode'),
+    ]).catch((err) => console.warn('[authStore] SecureStore clear error:', err));
   },
   loadStoredAuth: async () => {
     try {

@@ -16,50 +16,54 @@ spring:
             allowedOrigins: "*"
             allowedMethods: "*"
             allowedHeaders: "*"
+      discovery:
+        locator:
+          enabled: true
+          lower-case-service-id: true
       default-filters:
         - JwtValidation
         - RemoveRequestHeader=X-Internal-Auth
         - AddRequestHeader=X-Internal-Auth, ${internal.auth.secret}
       routes:
         - id: auth-service
-          uri: lb://auth-service
+          uri: lb://AUTH-SERVICE
           predicates:
             - Path=/auth/**, /admin/providers/**, /admin/verification/**, /admin/users/**, /admin/counts
 
         - id: user-service
-          uri: lb://user-service
+          uri: lb://USER-SERVICE
           predicates:
             - Path=/users/**, /providers/**
 
         - id: user-files
-          uri: lb://user-service
+          uri: lb://USER-SERVICE
           predicates:
             - Path=/users/files/**
           filters: []
           # Profile picture files are served publicly — no auth required to view them
 
         - id: request-service
-          uri: lb://request-service
+          uri: lb://REQUEST-SERVICE
           predicates:
             - Path=/requests/**, /admin/requests/**, /categories/**, /admin/categories/**
 
         - id: job-service
-          uri: lb://job-service
+          uri: lb://JOB-SERVICE
           predicates:
             - Path=/jobs/**, /admin/jobs/**
 
         - id: payment-service
-          uri: lb://payment-service
+          uri: lb://PAYMENT-SERVICE
           predicates:
             - Path=/payments/**, /admin/finance/**
 
         - id: wallet-service
-          uri: lb://payment-service
+          uri: lb://PAYMENT-SERVICE
           predicates:
             - Path=/wallet/**
 
         - id: supporting-service-ws
-          uri: lb:ws://supporting-service
+          uri: lb:ws://SUPPORTING-SERVICE
           predicates:
             - Path=/ws/chats, /ws/chats/**
           filters: []
@@ -72,7 +76,8 @@ spring:
         - id: supporting-service
           uri: lb://supporting-service
           predicates:
-            - Path=/chats/**, /reviews/**, /disputes/**, /notifications/**, /location/**, /admin/notifications/**, /admin/chats/**, /announcements/**, /admin/announcements/**, /admin/audit/**, /admin/dashboard/**, /admin/reviews/**
+            - Path=/chats/**, /reviews/**, /disputes/**, /notifications/**, /location/**, /admin/notifications/**, /admin/chats/**, /announcements/**, /admin/announcements/**, /admin/audit/**, /admin/dashboard/**, /admin/reviews/**, /admin/fraud-scoring/**
+
 
         - id: gateway-internal
           uri: lb://auth-service
@@ -92,11 +97,11 @@ eureka:
     lease-expiration-duration-in-seconds: 4
 
 jwt:
-  secret: ${JWT_SECRET}
+  secret: ${JWT_SECRET:dGhlLXN1cGVyLXNlY3JldC1jb25mZGVudGlhbC1qd3Qta2V5LWZvci1jYW1wdXNzZXJ2LWtudXN0LWdyb3VwLTg4}
 
 internal:
   auth:
-    secret: ${INTERNAL_SERVICE_SECRET}
+    secret: ${INTERNAL_SERVICE_SECRET:default_internal_service_secret_knust_campusserv_2026}
 
 ---
 spring:

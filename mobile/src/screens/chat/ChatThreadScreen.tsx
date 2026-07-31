@@ -28,6 +28,7 @@ import {
 } from '../../services/chatService';
 import { BASE_URL } from '../../services/api';
 import * as ImagePicker from 'expo-image-picker';
+import AnimatedBackground from '../../components/AnimatedBackground';
 
 function getFullImageUrl(url?: string | null) {
   if (!url) return null;
@@ -278,11 +279,12 @@ export default function ChatThreadScreen({ route, navigation }: any) {
   };
 
   return (
-    <KeyboardAvoidingView
-      style={[styles.root, { backgroundColor: colors.background }]}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
-    >
+    <AnimatedBackground style={{ flex: 1 }}>
+      <KeyboardAvoidingView
+        style={[styles.root, { backgroundColor: 'transparent' }]}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
+      >
       {/* Header */}
       <View style={[styles.header, { paddingTop: insets.top + 8, borderBottomColor: colors.border }]}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
@@ -388,6 +390,7 @@ export default function ChatThreadScreen({ route, navigation }: any) {
         </TouchableOpacity>
       </Modal>
     </KeyboardAvoidingView>
+  </AnimatedBackground>
   );
 }
 

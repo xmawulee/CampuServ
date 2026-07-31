@@ -11,6 +11,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { getProviderJobs } from '../../services/jobService';
 import { useAuthStore } from '../../store/authStore';
 import { stompClient } from '../../services/socket';
+import AnimatedBackground from '../../components/AnimatedBackground';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const PAGE_SIZE = 10;
@@ -169,7 +170,7 @@ export default function ProviderJobListScreen({ navigation }: any) {
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
+    <AnimatedBackground style={styles.container}>
       <View style={[styles.header, { borderBottomColor: colors.border }]}>
         <TouchableOpacity
           onPress={() => navigation.goBack()}
@@ -226,7 +227,7 @@ export default function ProviderJobListScreen({ navigation }: any) {
           )}
         />
       )}
-    </SafeAreaView>
+    </AnimatedBackground>
   );
 }
 

@@ -36,32 +36,52 @@ export default function ReportsPage() {
     }
   ]);
 
-  const handleExportCSV = () => {
-    if (!reports.length) {
-      toast.info('No report records to export');
-      return;
-    }
-    const headers = ['Report ID', 'Type', 'Reported User', 'Reporter', 'Reason', 'Status', 'Date'];
-    const rows = reports.map(r => [
-      r.id,
-      r.type,
-      `"${r.reportedUser.replace(/"/g, '""')}"`,
-      `"${r.reporter.replace(/"/g, '""')}"`,
-      `"${r.reason.replace(/"/g, '""')}"`,
-      r.status,
-      r.date,
-    ]);
+  const handleExportCSV = async () => {
+    try {
+      const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+      const response = await fetch('http://localhost:8080/admin/dashboard/financials/export?format=csv', {
+        headers: {
+          'Authorization': token ? `Bearer ${token}` : '',
+          'X-User-Role': 'ADMIN'
+        }
+      });
+      if (!response.ok) throw new Error('Export failed');
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `campusserv_financial_statement_${new Date().toISOString().split('T')[0]}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      toast.success('Financial statement CSV downloaded successfully');
+    } catch (e) {
+      if (!reports.length) {
+        toast.info('No report records to export');
+        return;
+      }
+      const headers = ['Report ID', 'Type', 'Reported User', 'Reporter', 'Reason', 'Status', 'Date'];
+      const rows = reports.map(r => [
+        r.id,
+        r.type,
+        `"${r.reportedUser.replace(/"/g, '""')}"`,
+        `"${r.reporter.replace(/"/g, '""')}"`,
+        `"${r.reason.replace(/"/g, '""')}"`,
+        r.status,
+        r.date,
+      ]);
 
-    const csvContent = [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.setAttribute('download', `platform_reports_${new Date().toISOString().split('T')[0]}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    toast.success('Platform reports exported to CSV successfully');
+      const csvContent = [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `platform_reports_${new Date().toISOString().split('T')[0]}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      toast.success('Platform reports exported to CSV successfully');
+    }
   };
 
   return (

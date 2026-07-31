@@ -1,5 +1,6 @@
 package com.knust.campusserv.request.controller;
 
+import com.knust.campusserv.request.model.Offer;
 import com.knust.campusserv.request.model.RequestAttachment;
 import com.knust.campusserv.request.model.RequestLocation;
 import com.knust.campusserv.request.model.ServiceCategory;
@@ -376,6 +377,18 @@ public class RequestController {
         long completedCount = serviceRequestRepository.countByRequesterIdAndStatusIn(userIdHeader.trim(), List.of("COMPLETED"));
         long cancelledCount = serviceRequestRepository.countByRequesterIdAndStatusIn(userIdHeader.trim(), List.of("CANCELLED"));
 
+        for (ServiceRequest req : requestPage.getContent()) {
+            if (req.getAgreedPrice() == null) {
+                Optional<Offer> acceptedOpt = offerRepository.findFirstByRequestIdAndStatus(req.getId(), "ACCEPTED");
+                if (acceptedOpt.isPresent()) {
+                    req.setAgreedPrice(acceptedOpt.get().getPrice());
+                    serviceRequestRepository.save(req);
+                } else if (req.getBudgetMin() != null) {
+                    req.setAgreedPrice(req.getBudgetMin());
+                }
+            }
+        }
+
         Map<String, Object> response = new HashMap<>();
         response.put("requests", requestPage.getContent());
         response.put("counts", Map.of("active", activeCount, "completed", completedCount, "cancelled", cancelledCount));
@@ -578,6 +591,7 @@ public class RequestController {
 
         // Update request to ASSIGNED
         request.setStatus("ASSIGNED");
+        request.setAgreedPrice(latestPending.getPrice());
         request.setEscrowHeld(true);
         request.setUpdatedAt(LocalDateTime.now());
         serviceRequestRepository.save(request);
@@ -776,6 +790,7 @@ public class RequestController {
 
         // Update request to ASSIGNED
         request.setStatus("ASSIGNED");
+        request.setAgreedPrice(offer.getPrice());
         request.setEscrowHeld(true);
         request.setUpdatedAt(LocalDateTime.now());
         serviceRequestRepository.save(request);

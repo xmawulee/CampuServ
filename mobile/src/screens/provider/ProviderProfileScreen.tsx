@@ -13,6 +13,7 @@ import AvatarUploader from '../../components/AvatarUploader';
 import { useToast } from '../../styles/ToastContext';
 import StatusDialog from '../../components/StatusDialog';
 import type { ProviderProfileData } from '../../types/provider';
+import AnimatedBackground from '../../components/AnimatedBackground';
 
 export default function ProviderProfileScreen({ navigation }: any) {
   const { user, logout, setAuth } = useAuthStore();
@@ -84,9 +85,9 @@ export default function ProviderProfileScreen({ navigation }: any) {
   }
 
   return (
-    <View style={{ flex: 1 }}>
+    <AnimatedBackground style={{ flex: 1 }}>
       <ScrollView
-        style={[styles.container, { backgroundColor: colors.background }]}
+        style={[styles.container, { backgroundColor: 'transparent' }]}
         contentContainerStyle={{ paddingBottom: 40 + insets.bottom }}
         showsVerticalScrollIndicator={false}
         refreshControl={
@@ -257,7 +258,7 @@ export default function ProviderProfileScreen({ navigation }: any) {
         onCancel={() => setLogoutDialogVisible(false)}
         onClose={() => setLogoutDialogVisible(false)}
       />
-    </View>
+    </AnimatedBackground>
   );
 }
 

@@ -46,13 +46,10 @@ class StompClient {
     if (onDisconnect) this.onDisconnectCallback = onDisconnect;
     if (token) this.token = token;
 
-    if (this.connected && this.ws && this.ws.readyState === WebSocket.OPEN) {
-      if (this.onConnectCallback) this.onConnectCallback();
-      return;
-    }
-
-    if (this.ws && this.ws.readyState === WebSocket.CONNECTING) {
-      console.log('STOMP: WebSocket is already connecting...');
+    if (this.ws && (this.ws.readyState === WebSocket.OPEN || this.ws.readyState === WebSocket.CONNECTING)) {
+      if (this.connected && this.onConnectCallback) {
+        this.onConnectCallback();
+      }
       return;
     }
 
@@ -129,7 +126,7 @@ class StompClient {
     const subId = `sub-${this.subIdCounter++}`;
     this.subscriptions.set(subId, { destination, callback });
 
-    if (this.connected) {
+    if (this.connected && this.ws && this.ws.readyState === WebSocket.OPEN) {
       console.log(`STOMP: Sending SUBSCRIBE for ${destination} (subId: ${subId})`);
       this.sendFrame('SUBSCRIBE', {
         id: subId,
@@ -272,17 +269,19 @@ class StompClient {
       }
     } else if (command === 'ERROR') {
       const messageHeader = headers['message'] || '';
-      console.warn('STOMP: Received ERROR frame:', messageHeader);
+      console.warn('STOMP: Received ERROR frame:', messageHeader, bodyPart);
       
-      const errMsg = `${messageHeader}\n${bodyPart}`.toLowerCase();
-      // If it's an authentication or connection interceptor error, stop reconnecting and clear the token to prevent DDOSing the server
-      if (
-        errMsg.includes('auth') || 
-        errMsg.includes('expired') || 
-        errMsg.includes('unauthorized') || 
-        errMsg.includes('clientinboundchannel')
-      ) {
-        console.warn('STOMP: Authentication/Authorization/Channel failure. Aborting reconnect loop.');
+      const fullError = `${messageHeader}\n${bodyPart}`.toLowerCase();
+      // Only abort connection & clear token if it's a true CONNECT authentication failure
+      const isAuthFailure = 
+        fullError.includes('auth failed') || 
+        fullError.includes('jwt') || 
+        fullError.includes('token expired') || 
+        fullError.includes('missing or invalid authorization') ||
+        fullError.includes('user not authenticated');
+
+      if (isAuthFailure) {
+        console.warn('STOMP: Authentication failure. Aborting reconnect loop.');
         this.disconnect();
       }
     }

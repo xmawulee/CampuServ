@@ -7,6 +7,7 @@ import { useAuthStore } from '../../store/authStore';
 import { useFocusEffect } from '@react-navigation/native';
 import { api } from '../../services/api';
 import type { ServiceListing } from '../../types/provider';
+import AnimatedBackground from '../../components/AnimatedBackground';
 
 const CATEGORY_ICONS: Record<string, { icon: string; color: string }> = {
   'Laundry':  { icon: 'water',         color: '#0096FF' },
@@ -83,7 +84,7 @@ export default function MyListingsScreen({ navigation }: any) {
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+    <AnimatedBackground style={styles.container}>
       <View style={styles.header}>
         <Text style={[styles.headerTitle, { color: colors.text }]}>My Listings</Text>
         <TouchableOpacity
@@ -134,7 +135,7 @@ export default function MyListingsScreen({ navigation }: any) {
           }
         />
       )}
-    </SafeAreaView>
+    </AnimatedBackground>
   );
 }
 

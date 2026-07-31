@@ -9,6 +9,7 @@ import { useTheme } from '../../styles/ThemeContext';
 import { useFocusEffect } from '@react-navigation/native';
 import { getProviderProfile, ProviderResponse } from '../../services/userService';
 import RatingBadge from '../../components/RatingBadge';
+import AnimatedBackground from '../../components/AnimatedBackground';
 
 const { width } = Dimensions.get('window');
 
@@ -78,7 +79,7 @@ export default function ProviderProfileScreen({ route, navigation }: any) {
   }
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
+    <AnimatedBackground style={styles.container}>
       <View style={[styles.header, { backgroundColor: colors.cardBackground }]}>
         <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
           <Ionicons name="arrow-back" size={24} color={colors.text} />
@@ -177,7 +178,7 @@ export default function ProviderProfileScreen({ route, navigation }: any) {
           <Text style={styles.requestBtnText}>Request Service</Text>
         </TouchableOpacity>
       </View>
-    </SafeAreaView>
+    </AnimatedBackground>
   );
 }
 

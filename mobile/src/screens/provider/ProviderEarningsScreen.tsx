@@ -12,6 +12,7 @@ import { api } from '../../services/api';
 import type { WalletTransaction } from '../../types/walletTransaction';
 import { useToast } from '../../styles/ToastContext';
 import StatusDialog from '../../components/StatusDialog';
+import AnimatedBackground from '../../components/AnimatedBackground';
 
 type Wallet = {
   id: string;
@@ -100,7 +101,7 @@ export default function ProviderEarningsScreen({ navigation }: any) {
   }
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+    <AnimatedBackground style={styles.container}>
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={[styles.content, { paddingBottom: 110 + insets.bottom }]}
@@ -231,7 +232,7 @@ export default function ProviderEarningsScreen({ navigation }: any) {
         onCancel={() => setWithdrawDialogVisible(false)}
         onClose={() => setWithdrawDialogVisible(false)}
       />
-    </SafeAreaView>
+    </AnimatedBackground>
   );
 }
 

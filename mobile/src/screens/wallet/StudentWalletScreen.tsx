@@ -12,6 +12,7 @@ import { CustomIonicons as Ionicons } from '../../components/CustomIcons';
 import WalletTxnCard from '../../components/wallet/WalletTxnCard';
 import WalletEmptyState from '../../components/wallet/WalletEmptyState';
 import { useToast } from '../../styles/ToastContext';
+import AnimatedBackground from '../../components/AnimatedBackground';
 
 export default function StudentWalletScreen() {
   const { showToast } = useToast();
@@ -67,7 +68,7 @@ export default function StudentWalletScreen() {
   const txnList = Array.isArray(transactions) ? transactions : [];
 
   return (
-    <View style={[styles.container, { backgroundColor: 'transparent' }]}>
+    <AnimatedBackground style={styles.container}>
       <ScrollView
         style={{ flex: 1 }}
         contentContainerStyle={{ paddingTop: insets.top + 16, paddingBottom: 40 + insets.bottom }}
@@ -141,7 +142,7 @@ export default function StudentWalletScreen() {
 
       <View style={{ height: 40 }} />
       </ScrollView>
-    </View>
+    </AnimatedBackground>
   );
 }
 

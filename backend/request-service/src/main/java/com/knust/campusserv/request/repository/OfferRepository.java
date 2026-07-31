@@ -13,4 +13,5 @@ public interface OfferRepository extends JpaRepository<Offer, String> {
     boolean existsByRequestIdAndProviderId(String requestId, String providerId);
     int countByRequestIdAndProviderIdAndPrice(String requestId, String providerId, java.math.BigDecimal price);
     List<Offer> findByRequestIdAndProviderIdOrderByCreatedAtDesc(String requestId, String providerId);
+    java.util.Optional<Offer> findFirstByRequestIdAndStatus(String requestId, String status);
 }

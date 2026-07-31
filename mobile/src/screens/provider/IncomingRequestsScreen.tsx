@@ -12,6 +12,7 @@ import { api } from '../../services/api';
 import { stompClient } from '../../services/socket';
 import { useAuthStore } from '../../store/authStore';
 import type { OpenRequest } from '../../types/provider';
+import AnimatedBackground from '../../components/AnimatedBackground';
 
 const PAGE_SIZE = 20;
 
@@ -96,7 +97,10 @@ export default function IncomingRequestsScreen({ navigation }: any) {
   };
 
   const renderItem = ({ item }: { item: OpenRequest }) => {
-    const budgetText = 'Contact for quote';
+    const rawPrice = (item as any).agreedPrice ?? (item as any).finalBudget ?? (item as any).price ?? item.budgetMin ?? item.budgetMax;
+    const budgetText = rawPrice != null && !isNaN(Number(rawPrice)) && Number(rawPrice) > 0
+      ? `GHS ${Number(rawPrice).toFixed(2)}`
+      : 'Contact for quote';
 
     const deadline = item.bidWindowCloses
       ? new Date(item.bidWindowCloses)
@@ -168,7 +172,7 @@ export default function IncomingRequestsScreen({ navigation }: any) {
   );
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+    <AnimatedBackground style={styles.container}>
       <View style={styles.headerBlock}>
         <Text style={[styles.headerTitle, { color: colors.text }]}>Opportunity Feed</Text>
         <Text style={[styles.headerSub, { color: colors.textMuted }]}>
@@ -205,7 +209,7 @@ export default function IncomingRequestsScreen({ navigation }: any) {
           ListFooterComponent={renderFooter}
         />
       )}
-    </SafeAreaView>
+    </AnimatedBackground>
   );
 }
 

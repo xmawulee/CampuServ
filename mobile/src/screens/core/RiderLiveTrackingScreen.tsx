@@ -20,6 +20,7 @@ import { stompClient } from '../../services/socket';
 import { api } from '../../services/api';
 import { useToast } from '../../styles/ToastContext';
 import StatusDialog from '../../components/StatusDialog';
+import AnimatedBackground from '../../components/AnimatedBackground';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -254,7 +255,7 @@ export default function RiderLiveTrackingScreen({ route, navigation }: any) {
   }
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
+    <AnimatedBackground style={styles.container}>
       
       {/* ── Top Status Bar ── */}
       <View style={[styles.topBanner, { backgroundColor: colors.cardBackground, borderBottomColor: colors.border }]}>
@@ -418,7 +419,7 @@ export default function RiderLiveTrackingScreen({ route, navigation }: any) {
         onCancel={() => setCompleteDialogVisible(false)}
         onClose={() => setCompleteDialogVisible(false)}
       />
-    </View>
+    </AnimatedBackground>
   );
 }
 

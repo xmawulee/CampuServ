@@ -27,6 +27,7 @@ import {
 import RequestCard from '../../components/RequestCard';
 import RequestCardSkeleton from '../../components/RequestCardSkeleton';
 import { useToast } from '../../styles/ToastContext';
+import AnimatedBackground from '../../components/AnimatedBackground';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -408,7 +409,7 @@ export default function MyRequestsScreen({ navigation }: any) {
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: 'transparent' }]}>
+    <AnimatedBackground style={styles.container}>
       {/* Tab bar header */}
       <View style={[styles.tabBarContainer, { paddingTop: Math.max(insets.top, 16) }]}>
         <View style={[styles.segmentedControl, { backgroundColor: isDark ? colors.cardBackground : '#F1F5F9' }]}>
@@ -485,7 +486,7 @@ export default function MyRequestsScreen({ navigation }: any) {
         onCancel={closeDialog}
         onClose={closeDialog}
       />
-    </View>
+      </AnimatedBackground>
   );
 }
 

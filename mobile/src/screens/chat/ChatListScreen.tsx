@@ -18,6 +18,7 @@ import { useAuthStore } from '../../store/authStore';
 import { stompClient } from '../../services/socket';
 import { getChats, ChatThread } from '../../services/chatService';
 import { BASE_URL } from '../../services/api';
+import AnimatedBackground from '../../components/AnimatedBackground';
 
 function getFullImageUrl(url?: string | null) {
   if (!url) return null;
@@ -166,7 +167,7 @@ export default function ChatListScreen({ navigation }: any) {
   );
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
+    <AnimatedBackground style={styles.container}>
       {/* Header */}
       <View style={[styles.header, { paddingTop: insets.top + 8, borderBottomColor: colors.border }]}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
@@ -200,7 +201,7 @@ export default function ChatListScreen({ navigation }: any) {
           contentContainerStyle={threads?.length === 0 ? { flex: 1 } : { paddingBottom: insets.bottom + 16 }}
         />
       )}
-    </View>
+      </AnimatedBackground>
   );
 }
 

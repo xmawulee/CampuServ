@@ -13,6 +13,7 @@ import type { OpenRequest, ProviderOffer } from '../../types/provider';
 import { useToast } from '../../styles/ToastContext';
 import StatusDialog from '../../components/StatusDialog';
 import ImageViewerModal from '../../components/ImageViewerModal';
+import AnimatedBackground from '../../components/AnimatedBackground';
 
 const ETA_OPTIONS = ['Within 30 min', '1 hour', '2 hours', 'Today', 'Tomorrow', 'This week'];
 
@@ -158,7 +159,10 @@ export default function RequestDetailForProviderScreen({ navigation, route }: an
     );
   }
 
-  const budgetText = 'Contact for quote';
+  const rawPrice = (request as any).agreedPrice ?? (request as any).finalBudget ?? (request as any).price ?? request.budgetMin ?? request.budgetMax;
+  const budgetText = rawPrice != null && !isNaN(Number(rawPrice)) && Number(rawPrice) > 0
+    ? `GHS ${Number(rawPrice).toFixed(2)}`
+    : 'Contact for quote';
 
   const bidWindowClose = request.bidWindowCloses ? new Date(request.bidWindowCloses) : null;
   const isBidOpen = !bidWindowClose || bidWindowClose > new Date();
@@ -166,7 +170,7 @@ export default function RequestDetailForProviderScreen({ navigation, route }: an
   const canBid = isBidOpen && requestIsOpen;
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.background }}>
+    <AnimatedBackground style={{ flex: 1 }}>
       {/* Header */}
       <SafeAreaView edges={['top']} style={{ backgroundColor: colors.background }}>
         <View style={[styles.header, { borderBottomColor: colors.border }]}>
@@ -454,7 +458,7 @@ export default function RequestDetailForProviderScreen({ navigation, route }: an
         imageUrl={selectedImage}
         onClose={() => setSelectedImage(null)}
       />
-    </View>
+    </AnimatedBackground>
   );
 }
 

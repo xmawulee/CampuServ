@@ -110,15 +110,31 @@ public class AuthService {
         return new String[]{newAccessToken, newRefreshTokenStr};
     }
 
+    @Autowired(required = false)
+    private org.springframework.data.redis.core.StringRedisTemplate redisTemplate;
+
     @Transactional
     public void revokeAllUserTokens(String userId) {
         refreshTokenRepository.revokeAllUserTokens(userId);
+        if (redisTemplate != null) {
+            try {
+                redisTemplate.opsForValue().set("revoked:user:" + userId, "true", java.time.Duration.ofHours(24));
+                log.info("Blacklisted user tokens in Redis for user {}", userId);
+            } catch (Exception e) {
+                log.warn("Could not write token blacklist to Redis: {}", e.getMessage());
+            }
+        }
     }
 
     @org.springframework.beans.factory.annotation.Value("${internal.auth.secret:default_internal_service_secret_knust_campusserv_2026}")
     private String internalAuthSecret;
 
     public void revokeGatewayToken(String userId) {
+        if (redisTemplate != null) {
+            try {
+                redisTemplate.opsForValue().set("revoked:user:" + userId, "true", java.time.Duration.ofHours(24));
+            } catch (Exception ignored) {}
+        }
         try {
             org.springframework.http.HttpHeaders headers = new org.springframework.http.HttpHeaders();
             headers.set("X-Internal-Auth", internalAuthSecret);

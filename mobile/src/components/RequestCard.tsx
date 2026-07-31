@@ -265,13 +265,27 @@ export default function RequestCard({
       </View>
 
       {/* Bottom Row */}
-      <View style={styles.bottomRow}>
-        <View style={styles.priceWrap}>
-          <Text style={[styles.priceText, { color: colors.text, fontWeight: '700' }]}>
-            Contact for quote
-          </Text>
-        </View>
-        <View style={styles.timeWrap}>
+      {(() => {
+        const rawPrice =
+          request.agreedPrice ??
+          request.acceptedOffer?.price ??
+          request.finalBudget ??
+          request.price ??
+          request.counterOffer?.price ??
+          request.budgetMin ??
+          request.budgetMax;
+        const priceText =
+          rawPrice != null && !isNaN(Number(rawPrice)) && Number(rawPrice) > 0
+            ? `GHS ${Number(rawPrice).toFixed(2)}`
+            : 'Contact for quote';
+        return (
+          <View style={styles.bottomRow}>
+            <View style={styles.priceWrap}>
+              <Text style={[styles.priceText, { color: colors.text, fontWeight: '700' }]}>
+                {priceText}
+              </Text>
+            </View>
+            <View style={styles.timeWrap}>
           {variant === 'completed' && request.status === 'COMPLETED' && !request.isReviewed && request.jobCompletedAt && (
             new Date().getTime() - new Date(request.jobCompletedAt).getTime() < 7 * 24 * 60 * 60 * 1000
           ) && (
@@ -285,7 +299,8 @@ export default function RequestCard({
           </Text>
           <Ionicons name="chevron-forward" size={16} color={colors.textMuted} style={{ marginLeft: 4 }} />
         </View>
-      </View>
+      </View>);
+      })()}
     </TouchableOpacity>
   );
 }

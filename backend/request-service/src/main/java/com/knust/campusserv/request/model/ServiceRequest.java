@@ -74,7 +74,13 @@ public class ServiceRequest {
     @Column(name = "target_provider_id")
     private String targetProviderId;
 
+    @Column(name = "agreed_price")
+    private java.math.BigDecimal agreedPrice;
+
     // Getters and Setters
+    public java.math.BigDecimal getAgreedPrice() { return agreedPrice; }
+    public void setAgreedPrice(java.math.BigDecimal agreedPrice) { this.agreedPrice = agreedPrice; }
+
     public String getTargetProviderId() { return targetProviderId; }
     public void setTargetProviderId(String targetProviderId) { this.targetProviderId = targetProviderId; }
 

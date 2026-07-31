@@ -17,6 +17,7 @@ import { CustomIonicons as Ionicons } from '../../components/CustomIcons';
 import { api } from '../../services/api';
 import { useTheme } from '../../styles/ThemeContext';
 import { useToast } from '../../styles/ToastContext';
+import AnimatedBackground from '../../components/AnimatedBackground';
 
 // ─────────────────────────────────────────────────────────
 //  Types
@@ -330,7 +331,7 @@ export default function NotificationCenterScreen({ navigation }: any) {
   const unreadCount = (filteredNotifications ?? []).filter((n) => !n.read).length;
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
+    <AnimatedBackground style={styles.container}>
       {/* Header */}
       <View style={[styles.header, { backgroundColor: colors.cardBackground }]}>
         <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
@@ -395,7 +396,7 @@ export default function NotificationCenterScreen({ navigation }: any) {
           }
         />
       )}
-    </SafeAreaView>
+    </AnimatedBackground>
   );
 }
 

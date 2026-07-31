@@ -53,7 +53,7 @@ eureka:
 
 internal:
   auth:
-    secret: ${INTERNAL_SERVICE_SECRET}
+    secret: ${INTERNAL_SERVICE_SECRET:default_internal_service_secret_knust_campusserv_2026}
 
 management:
   endpoints:

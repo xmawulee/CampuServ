@@ -13,6 +13,7 @@ import { useTheme } from '../../styles/ThemeContext';
 import { useToast } from '../../styles/ToastContext';
 import StatusDialog from '../../components/StatusDialog';
 import { DialogStatus } from '../../styles/dialogStatusStyles';
+import AnimatedBackground from '../../components/AnimatedBackground';
 
 const STATUSES: DialogStatus[] = ['success', 'warning', 'info', 'error', 'cta'];
 const STATUS_LABELS: Record<DialogStatus, string> = {
@@ -45,7 +46,7 @@ export default function DialogPreviewScreen({ navigation }: any) {
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
+    <AnimatedBackground style={styles.container}>
       {/* Header */}
       <View style={[styles.header, { borderBottomColor: colors.border }]}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
@@ -131,7 +132,7 @@ export default function DialogPreviewScreen({ navigation }: any) {
         onCancel={() => setDialog(prev => ({ ...prev, visible: false }))}
         onClose={() => setDialog(prev => ({ ...prev, visible: false }))}
       />
-    </SafeAreaView>
+    </AnimatedBackground>
   );
 }
 
