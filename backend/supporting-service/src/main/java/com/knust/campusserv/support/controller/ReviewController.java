@@ -27,6 +27,12 @@ public class ReviewController {
     @Autowired
     private RestTemplate restTemplate;
 
+    @Autowired
+    private com.knust.campusserv.support.repository.NotificationRepository notificationRepository;
+
+    @Autowired
+    private org.springframework.messaging.simp.SimpMessagingTemplate messagingTemplate;
+
     @PostMapping("/{jobId}")
     public ResponseEntity<?> submitReview(@PathVariable("jobId") String jobId,
                                           @RequestBody Map<String, Object> body,
@@ -87,6 +93,39 @@ public class ReviewController {
             }
 
             Review review = reviewService.submitReview(jobId, reviewerId, revieweeId, ratingNum.intValue(), comment, direction, false, categoryId, tags);
+
+            try {
+                if (!notificationRepository.existsByUserIdAndTypeAndReferenceId(revieweeId, "REVIEW_RECEIVED", jobId)) {
+                    String reviewerName = "Someone";
+                    try {
+                        Map<?, ?> userProfile = restTemplate.getForObject("http://user-service/users/" + reviewerId, Map.class);
+                        if (userProfile != null && userProfile.containsKey("fullName")) {
+                            String fullName = (String) userProfile.get("fullName");
+                            if (fullName != null) {
+                                reviewerName = fullName.trim().split("\\s+")[0];
+                            }
+                        }
+                    } catch (Exception e) {
+                        System.err.println("Failed to fetch reviewer name: " + e.getMessage());
+                    }
+
+                    com.knust.campusserv.support.model.Notification notification = new com.knust.campusserv.support.model.Notification();
+                    notification.setId("ntf-" + java.util.UUID.randomUUID().toString());
+                    notification.setUserId(revieweeId);
+                    notification.setTitle("New Review Received");
+                    notification.setMessage(reviewerName + " left you a " + ratingNum.intValue() + "-star review.");
+                    notification.setType("REVIEW_RECEIVED");
+                    notification.setReferenceId(jobId);
+                    notification.setIsRead(false);
+                    notificationRepository.save(notification);
+
+                    messagingTemplate.convertAndSend("/topic/user/" + revieweeId + "/notifications", notification);
+                    System.out.println("ReviewController: saved and broadcasted REVIEW_RECEIVED notification for reviewee " + revieweeId);
+                }
+            } catch (Exception e) {
+                System.err.println("Failed to save/broadcast review notification: " + e.getMessage());
+            }
+
             return ResponseEntity.ok(review);
 
         } catch (IllegalArgumentException e) {

@@ -36,4 +36,32 @@ public class RabbitMQConfig {
     public Binding jobStatusDlqBinding(Queue jobStatusDlq, DirectExchange deadLetterExchange) {
         return BindingBuilder.bind(jobStatusDlq).to(deadLetterExchange).with("job-status-queue.dlq");
     }
+
+    @Bean
+    public FanoutExchange accountDeletionExchange() {
+        return new FanoutExchange("account.deletion.exchange");
+    }
+
+    @Bean
+    public Queue jobServiceDeletionQueue() {
+        return QueueBuilder.durable("job-service.account.deletion")
+                .withArgument("x-dead-letter-exchange", "dlx")
+                .withArgument("x-dead-letter-routing-key", "job-service.account.deletion.dlq")
+                .build();
+    }
+
+    @Bean
+    public Queue jobServiceDeletionDlq() {
+        return QueueBuilder.durable("job-service.account.deletion.dlq").build();
+    }
+
+    @Bean
+    public Binding jobServiceDeletionDlqBinding(Queue jobServiceDeletionDlq, DirectExchange deadLetterExchange) {
+        return BindingBuilder.bind(jobServiceDeletionDlq).to(deadLetterExchange).with("job-service.account.deletion.dlq");
+    }
+
+    @Bean
+    public Binding jobServiceDeletionBinding(Queue jobServiceDeletionQueue, FanoutExchange accountDeletionExchange) {
+        return BindingBuilder.bind(jobServiceDeletionQueue).to(accountDeletionExchange);
+    }
 }

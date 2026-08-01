@@ -85,7 +85,18 @@ export default function ProviderBioScreen({ navigation, route }: any) {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
-      <View style={styles.headerBar}>
+      <View style={[styles.headerBar, { justifyContent: 'space-between' }]}>
+          <TouchableOpacity
+            style={[styles.backButton, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}
+            onPress={() => navigation.goBack()}
+            activeOpacity={0.7}
+            accessibilityLabel="Back"
+            accessibilityRole="button"
+          >
+            <Ionicons name="arrow-back" size={20} color={colors.text} />
+            <Text style={[styles.backButtonText, { color: colors.text }]}>Back</Text>
+          </TouchableOpacity>
+
           <TouchableOpacity
             style={[styles.backButton, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}
             onPress={handleSignOut}

@@ -134,4 +134,32 @@ public class RabbitMQConfig {
     public MessageConverter jsonMessageConverter() {
         return new Jackson2JsonMessageConverter();
     }
+
+    @Bean
+    public FanoutExchange accountDeletionExchange() {
+        return new FanoutExchange("account.deletion.exchange");
+    }
+
+    @Bean
+    public Queue supportServiceDeletionQueue() {
+        return QueueBuilder.durable("supporting-service.account.deletion")
+                .withArgument("x-dead-letter-exchange", "dlx")
+                .withArgument("x-dead-letter-routing-key", "supporting-service.account.deletion.dlq")
+                .build();
+    }
+
+    @Bean
+    public Queue supportServiceDeletionDlq() {
+        return QueueBuilder.durable("supporting-service.account.deletion.dlq").build();
+    }
+
+    @Bean
+    public Binding supportServiceDeletionDlqBinding(Queue supportServiceDeletionDlq, DirectExchange deadLetterExchange) {
+        return BindingBuilder.bind(supportServiceDeletionDlq).to(deadLetterExchange).with("supporting-service.account.deletion.dlq");
+    }
+
+    @Bean
+    public Binding supportServiceDeletionBinding(Queue supportServiceDeletionQueue, FanoutExchange accountDeletionExchange) {
+        return BindingBuilder.bind(supportServiceDeletionQueue).to(accountDeletionExchange);
+    }
 }

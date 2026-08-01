@@ -77,7 +77,33 @@ public class ServiceRequest {
     @Column(name = "agreed_price")
     private java.math.BigDecimal agreedPrice;
 
+    @Embedded
+    @AttributeOverrides({
+        @AttributeOverride(name = "address", column = @Column(name = "pickup_address")),
+        @AttributeOverride(name = "latitude", column = @Column(name = "pickup_latitude")),
+        @AttributeOverride(name = "longitude", column = @Column(name = "pickup_longitude")),
+        @AttributeOverride(name = "placeId", column = @Column(name = "pickup_place_id")),
+        @AttributeOverride(name = "landmark", column = @Column(name = "pickup_landmark"))
+    })
+    private StructuredLocation pickupLocation;
+
+    @Embedded
+    @AttributeOverrides({
+        @AttributeOverride(name = "address", column = @Column(name = "dropoff_address")),
+        @AttributeOverride(name = "latitude", column = @Column(name = "dropoff_latitude")),
+        @AttributeOverride(name = "longitude", column = @Column(name = "dropoff_longitude")),
+        @AttributeOverride(name = "placeId", column = @Column(name = "dropoff_place_id")),
+        @AttributeOverride(name = "landmark", column = @Column(name = "dropoff_landmark"))
+    })
+    private StructuredLocation dropoffLocation;
+
     // Getters and Setters
+    public StructuredLocation getPickupLocation() { return pickupLocation; }
+    public void setPickupLocation(StructuredLocation pickupLocation) { this.pickupLocation = pickupLocation; }
+
+    public StructuredLocation getDropoffLocation() { return dropoffLocation; }
+    public void setDropoffLocation(StructuredLocation dropoffLocation) { this.dropoffLocation = dropoffLocation; }
+
     public java.math.BigDecimal getAgreedPrice() { return agreedPrice; }
     public void setAgreedPrice(java.math.BigDecimal agreedPrice) { this.agreedPrice = agreedPrice; }
 

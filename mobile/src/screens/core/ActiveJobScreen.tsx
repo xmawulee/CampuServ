@@ -26,6 +26,21 @@ import AnimatedBackground from '../../components/AnimatedBackground';
 const STATUS_STEPS_ONSITE = ['ACCEPTED', 'IN_PROGRESS', 'AWAITING_CODE', 'COMPLETED'];
 // Status steps for remote jobs (proof-review based)
 const STATUS_STEPS_REMOTE = ['ACCEPTED', 'IN_PROGRESS', 'PROOF_SUBMITTED', 'COMPLETED'];
+// Status steps for delivery jobs
+const STATUS_STEPS_DELIVERY = ['ACCEPTED', 'EN_ROUTE_TO_PICKUP', 'EN_ROUTE_TO_DROPOFF', 'AWAITING_CODE', 'COMPLETED'];
+
+const getStepLabel = (step: string) => {
+  switch (step) {
+    case 'ACCEPTED': return 'Accepted';
+    case 'IN_PROGRESS': return 'In Progress';
+    case 'EN_ROUTE_TO_PICKUP': return 'Pickup';
+    case 'EN_ROUTE_TO_DROPOFF': return 'Drop-off';
+    case 'AWAITING_CODE': return 'Verify Code';
+    case 'PROOF_SUBMITTED': return 'Proof Submitted';
+    case 'COMPLETED': return 'Completed';
+    default: return step.replace(/_/g, ' ');
+  }
+};
 
 export default function ActiveJobScreen({ navigation, route }: any) {
   const { jobId } = route.params;
@@ -87,7 +102,10 @@ export default function ActiveJobScreen({ navigation, route }: any) {
 
   useEffect(() => {
     (async () => {
-      if (job?.serviceMode !== 'REMOTE' && job?.locationLat && job?.locationLng) {
+      const isDelivery = !!(job && job.pickupLocation && job.pickupLocation.address);
+      const hasTargetLoc = job?.locationLat || (isDelivery && job?.pickupLocation?.latitude);
+
+      if (job?.serviceMode !== 'REMOTE' && hasTargetLoc) {
         let { status } = await Location.requestForegroundPermissionsAsync();
         if (status !== 'granted') return;
         let location = await Location.getCurrentPositionAsync({});
@@ -120,17 +138,36 @@ export default function ActiveJobScreen({ navigation, route }: any) {
             return points;
           };
 
-          const directions = await getDirections(
-            location.coords.latitude, location.coords.longitude,
-            job.locationLat, job.locationLng
-          );
-          setRouteCoordinates(decodePolyline(directions.polyline));
+          let destLat = job.locationLat;
+          let destLng = job.locationLng;
+
+          if (isDelivery) {
+            const status = job.status as string;
+            if (status === 'EN_ROUTE_TO_PICKUP' && job.pickupLocation?.latitude) {
+              destLat = Number(job.pickupLocation.latitude);
+              destLng = Number(job.pickupLocation.longitude);
+            } else if (status === 'EN_ROUTE_TO_DROPOFF' && job.dropoffLocation?.latitude) {
+              destLat = Number(job.dropoffLocation.latitude);
+              destLng = Number(job.dropoffLocation.longitude);
+            } else {
+              destLat = job.pickupLocation?.latitude ? Number(job.pickupLocation.latitude) : destLat;
+              destLng = job.pickupLocation?.longitude ? Number(job.pickupLocation.longitude) : destLng;
+            }
+          }
+
+          if (destLat && destLng) {
+            const directions = await getDirections(
+              location.coords.latitude, location.coords.longitude,
+              destLat, destLng
+            );
+            setRouteCoordinates(decodePolyline(directions.polyline));
+          }
         } catch (e) {
           console.error("Failed to get directions", e);
         }
       }
     })();
-  }, [job?.locationLat, job?.locationLng, job?.serviceMode]);
+  }, [job?.locationLat, job?.locationLng, job?.pickupLocation, job?.dropoffLocation, job?.status, job?.serviceMode]);
 
   useEffect(() => {
     let subStatusId: string | null = null;
@@ -167,6 +204,19 @@ export default function ActiveJobScreen({ navigation, route }: any) {
       queryClient.invalidateQueries({ queryKey: ['job', jobId] });
     } catch (e: any) {
       showToast({ status: 'error', title: e.response?.data || 'Failed to start job.' });
+    } finally {
+      setStartingJob(false);
+    }
+  };
+
+  const handlePickedUp = async () => {
+    setStartingJob(true);
+    try {
+      await api.put(`/jobs/${jobId}/picked-up`);
+      showToast({ status: 'success', title: 'Package Picked Up!', subtitle: "Client notified you're en route to drop-off." });
+      queryClient.invalidateQueries({ queryKey: ['job', jobId] });
+    } catch (e: any) {
+      showToast({ status: 'error', title: e.response?.data || 'Failed to update status.' });
     } finally {
       setStartingJob(false);
     }
@@ -285,8 +335,26 @@ export default function ActiveJobScreen({ navigation, route }: any) {
   };
 
   const handleOpenGoogleMaps = () => {
-    if (!job?.locationLat || !job?.locationLng) return;
-    const url = `https://www.google.com/maps/dir/?api=1&destination=${job.locationLat},${job.locationLng}&travelmode=walking`;
+    const isDelivery = !!(job?.pickupLocation && job?.pickupLocation.address);
+    let destLat = job?.locationLat;
+    let destLng = job?.locationLng;
+
+    if (isDelivery) {
+      const status = job?.status as string;
+      if (status === 'EN_ROUTE_TO_PICKUP' && job?.pickupLocation?.latitude) {
+        destLat = Number(job.pickupLocation.latitude);
+        destLng = Number(job.pickupLocation.longitude);
+      } else if (status === 'EN_ROUTE_TO_DROPOFF' && job?.dropoffLocation?.latitude) {
+        destLat = Number(job.dropoffLocation.latitude);
+        destLng = Number(job.dropoffLocation.longitude);
+      } else {
+        destLat = job?.pickupLocation?.latitude ? Number(job.pickupLocation.latitude) : destLat;
+        destLng = job?.pickupLocation?.longitude ? Number(job.pickupLocation.longitude) : destLng;
+      }
+    }
+
+    if (!destLat || !destLng) return;
+    const url = `https://www.google.com/maps/dir/?api=1&destination=${destLat},${destLng}&travelmode=walking`;
     Linking.openURL(url).catch(() => {
       showToast({ status: 'error', title: 'Error', subtitle: "Couldn't open Maps — check your device's default apps" });
     });
@@ -330,20 +398,38 @@ export default function ActiveJobScreen({ navigation, route }: any) {
 
   const isProvider = user?.id === job.providerId;
   const isRemote = job.serviceMode === 'REMOTE';
+  const isDelivery = !!(job.pickupLocation && job.pickupLocation.address);
   const canStart = isProvider && job.status === 'ACTIVE';
-  const canMarkFinished = isProvider && ['ACTIVE', 'IN_PROGRESS'].includes(job.status);
+  const canPickUp = isProvider && isDelivery && job.status === 'EN_ROUTE_TO_PICKUP';
+  const canMarkFinished = isProvider && (
+    isDelivery 
+      ? job.status === 'EN_ROUTE_TO_DROPOFF'
+      : ['ACTIVE', 'IN_PROGRESS'].includes(job.status)
+  );
   const isAwaitingCode = job.status === 'AWAITING_CODE' && !isRemote;
   const isProofSubmitted = job.status === 'PROOF_SUBMITTED' && isRemote;
 
   // Use the appropriate status steps based on service mode
-  const STATUS_STEPS = isRemote ? STATUS_STEPS_REMOTE : STATUS_STEPS_ONSITE;
+  const STATUS_STEPS = isDelivery
+    ? STATUS_STEPS_DELIVERY
+    : isRemote
+      ? STATUS_STEPS_REMOTE
+      : STATUS_STEPS_ONSITE;
 
   // Normalize status for strip
   let currentStepIndex = 0;
-  if (job.status === 'ACTIVE') currentStepIndex = 0;
-  else if (job.status === 'IN_PROGRESS') currentStepIndex = 1;
-  else if (job.status === 'AWAITING_CODE' || job.status === 'PROOF_SUBMITTED') currentStepIndex = 2;
-  else if (job.status === 'COMPLETED') currentStepIndex = 3;
+  if (isDelivery) {
+    if (job.status === 'ACTIVE' || job.status === 'ACCEPTED') currentStepIndex = 0;
+    else if (job.status === 'EN_ROUTE_TO_PICKUP') currentStepIndex = 1;
+    else if (job.status === 'EN_ROUTE_TO_DROPOFF') currentStepIndex = 2;
+    else if (job.status === 'AWAITING_CODE') currentStepIndex = 3;
+    else if (job.status === 'COMPLETED') currentStepIndex = 4;
+  } else {
+    if (job.status === 'ACTIVE' || job.status === 'ACCEPTED') currentStepIndex = 0;
+    else if (job.status === 'IN_PROGRESS') currentStepIndex = 1;
+    else if (job.status === 'AWAITING_CODE' || job.status === 'PROOF_SUBMITTED') currentStepIndex = 2;
+    else if (job.status === 'COMPLETED') currentStepIndex = 3;
+  }
 
   return (
     <AnimatedBackground style={{ flex: 1 }}>
@@ -382,12 +468,11 @@ export default function ActiveJobScreen({ navigation, route }: any) {
                     styles.stepLine,
                     { backgroundColor: currentStepIndex > idx ? colors.primary : colors.border }
                   ]} />
-                )}
-                <Text style={[
+                )}                 <Text style={[
                   styles.stepText,
                   { color: isCurrent ? colors.primary : colors.textMuted, fontWeight: isCurrent ? '800' : '600' }
                 ]} numberOfLines={1}>
-                  {step.replace('_', ' ')}
+                  {getStepLabel(step)}
                 </Text>
               </View>
             );
@@ -398,14 +483,19 @@ export default function ActiveJobScreen({ navigation, route }: any) {
         <View style={styles.actionsContainer}>
           {canStart && (
             <TouchableOpacity style={[styles.actionBtn, styles.primaryBtnShadow, { backgroundColor: colors.primary }]} onPress={handleStartJob} disabled={startingJob}>
-              {startingJob ? <ActivityIndicator color="#FFF" /> : <Text style={styles.actionBtnText}>{job.serviceMode === 'REMOTE' ? 'Start Working (Remote)' : 'Start Job (En Route)'}</Text>}
+              {startingJob ? <ActivityIndicator color="#FFF" /> : <Text style={styles.actionBtnText}>{job.serviceMode === 'REMOTE' ? 'Start Working (Remote)' : isDelivery ? 'Start Delivery' : 'Start Job (En Route)'}</Text>}
+            </TouchableOpacity>
+          )}
+          {canPickUp && (
+            <TouchableOpacity style={[styles.actionBtn, styles.primaryBtnShadow, { backgroundColor: colors.primary }]} onPress={handlePickedUp} disabled={startingJob}>
+              {startingJob ? <ActivityIndicator color="#FFF" /> : <Text style={styles.actionBtnText}>Confirm Pickup</Text>}
             </TouchableOpacity>
           )}
           {canMarkFinished && (
             <TouchableOpacity style={[styles.actionBtn, styles.primaryBtnShadow, { backgroundColor: '#10B981' }]} onPress={handleMarkFinished} disabled={markingFinished}>
               {markingFinished ? <ActivityIndicator color="#FFF" /> : (
                 <Text style={styles.actionBtnText}>
-                  {isRemote ? 'Submit Proof of Completion' : 'Mark as Complete'}
+                  {isRemote ? 'Submit Proof of Completion' : isDelivery ? 'Confirm Delivery' : 'Mark as Complete'}
                 </Text>
               )}
             </TouchableOpacity>
@@ -530,18 +620,35 @@ export default function ActiveJobScreen({ navigation, route }: any) {
               </View>
             ) : (
               <View>
-                {job.locationHint && (
-                  <TouchableOpacity 
-                    style={[styles.hintCard, { backgroundColor: colors.inputBackground }]}
-                    onPress={isProvider ? handleOpenGoogleMaps : undefined}
-                    activeOpacity={isProvider ? 0.8 : 1}
-                  >
-                    <Ionicons name="location" size={20} color={colors.primary} />
-                    <Text style={[styles.hintText, { color: colors.text }]}>{job.locationHint}</Text>
-                  </TouchableOpacity>
+                {isDelivery ? (
+                  <View style={{ gap: 8, marginBottom: 12 }}>
+                    {job.pickupLocation?.address && (
+                      <View style={[styles.hintCard, { backgroundColor: colors.inputBackground }]}>
+                        <Ionicons name="location" size={20} color="green" />
+                        <Text style={[styles.hintText, { color: colors.text }]}>Pickup: {job.pickupLocation.address}</Text>
+                      </View>
+                    )}
+                    {job.dropoffLocation?.address && (
+                      <View style={[styles.hintCard, { backgroundColor: colors.inputBackground }]}>
+                        <Ionicons name="flag" size={20} color="red" />
+                        <Text style={[styles.hintText, { color: colors.text }]}>Drop-off: {job.dropoffLocation.address}</Text>
+                      </View>
+                    )}
+                  </View>
+                ) : (
+                  job.locationHint && (
+                    <TouchableOpacity 
+                      style={[styles.hintCard, { backgroundColor: colors.inputBackground }]}
+                      onPress={isProvider ? handleOpenGoogleMaps : undefined}
+                      activeOpacity={isProvider ? 0.8 : 1}
+                    >
+                      <Ionicons name="location" size={20} color={colors.primary} />
+                      <Text style={[styles.hintText, { color: colors.text }]}>{job.locationHint}</Text>
+                    </TouchableOpacity>
+                  )
                 )}
 
-                {isProvider && job.locationLat && job.locationLng && (
+                {isProvider && (job.locationLat || (isDelivery && job.pickupLocation?.latitude)) && (
                   <TouchableOpacity 
                     style={[styles.mapsBtn, { borderColor: colors.border }]} 
                     onPress={handleOpenGoogleMaps}
@@ -552,18 +659,43 @@ export default function ActiveJobScreen({ navigation, route }: any) {
                   </TouchableOpacity>
                 )}
 
-                {job.locationLat && job.locationLng && (
+                {(job.locationLat || (isDelivery && job.pickupLocation?.latitude)) && (
                   <View style={styles.mapContainer}>
                     <MapView
                       style={styles.map}
                       initialRegion={{
-                        latitude: providerLocation ? (providerLocation.coords.latitude + job.locationLat) / 2 : job.locationLat,
-                        longitude: providerLocation ? (providerLocation.coords.longitude + job.locationLng) / 2 : job.locationLng,
+                        latitude: providerLocation 
+                          ? (providerLocation.coords.latitude + (isDelivery ? Number(job.pickupLocation?.latitude || 0) : (job.locationLat || 0))) / 2 
+                          : (isDelivery ? Number(job.pickupLocation?.latitude || 0) : (job.locationLat || 0)),
+                        longitude: providerLocation 
+                          ? (providerLocation.coords.longitude + (isDelivery ? Number(job.pickupLocation?.longitude || 0) : (job.locationLng || 0))) / 2 
+                          : (isDelivery ? Number(job.pickupLocation?.longitude || 0) : (job.locationLng || 0)),
                         latitudeDelta: 0.02,
                         longitudeDelta: 0.02,
                       }}
                     >
-                      <Marker coordinate={{ latitude: job.locationLat, longitude: job.locationLng }} title="Client Location" pinColor="red" />
+                      {isDelivery ? (
+                        <>
+                          {job.pickupLocation?.latitude && job.pickupLocation?.longitude && (
+                            <Marker 
+                              coordinate={{ latitude: Number(job.pickupLocation.latitude), longitude: Number(job.pickupLocation.longitude) }} 
+                              title="Pickup Location" 
+                              pinColor="green" 
+                            />
+                          )}
+                          {job.dropoffLocation?.latitude && job.dropoffLocation?.longitude && (
+                            <Marker 
+                              coordinate={{ latitude: Number(job.dropoffLocation.latitude), longitude: Number(job.dropoffLocation.longitude) }} 
+                              title="Drop-off Location" 
+                              pinColor="red" 
+                            />
+                          )}
+                        </>
+                      ) : (
+                        job.locationLat && job.locationLng && (
+                          <Marker coordinate={{ latitude: job.locationLat, longitude: job.locationLng }} title="Client Location" pinColor="red" />
+                        )
+                      )}
                       {providerLocation && (
                         <Marker coordinate={{ latitude: providerLocation.coords.latitude, longitude: providerLocation.coords.longitude }} title="Your Location" pinColor="blue" />
                       )}

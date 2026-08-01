@@ -13,6 +13,21 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
+@keyframes drift {
+  from {
+    background-position: 0 0;
+  }
+  to {
+    background-position: -256px -256px;
+  }
+}
+
+.animated-bg {
+  background-image: url('/app_bg_pattern.png');
+  background-size: 256px 256px;
+  animation: drift 60s linear infinite;
+}
+
 @layer utilities {
   .text-balance {
     text-wrap: balance;

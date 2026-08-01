@@ -136,6 +136,12 @@ export default function UserDetailPage() {
                 {user.verificationStatus}
               </span>
             </div>
+            {user.whatsappNumber && (
+              <div>
+                <span className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5">WhatsApp Contact</span>
+                <span className="text-slate-900 font-semibold">{user.whatsappNumber}</span>
+              </div>
+            )}
             
             {user.role === 'PROVIDER' && user.studentIdPhotoUrl && (
               <div className="pt-6 border-t border-gray-100">

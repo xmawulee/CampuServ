@@ -1,6 +1,7 @@
 package com.knust.campusserv.job.controller;
 
 import com.knust.campusserv.job.model.Job;
+import com.knust.campusserv.job.model.StructuredLocation;
 import com.knust.campusserv.job.repository.JobRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -193,6 +194,30 @@ public class JobController {
         job.setLocationLat(locationLat);
         job.setLocationLng(locationLng);
         job.setLocationHint(locationHint);
+
+        if (body.get("pickupLocation") != null) {
+            Map<String, Object> pl = (Map<String, Object>) body.get("pickupLocation");
+            StructuredLocation pickup = new StructuredLocation(
+                (String) pl.get("address"),
+                pl.get("latitude") != null ? Double.parseDouble(pl.get("latitude").toString()) : null,
+                pl.get("longitude") != null ? Double.parseDouble(pl.get("longitude").toString()) : null,
+                (String) pl.get("placeId"),
+                (String) pl.get("landmark")
+            );
+            job.setPickupLocation(pickup);
+        }
+        if (body.get("dropoffLocation") != null) {
+            Map<String, Object> dl = (Map<String, Object>) body.get("dropoffLocation");
+            StructuredLocation dropoff = new StructuredLocation(
+                (String) dl.get("address"),
+                dl.get("latitude") != null ? Double.parseDouble(dl.get("latitude").toString()) : null,
+                dl.get("longitude") != null ? Double.parseDouble(dl.get("longitude").toString()) : null,
+                (String) dl.get("placeId"),
+                (String) dl.get("landmark")
+            );
+            job.setDropoffLocation(dropoff);
+        }
+
         job.setCreatedAt(LocalDateTime.now());
         job.setUpdatedAt(LocalDateTime.now());
 
@@ -232,13 +257,42 @@ public class JobController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Job cannot be started. Current status: " + job.getStatus());
         }
 
-        // Advance status to IN_PROGRESS so the provider's stepper moves forward
-        job.setStatus("IN_PROGRESS");
+        boolean isDelivery = job.getPickupLocation() != null && job.getPickupLocation().getAddress() != null;
+        if (isDelivery) {
+            job.setStatus("EN_ROUTE_TO_PICKUP");
+        } else {
+            job.setStatus("IN_PROGRESS");
+        }
         job.setUpdatedAt(LocalDateTime.now());
         jobRepository.save(job);
 
         // Publish job.started event
         publishJobEvent("job.started", job);
+
+        return ResponseEntity.ok(job);
+    }
+
+    @PutMapping("/{jobId}/picked-up")
+    public ResponseEntity<?> pickedUp(
+            @PathVariable String jobId,
+            @RequestHeader(value = "X-User-Id", required = false) String userId) {
+
+        Optional<Job> jobOpt = jobRepository.findById(jobId);
+        if (jobOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Job not found.");
+        }
+
+        Job job = jobOpt.get();
+        if (!"EN_ROUTE_TO_PICKUP".equals(job.getStatus())) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Job is not en route to pickup. Current status: " + job.getStatus());
+        }
+
+        job.setStatus("EN_ROUTE_TO_DROPOFF");
+        job.setUpdatedAt(LocalDateTime.now());
+        jobRepository.save(job);
+
+        // Publish job.picked_up event
+        publishJobEvent("job.picked_up", job);
 
         return ResponseEntity.ok(job);
     }
@@ -256,8 +310,15 @@ public class JobController {
         }
 
         Job job = jobOpt.get();
-        if (!"ACTIVE".equals(job.getStatus()) && !"IN_PROGRESS".equals(job.getStatus())) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Job is not active. Current status: " + job.getStatus());
+        boolean isDelivery = job.getPickupLocation() != null && job.getPickupLocation().getAddress() != null;
+        if (isDelivery) {
+            if (!"EN_ROUTE_TO_DROPOFF".equals(job.getStatus())) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Job is not en route to drop-off. Current status: " + job.getStatus());
+            }
+        } else {
+            if (!"ACTIVE".equals(job.getStatus()) && !"IN_PROGRESS".equals(job.getStatus())) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Job is not active. Current status: " + job.getStatus());
+            }
         }
 
         // Generate 6-digit completion code

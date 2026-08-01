@@ -8,6 +8,12 @@ public class NotificationPayload implements Serializable {
     private String summary;
     private String severity;
     private String timestamp;
+    private String requestId;
+    private String offerId;
+    private String providerId;
+    private String requesterId;
+    private Double price;
+    private String jobId;
 
     public NotificationPayload() {}
 
@@ -25,4 +31,22 @@ public class NotificationPayload implements Serializable {
     
     public String getTimestamp() { return timestamp; }
     public void setTimestamp(String timestamp) { this.timestamp = timestamp; }
+
+    public String getRequestId() { return requestId; }
+    public void setRequestId(String requestId) { this.requestId = requestId; }
+
+    public String getOfferId() { return offerId; }
+    public void setOfferId(String offerId) { this.offerId = offerId; }
+
+    public String getProviderId() { return providerId; }
+    public void setProviderId(String providerId) { this.providerId = providerId; }
+
+    public String getRequesterId() { return requesterId; }
+    public void setRequesterId(String requesterId) { this.requesterId = requesterId; }
+
+    public Double getPrice() { return price; }
+    public void setPrice(Double price) { this.price = price; }
+
+    public String getJobId() { return jobId; }
+    public void setJobId(String jobId) { this.jobId = jobId; }
 }

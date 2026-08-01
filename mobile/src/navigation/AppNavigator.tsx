@@ -17,16 +17,18 @@ import RoleSelectScreen from '../screens/auth/RoleSelectScreen';
 import SignInScreen from '../screens/auth/SignInScreen';
 import ClientSignUpScreen from '../screens/auth/ClientSignUpScreen';
 import ProviderSignUpScreen from '../screens/auth/ProviderSignUpScreen';
-// OtpVerifyScreen removed — email verification is exclusively via deep-link. See EmailSentScreen.
+import EmailVerificationScreen from '../screens/auth/EmailVerificationScreen';
 import IdCaptureScreen from '../screens/auth/IdCaptureScreen';
 import CategorySelectScreen from '../screens/auth/CategorySelectScreen';
 import PendingApprovalScreen from '../screens/auth/PendingApprovalScreen';
 import RejectedApplicationScreen from '../screens/auth/RejectedApplicationScreen';
 import ProviderBioScreen from '../screens/auth/ProviderBioScreen';
 import ProviderReviewScreen from '../screens/auth/ProviderReviewScreen';
+import ForgotPasswordScreen from '../screens/auth/ForgotPasswordScreen';
+import ResetPasswordScreen from '../screens/auth/ResetPasswordScreen';
+import ResetPasswordCodeScreen from '../screens/auth/ResetPasswordCodeScreen';
 
 import HomeScreen from '../screens/core/HomeScreen';
-import SearchScreen from '../screens/core/SearchScreen';
 import RequestDetailsScreen from '../screens/core/RequestDetailsScreen';
 import RequestDetailForProviderScreen from '../screens/provider/RequestDetailForProviderScreen';
 import SelectProviderScreen from '../screens/core/SelectProviderScreen';
@@ -40,6 +42,7 @@ import { DepositScreen } from '../screens/wallet/DepositScreen';
 import WalletReceiptScreen from '../screens/wallet/WalletReceiptScreen';
 import TransactionReceiptScreen from '../screens/wallet/TransactionReceiptScreen';
 import SettingsScreen from '../screens/settings/SettingsScreen';
+import DeleteAccountScreen from '../screens/settings/DeleteAccountScreen';
 import CategoryProvidersScreen from '../screens/core/CategoryProvidersScreen';
 import ProviderProfileScreen from '../screens/core/ProviderProfileScreen';
 import ListingDetailScreen from '../screens/provider/ListingDetailScreen';
@@ -47,6 +50,8 @@ import ActiveJobScreen from '../screens/core/ActiveJobScreen';
 import RiderLiveTrackingScreen from '../screens/core/RiderLiveTrackingScreen';
 import { ReviewSubmissionScreen } from '../screens/core/ReviewSubmissionScreen';
 import NotificationCenterScreen from '../screens/core/NotificationCenterScreen';
+import { RaiseDisputeScreen } from '../screens/core/RaiseDisputeScreen';
+import { DisputeThreadScreen } from '../screens/core/DisputeThreadScreen';
 import AccountRestrictedScreen from '../screens/auth/AccountRestrictedScreen';
 import ChatListScreen from '../screens/chat/ChatListScreen';
 import ChatThreadScreen from '../screens/chat/ChatThreadScreen';
@@ -119,7 +124,7 @@ function CustomTabBar({ state, descriptors, navigation, colors, isDark }: any) {
         else if (route.name === 'Wallet') iconName = isFocused ? 'wallet' : 'wallet-outline';
         else if (route.name === 'Settings') iconName = isFocused ? 'person' : 'person-outline';
         else if (route.name === 'Home') iconName = isFocused ? 'home' : 'home-outline';
-        else if (route.name === 'Search') iconName = isFocused ? 'search' : 'search-outline';
+        else if (route.name === 'Search') iconName = isFocused ? 'add-circle' : 'add-circle-outline';
         else if (route.name === 'MyRequests') iconName = isFocused ? 'list' : 'list-outline';
 
         // Override label for bottom tabs
@@ -131,7 +136,7 @@ function CustomTabBar({ state, descriptors, navigation, colors, isDark }: any) {
         else if (route.name === 'Wallet') displayLabel = 'Wallet';
         else if (route.name === 'Settings') displayLabel = 'Account';
         else if (route.name === 'Home') displayLabel = 'Home';
-        else if (route.name === 'Search') displayLabel = 'Search';
+        else if (route.name === 'Search') displayLabel = 'Post';
         else if (route.name === 'MyRequests') displayLabel = 'Requests';
 
         return (
@@ -199,7 +204,7 @@ function AppTabs() {
         screenOptions={{ headerShown: false }}
       >
         <Tab.Screen name="Home" component={HomeScreen} />
-        <Tab.Screen name="Search" component={SearchScreen} />
+        <Tab.Screen name="Search" component={PostRequestScreen} />
         <Tab.Screen name="MyRequests" component={MyRequestsScreen} />
         <Tab.Screen name="Wallet" component={StudentWalletScreen} />
         <Tab.Screen name="Settings" component={SettingsScreen} />
@@ -274,6 +279,7 @@ function resolveRoute(
     isVerified?: boolean;
     verificationStatus?: string;
     serviceCategory?: string;
+    emailVerified?: boolean;
   } | null,
 ): string {
   if (!isAuthenticated || !user || !user.role) return 'auth';
@@ -287,6 +293,11 @@ function resolveRoute(
   // Full-app block: suspended or banned accounts
   if (user.accountStatus === 'SUSPENDED' || user.accountStatus === 'BANNED') {
     return 'accountRestricted';
+  }
+
+  // Gating access: email verification check
+  if (user.emailVerified === false) {
+    return 'emailVerification';
   }
 
   // Provider account onboarding & approval check
@@ -399,7 +410,7 @@ function AppNavigatorInner() {
   // transitions from SUSPENDED/BANNED → ACTIVE. Without this, React Navigation keeps
   // the old screen in its internal state even after resolveRoute() returns a different
   // route, meaning the AccountRestrictedScreen stays visible despite correct store state.
-  const activeViewKey = `${user?.role || 'STUDENT'}-${user?.accountStatus || 'ACTIVE'}`;
+  const activeViewKey = `${user?.role || 'STUDENT'}-${user?.accountStatus || 'ACTIVE'}-${user?.emailVerified === true ? 'verified' : 'unverified'}`;
 
   // Shared sub-screens
   const sharedScreens = (
@@ -413,8 +424,14 @@ function AppNavigatorInner() {
       <Stack.Screen name="Deposit" component={DepositScreen} options={{ title: 'Deposit Funds' }} />
       <Stack.Screen name="WalletReceiptScreen" component={WalletReceiptScreen} options={{ presentation: 'modal', headerShown: false, animation: 'slide_from_bottom' }} />
       <Stack.Screen name="NotificationCenter" component={NotificationCenterScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="DeleteAccount" component={DeleteAccountScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="RaiseDispute" component={RaiseDisputeScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="DisputeThread" component={DisputeThreadScreen} options={{ headerShown: false }} />
 
       {/* Pushed onboarding screens */}
+      <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="ResetPasswordCode" component={ResetPasswordCodeScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="ResetPassword" component={ResetPasswordScreen} options={{ headerShown: false }} />
       <Stack.Screen name="IdCapture" component={IdCaptureScreen} options={{ headerShown: false }} />
       <Stack.Screen name="CategorySelect" component={CategorySelectScreen} options={{ headerShown: false }} />
       <Stack.Screen name="PendingApproval" component={PendingApprovalScreen} options={{ headerShown: false }} />
@@ -438,6 +455,9 @@ function AppNavigatorInner() {
         <>
           <Stack.Screen name="RoleSelect" component={RoleSelectScreen} options={{ headerShown: false }} />
           <Stack.Screen name="SignIn" component={SignInScreen} options={{ headerShown: false }} />
+          <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} options={{ headerShown: false }} />
+          <Stack.Screen name="ResetPasswordCode" component={ResetPasswordCodeScreen} options={{ headerShown: false }} />
+          <Stack.Screen name="ResetPassword" component={ResetPasswordScreen} options={{ headerShown: false }} />
           <Stack.Screen name="ClientSignUp" component={ClientSignUpScreen} options={{ headerShown: false }} />
           <Stack.Screen name="ProviderSignUp" component={ProviderSignUpScreen} options={{ headerShown: false }} />
           {/* OtpVerify removed — verification is via email deep-link only (EmailSentScreen) */}
@@ -446,6 +466,11 @@ function AppNavigatorInner() {
           <Stack.Screen name="PendingApproval" component={PendingApprovalScreen} options={{ headerShown: false }} />
           <Stack.Screen name="RejectedApplication" component={RejectedApplicationScreen} options={{ headerShown: false }} />
         </>
+      )}
+
+      {/* ── Email Verification Gate ── */}
+      {route === 'emailVerification' && (
+        <Stack.Screen name="EmailVerification" component={EmailVerificationScreen} options={{ headerShown: false }} />
       )}
 
       {/* ── Account Restricted — full-app block ── */}

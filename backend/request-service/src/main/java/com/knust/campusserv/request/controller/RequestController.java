@@ -377,20 +377,101 @@ public class RequestController {
         long completedCount = serviceRequestRepository.countByRequesterIdAndStatusIn(userIdHeader.trim(), List.of("COMPLETED"));
         long cancelledCount = serviceRequestRepository.countByRequesterIdAndStatusIn(userIdHeader.trim(), List.of("CANCELLED"));
 
+        List<Map<String, Object>> enrichedRequests = new ArrayList<>();
         for (ServiceRequest req : requestPage.getContent()) {
+            Map<String, Object> reqMap = new LinkedHashMap<>();
+            reqMap.put("id", req.getId());
+            reqMap.put("requesterId", req.getRequesterId());
+            reqMap.put("category", req.getCategory());
+            reqMap.put("title", req.getTitle());
+            reqMap.put("description", req.getDescription());
+            reqMap.put("deadline", req.getDeadline() != null ? req.getDeadline().toString() : null);
+            reqMap.put("location", req.getLocation());
+            reqMap.put("serviceMode", req.getServiceMode());
+            reqMap.put("status", req.getStatus());
+            reqMap.put("createdAt", req.getCreatedAt() != null ? req.getCreatedAt().toString() : null);
+            reqMap.put("updatedAt", req.getUpdatedAt() != null ? req.getUpdatedAt().toString() : null);
+            reqMap.put("budgetMin", req.getBudgetMin());
+            reqMap.put("budgetMax", req.getBudgetMax());
+            reqMap.put("timingType", req.getTimingType());
+            reqMap.put("scheduledDate", req.getScheduledDate());
+            reqMap.put("locationType", req.getLocationType());
+            reqMap.put("locationDetail", req.getLocationDetail());
+            reqMap.put("deliveryMode", req.getDeliveryMode());
+            reqMap.put("bidWindowCloses", req.getBidWindowCloses() != null ? req.getBidWindowCloses().toString() : null);
+            reqMap.put("escrowHeld", req.getEscrowHeld());
+            reqMap.put("targetProviderId", req.getTargetProviderId());
+            reqMap.put("pickupLocation", req.getPickupLocation());
+            reqMap.put("dropoffLocation", req.getDropoffLocation());
+
             if (req.getAgreedPrice() == null) {
                 Optional<Offer> acceptedOpt = offerRepository.findFirstByRequestIdAndStatus(req.getId(), "ACCEPTED");
                 if (acceptedOpt.isPresent()) {
                     req.setAgreedPrice(acceptedOpt.get().getPrice());
                     serviceRequestRepository.save(req);
+                    reqMap.put("agreedPrice", acceptedOpt.get().getPrice());
                 } else if (req.getBudgetMin() != null) {
-                    req.setAgreedPrice(req.getBudgetMin());
+                    reqMap.put("agreedPrice", req.getBudgetMin());
+                } else {
+                    reqMap.put("agreedPrice", null);
                 }
+            } else {
+                reqMap.put("agreedPrice", req.getAgreedPrice());
             }
+
+            // Fetch and enrich offers
+            List<Offer> offers = offerRepository.findByRequestId(req.getId());
+            List<Map<String, Object>> enrichedOffers = new ArrayList<>();
+            for (Offer offer : offers) {
+                Map<String, Object> offerMap = new LinkedHashMap<>();
+                offerMap.put("id", offer.getId());
+                offerMap.put("requestId", offer.getRequestId());
+                offerMap.put("providerId", offer.getProviderId());
+                offerMap.put("price", offer.getPrice());
+                offerMap.put("eta", offer.getEta());
+                offerMap.put("message", offer.getMessage());
+                offerMap.put("status", offer.getStatus());
+                offerMap.put("createdAt", offer.getCreatedAt() != null ? offer.getCreatedAt().toString() : null);
+                offerMap.put("attachmentUrls", offer.getAttachmentUrls());
+
+                try {
+                    Map<String, Object> providerRow = jdbcTemplate.queryForMap(
+                        "SELECT full_name, email, profile_picture_url, rating, completed_jobs_count, is_verified " +
+                        "FROM users WHERE id = ?",
+                        offer.getProviderId()
+                    );
+                    offerMap.put("providerName", providerRow.get("full_name"));
+                    offerMap.put("providerAvatar", providerRow.get("profile_picture_url"));
+                    offerMap.put("providerRating", providerRow.get("rating") != null ? providerRow.get("rating") : 0);
+                    offerMap.put("providerIsVerified", Boolean.TRUE.equals(providerRow.get("is_verified")));
+
+                    try {
+                        Integer reviewCount = jdbcTemplate.queryForObject(
+                            "SELECT COUNT(*) FROM reviews WHERE reviewee_id = ? AND direction = 'REQUESTER_TO_PROVIDER'",
+                            Integer.class, offer.getProviderId()
+                        );
+                        offerMap.put("providerTotalReviews", reviewCount != null ? reviewCount : 0);
+                        offerMap.put("providerCompletedJobs", providerRow.get("completed_jobs_count") != null ? providerRow.get("completed_jobs_count") : 0);
+                    } catch (Exception e) {
+                        offerMap.put("providerTotalReviews", 0);
+                        offerMap.put("providerCompletedJobs", 0);
+                    }
+                } catch (Exception e) {
+                    offerMap.put("providerName", "Provider");
+                    offerMap.put("providerAvatar", null);
+                    offerMap.put("providerRating", 0);
+                    offerMap.put("providerIsVerified", false);
+                    offerMap.put("providerTotalReviews", 0);
+                    offerMap.put("providerCompletedJobs", 0);
+                }
+                enrichedOffers.add(offerMap);
+            }
+            reqMap.put("offers", enrichedOffers);
+            enrichedRequests.add(reqMap);
         }
 
         Map<String, Object> response = new HashMap<>();
-        response.put("requests", requestPage.getContent());
+        response.put("requests", enrichedRequests);
         response.put("counts", Map.of("active", activeCount, "completed", completedCount, "cancelled", cancelledCount));
         response.put("hasMore", requestPage.hasNext());
         response.put("nextPage", requestPage.hasNext() ? page + 1 : null);
@@ -1020,6 +1101,21 @@ public class RequestController {
 
         offer.setStatus("WITHDRAWN");
         offerRepository.save(offer);
+
+        Optional<ServiceRequest> reqOpt = serviceRequestRepository.findById(requestId);
+        if (reqOpt.isPresent()) {
+            try {
+                Map<String, Object> event = new HashMap<>();
+                event.put("type", "offer.withdrawn");
+                event.put("requestId", requestId);
+                event.put("offerId", offerId);
+                event.put("providerId", offer.getProviderId());
+                event.put("requesterId", reqOpt.get().getRequesterId());
+                rabbitTemplate.convertAndSend("admin.notifications", "", event);
+            } catch (Exception e) {
+                log.warn("Failed to publish offer.withdrawn event: {}", e.getMessage());
+            }
+        }
 
         return ResponseEntity.ok(Map.of("status", "WITHDRAWN", "offerId", offerId));
     }

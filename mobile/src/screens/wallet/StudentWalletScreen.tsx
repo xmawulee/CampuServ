@@ -8,6 +8,7 @@ import { api } from '../../services/api';
 import { useAuthStore } from '../../store/authStore';
 import { useTheme } from '../../styles/ThemeContext';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useBottomTabSpacing } from '../../hooks/useBottomTabSpacing';
 import { CustomIonicons as Ionicons } from '../../components/CustomIcons';
 import WalletTxnCard from '../../components/wallet/WalletTxnCard';
 import WalletEmptyState from '../../components/wallet/WalletEmptyState';
@@ -19,6 +20,7 @@ export default function StudentWalletScreen() {
   const { user } = useAuthStore();
   const { colors, isDark } = useTheme();
   const insets = useSafeAreaInsets();
+  const bottomTabSpacing = useBottomTabSpacing();
   const navigation = useNavigation<any>();
 
   const [wallet, setWallet] = useState<any>(null);
@@ -71,7 +73,7 @@ export default function StudentWalletScreen() {
     <AnimatedBackground style={styles.container}>
       <ScrollView
         style={{ flex: 1 }}
-        contentContainerStyle={{ paddingTop: insets.top + 16, paddingBottom: 40 + insets.bottom }}
+        contentContainerStyle={{ paddingTop: insets.top + 16, paddingBottom: bottomTabSpacing }}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}
         showsVerticalScrollIndicator={false}
       >

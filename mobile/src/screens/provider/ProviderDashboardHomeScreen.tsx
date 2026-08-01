@@ -9,6 +9,7 @@ import { useTheme } from '../../styles/ThemeContext';
 import { useAuthStore } from '../../store/authStore';
 import { useFocusEffect } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useBottomTabSpacing } from '../../hooks/useBottomTabSpacing';
 import { api } from '../../services/api';
 import type { ProviderJob, ProviderWallet } from '../../types/provider';
 import { getProviderJobSummary, JobSummary } from '../../services/jobService';
@@ -28,6 +29,7 @@ type DashboardStats = {
 export default function ProviderDashboardHomeScreen({ navigation }: any) {
   const { colors, isDark } = useTheme();
   const insets = useSafeAreaInsets();
+  const bottomTabSpacing = useBottomTabSpacing();
   const user = useAuthStore((s) => s.user);
 
   const { data: chatThreads } = useQuery<any[]>({
@@ -109,7 +111,7 @@ export default function ProviderDashboardHomeScreen({ navigation }: any) {
     <AnimatedBackground style={styles.container}>
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={[styles.scrollContent, { paddingBottom: 80 + insets.bottom }]}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: bottomTabSpacing }]}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}

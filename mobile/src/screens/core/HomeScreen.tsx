@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import {
   StyleSheet,
   Text,
@@ -16,8 +16,12 @@ import {
   Modal,
   Animated,
   Easing,
+  Switch,
+  Platform,
+  AppState,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useBottomTabSpacing } from '../../hooks/useBottomTabSpacing';
 import { useFocusEffect } from '@react-navigation/native';
 import { useAuthStore } from '../../store/authStore';
 import { api, BASE_URL } from '../../services/api';
@@ -29,8 +33,11 @@ import RatingModal from '../../components/RatingModal';
 import { useToast } from '../../styles/ToastContext';
 import { RoleSwitcher } from '../../components/RoleSwitcher';
 import { SecondaryRoleStatusBanner } from '../../components/SecondaryRoleStatusBanner';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useInfiniteQuery } from '@tanstack/react-query';
 import { getChats } from '../../services/chatService';
+import { getProviders } from '../../services/userService';
+import ProviderFeedCard from '../../components/ProviderFeedCard';
+import { getGreeting, formatGreeting } from '../../utils/greeting';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -107,41 +114,7 @@ const HomeScreenRequestCard = React.memo(({ item, colors, onPress }: { item: any
   );
 });
 
-const SearchBar = React.memo(({
-  colors,
-  searchQuery,
-  setSearchQuery,
-  searchInputRef,
-  isSticky
-}: {
-  colors: any;
-  searchQuery: string;
-  setSearchQuery: (q: string) => void;
-  searchInputRef: React.RefObject<any>;
-  isSticky?: boolean;
-}) => {
-  return (
-    <View style={[styles.searchRow, isSticky ? styles.searchRowSticky : null]}>
-      <View style={[styles.searchBar, { backgroundColor: colors.inputBackground }]}>
-        <CustomIonicons name="search-outline" size={18} color={colors.textMuted} style={{ marginRight: 8 }} />
-        <TextInput
-          ref={isSticky ? undefined : searchInputRef}
-          style={[styles.searchInput, { color: colors.text }]}
-          placeholder="Search services, categories..."
-          placeholderTextColor={colors.placeholderText}
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-          accessibilityLabel="Search for services"
-        />
-        {searchQuery.length > 0 && (
-          <TouchableOpacity onPress={() => { setSearchQuery(''); if (!isSticky) searchInputRef.current?.focus(); }}>
-            <CustomIonicons name="close-circle" size={18} color={colors.textMuted} />
-          </TouchableOpacity>
-        )}
-      </View>
-    </View>
-  );
-});
+// SearchBar component removed. Search is handled inline.
 
 const LOCAL_IMAGES = {
   food: require('../../../assets/images/home/food.jpg'),
@@ -186,6 +159,30 @@ export default function HomeScreen({ route, navigation }: any) {
   const { user, accessToken } = useAuthStore();
   const { colors, isDark } = useTheme();
   const { showToast } = useToast();
+  const bottomTabSpacing = useBottomTabSpacing();
+
+  // Time-of-day greeting logic
+  const [greetingText, setGreetingText] = useState('');
+
+  const updateGreeting = useCallback(() => {
+    const greetingPrefix = getGreeting(new Date());
+    const formatted = formatGreeting(greetingPrefix, user?.fullName);
+    setGreetingText(formatted);
+  }, [user?.fullName]);
+
+  useEffect(() => {
+    updateGreeting();
+
+    const subscription = AppState.addEventListener('change', (nextAppState) => {
+      if (nextAppState === 'active') {
+        updateGreeting();
+      }
+    });
+
+    return () => {
+      subscription.remove();
+    };
+  }, [updateGreeting]);
 
   const { data: chatThreads } = useQuery<any[]>({
     queryKey: ['chat-list'],
@@ -214,9 +211,121 @@ export default function HomeScreen({ route, navigation }: any) {
   const [debouncedQuery, setDebouncedQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
 
+  // Filter Modal & Temp States
+  const [isFilterModalVisible, setIsFilterModalVisible] = useState(false);
+  const [minRating, setMinRating] = useState<number>(0.0);
+  const [sortOrder, setSortOrder] = useState<string>('discover');
+  const [verifiedOnly, setVerifiedOnly] = useState<boolean>(false);
+  const [minPrice, setMinPrice] = useState<string>('');
+  const [maxPrice, setMaxPrice] = useState<string>('');
+
+  const [tempMinRating, setTempMinRating] = useState<number>(0.0);
+  const [tempSortOrder, setTempSortOrder] = useState<string>('discover');
+  const [tempVerifiedOnly, setTempVerifiedOnly] = useState<boolean>(false);
+  const [tempMinPrice, setTempMinPrice] = useState<string>('');
+  const [tempMaxPrice, setTempMaxPrice] = useState<string>('');
+
+  // Load and query providers feed for student
+  const {
+    data: providerPages,
+    isLoading: loadingProviders,
+    isRefetching: refetchingProviders,
+    fetchNextPage: fetchNextProvidersPage,
+    hasNextPage: hasNextProvidersPage,
+    isFetchingNextPage: fetchingNextProvidersPage,
+    refetch: refetchProvidersFeed
+  } = useInfiniteQuery({
+    queryKey: [
+      'providers-feed',
+      debouncedQuery,
+      activeCategory,
+      minRating,
+      sortOrder,
+      verifiedOnly,
+      minPrice,
+      maxPrice
+    ],
+    queryFn: async ({ pageParam = 0 }) => {
+      return getProviders(
+        activeCategory || undefined, // categoryName
+        minRating, // minRating
+        pageParam as number, // page
+        10, // size
+        sortOrder, // sort
+        debouncedQuery.trim() || undefined, // name query
+        verifiedOnly || undefined, // verifiedOnly
+        minPrice ? Number(minPrice) : undefined, // minPrice
+        maxPrice ? Number(maxPrice) : undefined // maxPrice
+      );
+    },
+    initialPageParam: 0,
+    getNextPageParam: (lastPage: any) => {
+      return lastPage.currentPage < lastPage.totalPages - 1 ? lastPage.currentPage + 1 : undefined;
+    },
+    enabled: user?.role === 'STUDENT' || user?.role === 'ADMIN', // Only run for student
+  });
+
+  const providers = React.useMemo(() => {
+    return providerPages?.pages.flatMap(page => page.content) || [];
+  }, [providerPages]);
+
+  const isAnyFilterActive = useMemo(() => {
+    return (
+      activeCategory !== null ||
+      minRating > 0.0 ||
+      verifiedOnly ||
+      !!minPrice ||
+      !!maxPrice ||
+      sortOrder !== 'discover'
+    );
+  }, [activeCategory, minRating, verifiedOnly, minPrice, maxPrice, sortOrder]);
+
+  const activeFiltersCount = useMemo(() => {
+    let count = 0;
+    if (activeCategory) count += 1;
+    if (minRating > 0.0) count += 1;
+    if (verifiedOnly) count += 1;
+    if (minPrice || maxPrice) count += 1;
+    if (sortOrder !== 'discover') count += 1;
+    return count;
+  }, [activeCategory, minRating, verifiedOnly, minPrice, maxPrice, sortOrder]);
+
+  const clearAllFilters = () => {
+    setActiveCategory(null);
+    setMinRating(0.0);
+    setSortOrder('discover');
+    setVerifiedOnly(false);
+    setMinPrice('');
+    setMaxPrice('');
+    
+    // Clear temp states too
+    setTempMinRating(0.0);
+    setTempSortOrder('discover');
+    setTempVerifiedOnly(false);
+    setTempMinPrice('');
+    setTempMaxPrice('');
+  };
+
+  const handleOpenFilterModal = () => {
+    setTempMinRating(minRating);
+    setTempSortOrder(sortOrder);
+    setTempVerifiedOnly(verifiedOnly);
+    setTempMinPrice(minPrice);
+    setTempMaxPrice(maxPrice);
+    setIsFilterModalVisible(true);
+  };
+
+  const handleApplyFilters = () => {
+    setMinRating(tempMinRating);
+    setSortOrder(tempSortOrder);
+    setVerifiedOnly(tempVerifiedOnly);
+    setMinPrice(tempMinPrice);
+    setMaxPrice(tempMaxPrice);
+    setIsFilterModalVisible(false);
+  };
+
 
   // UI States
-  const [isSearchBarSticky, setIsSearchBarSticky] = useState(false);
 
   const isProvider = user?.role === 'PROVIDER';
   const insets = useSafeAreaInsets();
@@ -291,6 +400,7 @@ export default function HomeScreen({ route, navigation }: any) {
         setAvailableRequests(allReqs);
       } else {
         setMyRequests(allReqs.filter((r: any) => r.requesterId === user?.id));
+        refetchProvidersFeed();
       }
     } catch (err) {
       // Silent catch
@@ -366,10 +476,6 @@ export default function HomeScreen({ route, navigation }: any) {
   };
 
   const handleCategoryToggle = (catId: string, catName: string) => {
-    if (!isProvider) {
-      navigation.navigate('CategoryProviders', { categoryId: catId, categoryName: catName });
-      return;
-    }
     if (activeCategory === catName) {
       setActiveCategory(null);
     } else {
@@ -382,12 +488,6 @@ export default function HomeScreen({ route, navigation }: any) {
     setActiveCategory(null);
   };
 
-  const getGreeting = () => {
-    const hour = new Date().getHours();
-    if (hour < 12) return 'Good morning,';
-    if (hour < 17) return 'Good afternoon,';
-    return 'Good evening,';
-  };
 
   const getInitials = (name: string) => {
     if (!name) return '';
@@ -403,23 +503,29 @@ export default function HomeScreen({ route, navigation }: any) {
     return `${BASE_URL}${url}`;
   };
 
-  const handleScroll = (event: any) => {
-    const offsetY = event.nativeEvent.contentOffset.y;
-    // Toggle sticky search bar when scrolled down past category shortcuts
-    if (offsetY > 110) {
-      setIsSearchBarSticky(true);
-    } else {
-      setIsSearchBarSticky(false);
-    }
-  };
+  // scroll listener removed
 
-  const renderItem = useCallback(({ item }: any) => (
-    <HomeScreenRequestCard
-      item={item}
-      colors={colors}
-      onPress={() => navigation.navigate('RequestDetails', { requestId: item.id })}
-    />
-  ), [colors, navigation]);
+  const renderItem = useCallback(({ item }: any) => {
+    if (isProvider) {
+      return (
+        <HomeScreenRequestCard
+          item={item}
+          colors={colors}
+          onPress={() => navigation.navigate('RequestDetails', { requestId: item.id })}
+        />
+      );
+    } else {
+      return (
+        <ProviderFeedCard
+          provider={item}
+          onPress={() => navigation.navigate('ListingDetail', { 
+            providerId: (item as any).id || item.providerId,
+            selectedListing: item.services?.[0]
+          })}
+        />
+      );
+    }
+  }, [isProvider, colors, navigation]);
 
   const renderActiveFilterChips = () => {
     const chips = [];
@@ -470,7 +576,98 @@ export default function HomeScreen({ route, navigation }: any) {
     );
   };
 
-  if (loading) {
+  const renderActiveRequestsSection = () => {
+    if (isProvider) return null;
+    
+    // Filter active requests
+    const activeReqs = myRequests.filter(r => r.status !== 'COMPLETED' && r.status !== 'CANCELLED');
+
+    return (
+      <View style={{ marginBottom: 24 }}>
+        <View style={[styles.sectionHeader, { justifyContent: 'space-between', paddingHorizontal: 16, marginBottom: 12 }]}>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>Active Requests</Text>
+          {activeReqs.length > 0 && (
+            <TouchableOpacity onPress={() => navigation.navigate('MyRequests')}>
+              <Text style={{ color: colors.primary, fontWeight: '700', fontSize: 13 }}>See All</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+        
+        {activeReqs.length === 0 ? (
+          <View style={[styles.emptyBox, { backgroundColor: colors.inputBackground, marginHorizontal: 16 }]}>
+            <CustomIonicons name="cube-outline" size={40} color={colors.border} />
+            <Text style={[styles.emptyText, { color: colors.text }]}>No active requests</Text>
+            <Text style={[styles.emptySub, { color: colors.textMuted }]}>
+              Post a request to get offers from campus providers.
+            </Text>
+            <TouchableOpacity
+              style={[styles.emptyBtn, { backgroundColor: colors.accent }]}
+              onPress={() => navigation.navigate('PostRequest')}
+            >
+              <Text style={styles.emptyBtnText}>Post a Request</Text>
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{ paddingHorizontal: 16, gap: 12, paddingBottom: 8 }}
+          >
+            {activeReqs.map((item) => {
+              const stripColor = getStatusColor(item.status, colors);
+              const getStatusBg = (status: string, colors: any) => {
+                switch (status) {
+                  case 'OPEN': return colors.successLight;
+                  case 'IN_PROGRESS': return colors.warningLight;
+                  case 'COMPLETED': return colors.successLight;
+                  case 'CANCELLED': return colors.errorLight;
+                  default: return colors.warningLight;
+                }
+              };
+              return (
+                <TouchableOpacity
+                  key={item.id}
+                  style={[
+                    styles.horizontalRequestCard,
+                    { backgroundColor: colors.cardBackground, borderColor: colors.border }
+                  ]}
+                  onPress={() => navigation.navigate('RequestDetails', { requestId: item.id })}
+                  activeOpacity={0.88}
+                >
+                  <View style={[styles.cardStrip, { backgroundColor: stripColor }]} />
+                  <View style={{ flex: 1, padding: 12 }}>
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                      <Text style={{ fontSize: 11, fontWeight: '700', color: colors.textMuted, textTransform: 'uppercase', flex: 1, marginRight: 6 }} numberOfLines={1}>
+                        {item.category?.name || 'Service'}
+                      </Text>
+                      <View style={[styles.statusPill, { backgroundColor: getStatusBg(item.status, colors), paddingHorizontal: 6, paddingVertical: 2 }]}>
+                        <Text style={{ fontSize: 9, fontWeight: '800', color: stripColor, textTransform: 'uppercase' }}>
+                          {item.status?.replace('_', ' ')}
+                        </Text>
+                      </View>
+                    </View>
+                    <Text style={{ fontSize: 14, fontWeight: '700', color: colors.text, marginBottom: 8 }} numberOfLines={2}>
+                      {item.description}
+                    </Text>
+                    {(() => {
+                      const rawPrice = item.agreedPrice ?? item.acceptedOffer?.price ?? item.finalBudget ?? item.price;
+                      return (
+                        <Text style={{ fontSize: 13, fontWeight: '800', color: colors.primary }}>
+                          {rawPrice != null && !isNaN(Number(rawPrice)) && Number(rawPrice) > 0 ? `GHS ${Number(rawPrice).toFixed(2)}` : 'Quote pending'}
+                        </Text>
+                      );
+                    })()}
+                  </View>
+                </TouchableOpacity>
+              );
+            })}
+          </ScrollView>
+        )}
+      </View>
+    );
+  };
+
+  if (loading || (loadingProviders && !isProvider)) {
     return (
       <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
         <ActivityIndicator size="large" color={colors.primary} />
@@ -479,18 +676,135 @@ export default function HomeScreen({ route, navigation }: any) {
   }
 
   const browseRequests = isProvider ? availableRequests : myRequests;
-  const listData = isSearchMode ? filteredRequests : browseRequests.slice(0, 5);
-
-  // Quick action tiles for the home screen
-  const quickTiles = [
-    { label: 'New Request', icon: 'add-circle-outline', bg: colors.primary, nav: 'PostRequest', image: LOCAL_IMAGES.new_request },
-    { label: 'Browse Services', icon: 'grid-outline', bg: '#8DC63F', nav: null, image: LOCAL_IMAGES.browse_services },
-    { label: 'My Requests', icon: 'document-text-outline', bg: colors.text, nav: 'MyRequests', image: LOCAL_IMAGES.my_requests },
-    { label: 'My Wallet', icon: 'wallet-outline', bg: '#6B7280', nav: 'Wallet', image: LOCAL_IMAGES.my_wallet },
-  ] as const;
+  const listData = isProvider 
+    ? (isSearchMode ? filteredRequests : browseRequests.slice(0, 5))
+    : providers;
 
   return (
     <View style={[styles.root, { backgroundColor: 'transparent', paddingTop: insets.top, overflow: 'hidden' }]}>
+
+      {/* Slide-up Filter Modal */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={isFilterModalVisible}
+        onRequestClose={() => setIsFilterModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <TouchableOpacity style={styles.modalCloseArea} onPress={() => setIsFilterModalVisible(false)} />
+          <View style={[styles.modalContent, { backgroundColor: colors.cardBackground }]}>
+            <View style={[styles.modalHeader, { borderBottomColor: colors.border }]}>
+              <Text style={[styles.modalTitle, { color: colors.text }]}>Filters</Text>
+              <TouchableOpacity onPress={clearAllFilters}>
+                <Text style={[styles.resetFiltersLink, { color: colors.primary }]}>Reset All</Text>
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView style={styles.modalScroll}>
+              {/* Sort Order Selector */}
+              <View style={styles.filterSection}>
+                <Text style={[styles.filterLabel, { color: colors.text }]}>Sort By</Text>
+                <View style={styles.sortPillsRow}>
+                  {[
+                    { id: 'discover', label: 'Discover' },
+                    { id: 'rating', label: 'Highest Rated' },
+                    { id: 'jobs', label: 'Most Reviewed' },
+                    { id: 'newest', label: 'Newest' },
+                    { id: 'price-low', label: 'Price: Low to High' },
+                    { id: 'price-high', label: 'Price: High to Low' },
+                  ].map(option => {
+                    const isSelected = tempSortOrder === option.id;
+                    return (
+                      <TouchableOpacity
+                        key={option.id}
+                        style={[
+                          styles.sortPill,
+                          { borderColor: colors.border, backgroundColor: colors.inputBackground },
+                          isSelected ? { backgroundColor: colors.primary, borderColor: colors.primary } : null,
+                        ]}
+                        onPress={() => setTempSortOrder(option.id)}
+                      >
+                        <Text style={[styles.sortPillText, { color: colors.text }, isSelected ? { color: '#FFF' } : null]}>
+                          {option.label}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+              </View>
+
+              {/* Minimum Rating Selector */}
+              <View style={styles.filterSection}>
+                <Text style={[styles.filterLabel, { color: colors.text }]}>Minimum Rating</Text>
+                <View style={styles.ratingRowSelect}>
+                  {[0.0, 3.0, 4.0, 4.5].map(ratingValue => {
+                    const isSelected = tempMinRating === ratingValue;
+                    return (
+                      <TouchableOpacity
+                        key={ratingValue}
+                        style={[
+                          styles.ratingPill,
+                          { borderColor: colors.border, backgroundColor: colors.inputBackground },
+                          isSelected ? { backgroundColor: colors.primary, borderColor: colors.primary } : null,
+                        ]}
+                        onPress={() => setTempMinRating(ratingValue)}
+                      >
+                        <Text style={[styles.ratingPillText, { color: colors.text }, isSelected ? { color: '#FFF' } : null]}>
+                          {ratingValue === 0.0 ? 'Any' : `${ratingValue} ★ & up`}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+              </View>
+
+              {/* Verified Badge Switch */}
+              <View style={[styles.filterSection, styles.toggleRow]}>
+                <View>
+                  <Text style={[styles.filterLabel, { color: colors.text, marginBottom: 2 }]}>Verified Pro Status</Text>
+                  <Text style={{ fontSize: 13, color: colors.textMuted }}>Show verified experts only</Text>
+                </View>
+                <Switch
+                  value={tempVerifiedOnly}
+                  onValueChange={setTempVerifiedOnly}
+                  trackColor={{ false: colors.border, true: colors.primary }}
+                  thumbColor={Platform.OS === 'android' ? '#FFF' : undefined}
+                />
+              </View>
+
+              {/* Price Range */}
+              <View style={styles.filterSection}>
+                <Text style={[styles.filterLabel, { color: colors.text }]}>Price Range (GHS)</Text>
+                <View style={styles.priceInputRow}>
+                  <TextInput
+                    style={[styles.priceInput, { color: colors.text, borderColor: colors.border, backgroundColor: colors.inputBackground }]}
+                    placeholder="Min Price"
+                    placeholderTextColor={colors.placeholderText}
+                    keyboardType="numeric"
+                    value={tempMinPrice}
+                    onChangeText={setTempMinPrice}
+                  />
+                  <Text style={{ color: colors.textMuted, marginHorizontal: 8 }}>to</Text>
+                  <TextInput
+                    style={[styles.priceInput, { color: colors.text, borderColor: colors.border, backgroundColor: colors.inputBackground }]}
+                    placeholder="Max Price"
+                    placeholderTextColor={colors.placeholderText}
+                    keyboardType="numeric"
+                    value={tempMaxPrice}
+                    onChangeText={setTempMaxPrice}
+                  />
+                </View>
+              </View>
+            </ScrollView>
+
+            <View style={[styles.modalFooter, { borderTopColor: colors.border }]}>
+              <TouchableOpacity style={[styles.applyBtn, { backgroundColor: colors.primary }]} onPress={handleApplyFilters}>
+                <Text style={styles.applyBtnText}>Apply Filters</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
 
       {/* Announcement Modal */}
       <Modal visible={showAnnouncement} transparent animationType="fade">
@@ -561,59 +875,24 @@ export default function HomeScreen({ route, navigation }: any) {
       {/* Status Banner for Pending/Rejected Secondary Role Applications */}
       <SecondaryRoleStatusBanner navigation={navigation} />
 
-      {/* ── Sticky Search Bar overlay ── */}
-      {isSearchBarSticky && (
-        <View style={[styles.stickySearchContainer, { top: 70 + insets.top }]}>
-          <SearchBar
-            colors={colors}
-            searchQuery={searchQuery}
-            setSearchQuery={setSearchQuery}
-            searchInputRef={searchInputRef}
-            isSticky
-          />
-        </View>
-      )}
-
       <FlatList
         ref={flatListRef}
+        key={isProvider ? 'provider-list' : 'student-list'}
+        numColumns={1}
         data={listData}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item) => item.id || item.providerId}
         renderItem={renderItem}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}
-        scrollEventThrottle={16}
-        onScroll={handleScroll}
-        contentContainerStyle={styles.listContent}
-        ItemSeparatorComponent={() => <View style={{ height: 12 }} />}
+        contentContainerStyle={[styles.listContent, { paddingBottom: bottomTabSpacing }]}
+        ItemSeparatorComponent={isProvider ? () => <View style={{ height: 12 }} /> : null}
+        onEndReached={() => {
+          if (!isProvider && hasNextProvidersPage && !fetchingNextProvidersPage) {
+            fetchNextProvidersPage();
+          }
+        }}
+        onEndReachedThreshold={0.5}
         ListHeaderComponent={
           <>
-            {/* ── Hero Banner ── */}
-            <View style={[styles.heroBanner, { backgroundColor: colors.primary }]}>
-              <Text style={styles.heroText}>
-                Our providers
-                {"\n"}
-                will take it from here
-              </Text>
-              
-              <View style={[styles.heroSearchBar, { backgroundColor: '#FFF' }]}>
-                <TextInput
-                  style={[styles.heroSearchInput, { color: '#000' }]}
-                  placeholder='Try "building mobile app"'
-                  placeholderTextColor="#888"
-                  value={searchQuery}
-                  onChangeText={setSearchQuery}
-                  accessibilityLabel="Search for services"
-                />
-                {searchQuery.length > 0 && (
-                  <TouchableOpacity onPress={() => setSearchQuery('')} style={{ marginRight: 8 }}>
-                    <CustomIonicons name="close-circle" size={18} color="#888" />
-                  </TouchableOpacity>
-                )}
-                <TouchableOpacity style={[styles.heroSearchBtn, { backgroundColor: colors.text }]}>
-                  <CustomIonicons name="search-outline" size={20} color={colors.background} />
-                </TouchableOpacity>
-              </View>
-            </View>
-
             {/* Pending Review CTA */}
             {pendingReview && (
               <TouchableOpacity
@@ -628,84 +907,128 @@ export default function HomeScreen({ route, navigation }: any) {
                 <CustomIonicons name="arrow-forward" size={20} color="#FFF" />
               </TouchableOpacity>
             )}
-
-            {/* Quick Action Tiles 2x2 */}
-            {!isSearchMode && (
-              <View style={styles.gridContainer}>
-                {quickTiles.map((tile) => (
-                  <TouchableOpacity
-                    key={tile.label}
-                    style={styles.gridItem}
-                    onPress={() => tile.nav && navigation.navigate(tile.nav as any)}
-                    activeOpacity={0.88}
-                  >
-                    <ImageBackground
-                      source={tile.image}
-                      style={[styles.gridIconBox, { justifyContent: 'flex-end', paddingBottom: 16 }]}
-                      imageStyle={{ borderRadius: 24 }}
-                    >
-                      <View style={[StyleSheet.absoluteFillObject, { backgroundColor: 'rgba(0,0,0,0.4)', borderRadius: 24 }]} />
-                      <Text style={styles.catLabel} numberOfLines={2}>{tile.label}</Text>
-                    </ImageBackground>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            )}
-
-            {/* Category filter row */}
-            <View style={{ marginBottom: 16 }}>
-              <View style={styles.sectionHeader}>
-                <Text style={[styles.sectionTitle, { color: colors.text }]}>Category</Text>
-              </View>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.categoryScrollList}>
-                {(() => {
-                  const seenImages = new Set();
-                  return categories.filter(item => {
-                    const img = getCategoryImageUrl(item.name);
-                    if (seenImages.has(img)) return false;
-                    seenImages.add(img);
-                    return true;
-                  }).map((item) => {
-                    const isActive = activeCategory === item.name;
-                    return (
-                      <TouchableOpacity
-                        key={item.id}
-                        style={[styles.catCard, isActive && { shadowColor: colors.primary, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.5, shadowRadius: 8, elevation: 8 }]}
-                        onPress={() => handleCategoryToggle(item.id, item.name)}
-                        activeOpacity={0.8}
-                      >
-                        <ImageBackground
-                          source={getCategoryImageUrl(item.name)}
-                          style={styles.catImageBg}
-                          imageStyle={{ borderRadius: 20 }}
-                        >
-                          <View style={isActive ? [styles.catActiveOverlay, { borderColor: colors.primary }] : styles.catOverlay} />
-                          <Text style={styles.catLabel} numberOfLines={2}>
-                            {item.name}
-                          </Text>
-                        </ImageBackground>
-                      </TouchableOpacity>
-                    );
-                  });
-                })()}
-                {loading && categories.length === 0 && (
-                  <Text style={{ color: colors.textMuted, marginLeft: 4 }}>Loading...</Text>
-                )}
-                {!loading && categories.length === 0 && (
-                  <Text style={{ color: colors.textMuted, marginLeft: 4 }}>No categories found.</Text>
-                )}
-              </ScrollView>
-            </View>
-
             {/* Active Filter Chips */}
             {renderActiveFilterChips()}
 
+
+            {/* Service Feed Search & Filters */}
+            {!isProvider && (
+              <View style={{ paddingHorizontal: 16, marginBottom: 16, marginTop: 8 }}>
+                {greetingText ? (
+                  <Text style={{ fontSize: 24, fontWeight: '800', color: colors.text, marginBottom: 6 }}>
+                    {greetingText}
+                  </Text>
+                ) : null}
+                <Text style={{ fontSize: 11, fontWeight: '800', color: colors.textMuted, textTransform: 'uppercase', marginBottom: 8, letterSpacing: 0.8 }}>
+                  Explore Campus Services
+                </Text>
+                
+                {/* Feed Search Input and Filter Button */}
+                <View style={{ flexDirection: 'row', gap: 10, alignItems: 'center' }}>
+                  <View style={[styles.feedSearchInputWrap, { backgroundColor: colors.inputBackground, borderColor: colors.border, flex: 1, paddingHorizontal: 12, flexDirection: 'row', alignItems: 'center', borderRadius: 14, borderWidth: 1 }]}>
+                    <CustomIonicons name="search-outline" size={20} color={colors.textMuted} style={{ opacity: 0.7, marginRight: 8 }} />
+                    <TextInput
+                      ref={searchInputRef}
+                      style={[styles.feedSearchInput, { color: colors.text, flex: 1, paddingVertical: 8 }]}
+                      placeholder="Search services..."
+                      placeholderTextColor={colors.placeholderText}
+                      value={searchQuery}
+                      onChangeText={setSearchQuery}
+                      accessibilityLabel="Search services"
+                    />
+                    {searchQuery.length > 0 && (
+                      <TouchableOpacity onPress={() => setSearchQuery('')} style={{ padding: 4 }}>
+                        <CustomIonicons name="close-circle" size={18} color={colors.textMuted} />
+                      </TouchableOpacity>
+                    )}
+                  </View>
+
+                  {/* Dedicated Filter Button */}
+                  <TouchableOpacity
+                    style={[
+                      styles.filterButton,
+                      {
+                        backgroundColor: isAnyFilterActive ? colors.primary : colors.inputBackground,
+                        borderColor: isAnyFilterActive ? colors.primary : colors.border
+                      }
+                    ]}
+                    onPress={handleOpenFilterModal}
+                    activeOpacity={0.8}
+                  >
+                    <CustomIonicons name="options-outline" size={20} color={isAnyFilterActive ? '#FFF' : colors.text} />
+                    {activeFiltersCount > 0 && (
+                      <View style={[styles.filterBadge, { backgroundColor: isAnyFilterActive ? '#FFF' : colors.primary }]}>
+                        <Text style={[styles.filterBadgeText, { color: isAnyFilterActive ? colors.primary : '#FFF' }]}>
+                          {activeFiltersCount}
+                        </Text>
+                      </View>
+                    )}
+                  </TouchableOpacity>
+                </View>
+
+                {/* Category Filter Pills */}
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={{ gap: 8, paddingVertical: 4 }}
+                  style={{ marginTop: 10 }}
+                >
+                  <TouchableOpacity
+                    style={[
+                      styles.categoryFilterPill,
+                      activeCategory === null
+                        ? { backgroundColor: colors.primary, borderColor: colors.primary }
+                        : { backgroundColor: colors.inputBackground, borderColor: colors.border }
+                    ]}
+                    onPress={() => setActiveCategory(null)}
+                  >
+                    <Text
+                      style={[
+                        styles.categoryFilterPillText,
+                        activeCategory === null
+                          ? { color: '#FFF', fontWeight: '800' }
+                          : { color: colors.text, fontWeight: '600' }
+                      ]}
+                    >
+                      All Services
+                    </Text>
+                  </TouchableOpacity>
+
+                  {categories.map((cat) => {
+                    const isActive = activeCategory === cat.name;
+                    return (
+                      <TouchableOpacity
+                        key={cat.id}
+                        style={[
+                          styles.categoryFilterPill,
+                          isActive
+                            ? { backgroundColor: colors.primary, borderColor: colors.primary }
+                            : { backgroundColor: colors.inputBackground, borderColor: colors.border }
+                        ]}
+                        onPress={() => handleCategoryToggle(cat.id, cat.name)}
+                      >
+                        <Text
+                          style={[
+                            styles.categoryFilterPillText,
+                            isActive
+                              ? { color: '#FFF', fontWeight: '800' }
+                              : { color: colors.text, fontWeight: '600' }
+                          ]}
+                        >
+                          {cat.name}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </ScrollView>
+              </View>
+            )}
 
             {/* Section Header */}
             {!isSearchMode && (
               <View style={styles.sectionHeader}>
                 <Text style={[styles.sectionTitle, { color: colors.text }]}>
-                  {isProvider ? 'Available Bids' : 'Recent Activity'}
+                  {isProvider ? 'Available Bids' : 'Service Feed'}
                 </Text>
               </View>
             )}
@@ -713,14 +1036,16 @@ export default function HomeScreen({ route, navigation }: any) {
             {isSearchMode && (
               <View style={[styles.sectionHeader, { paddingHorizontal: 0, marginTop: 8 }]}>
                 <Text style={[styles.sectionTitle, { color: colors.text }]}>Search Results</Text>
-                <Text style={[styles.resultsCount, { color: colors.textMuted }]}>{filteredRequests.length} results</Text>
+                <Text style={[styles.resultsCount, { color: colors.textMuted }]}>
+                  {isProvider ? filteredRequests.length : providers.length} results
+                </Text>
               </View>
             )}
           </>
         }
         ListEmptyComponent={
           isSearchMode ? (
-            <View style={[styles.emptyBox, { backgroundColor: colors.inputBackground }]}>
+            <View style={[styles.emptyBox, { backgroundColor: colors.inputBackground, marginHorizontal: 16 }]}>
               <CustomIonicons name="search-outline" size={48} color={colors.border} />
               <Text style={[styles.emptyText, { color: colors.text }]}>No services found</Text>
               <Text style={[styles.emptySub, { color: colors.textMuted }]}>Try adjusting your search or filters.</Text>
@@ -729,23 +1054,27 @@ export default function HomeScreen({ route, navigation }: any) {
               </TouchableOpacity>
             </View>
           ) : (
-            <View style={[styles.emptyBox, { backgroundColor: colors.inputBackground }]}>
+            <View style={[styles.emptyBox, { backgroundColor: colors.inputBackground, marginHorizontal: 16 }]}>
               <CustomIonicons name="cube-outline" size={40} color={colors.border} />
               <Text style={[styles.emptyText, { color: colors.text }]}>
-                {isProvider ? 'No open bids yet.' : 'No active requests.'}
+                {isProvider ? 'No open bids yet.' : 'No providers available.'}
               </Text>
-              {!isProvider && (
-                <TouchableOpacity
-                  style={[styles.emptyBtn, { backgroundColor: colors.accent }]}
-                  onPress={() => navigation.navigate('PostRequest')}
-                >
-                  <Text style={styles.emptyBtnText}>Post a Request</Text>
-                </TouchableOpacity>
-              )}
             </View>
           )
         }
-        ListFooterComponent={<View style={{ height: 40 }} />}
+        ListFooterComponent={
+          isProvider ? (
+            <View style={{ height: 40 }} />
+          ) : (
+            fetchingNextProvidersPage ? (
+              <View style={{ paddingVertical: 16 }}>
+                <ActivityIndicator size="small" color={colors.primary} />
+              </View>
+            ) : (
+              <View style={{ height: 40 }} />
+            )
+          )
+        }
       />
 
       {/* ── FAB ── */}
@@ -856,18 +1185,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
 
-  // Search
-  searchRow: { flexDirection: 'row', paddingVertical: 14, gap: 10, alignItems: 'center' },
-  searchRowSticky: { paddingHorizontal: 20, paddingVertical: 10 },
-  stickySearchContainer: {
-    position: 'absolute', left: 0, right: 0, zIndex: 100, elevation: 4,
-  },
-  searchBar: { 
-    flex: 1, flexDirection: 'row', alignItems: 'center', borderRadius: 50, paddingHorizontal: 16, height: 50,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.08, shadowRadius: 10, elevation: 5 
-  },
-  searchInput: { flex: 1, fontSize: 14, fontWeight: '500' },
-  filterBtn: { width: 50, height: 50, borderRadius: 25, alignItems: 'center', justifyContent: 'center' },
+  // Search styles cleaned up
 
   // New Grid System (Replaces 2x2 and Category scroll)
   gridContainer: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', paddingHorizontal: 32, marginBottom: 24, rowGap: 24 },
@@ -984,5 +1302,180 @@ const styles = StyleSheet.create({
     fontSize: 9,
     fontWeight: '900',
     textAlign: 'center',
+  },
+  columnWrapper: {
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+  },
+  horizontalRequestCard: {
+    width: 280,
+    borderRadius: 16,
+    borderWidth: 1,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
+    flexDirection: 'row',
+  },
+  feedSearchInputWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    height: 48,
+    borderRadius: 12,
+    borderWidth: 1,
+    paddingHorizontal: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.02,
+    shadowRadius: 4,
+    elevation: 1,
+  },
+  feedSearchInput: {
+    flex: 1,
+    height: '100%',
+    marginLeft: 8,
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  categoryFilterPill: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 100,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  categoryFilterPillText: {
+    fontSize: 13,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalCloseArea: {
+    flex: 1,
+  },
+  modalContent: {
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    paddingTop: 20,
+    maxHeight: '80%',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 24,
+    paddingBottom: 16,
+    borderBottomWidth: 1,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: '800',
+  },
+  resetFiltersLink: {
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  modalScroll: {
+    padding: 24,
+  },
+  filterSection: {
+    marginBottom: 28,
+  },
+  filterLabel: {
+    fontSize: 15,
+    fontWeight: '700',
+    marginBottom: 12,
+  },
+  sortPillsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  sortPill: {
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 100,
+    borderWidth: 1,
+  },
+  sortPillText: {
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  ratingRowSelect: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  ratingPill: {
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 100,
+    borderWidth: 1,
+  },
+  ratingPillText: {
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  toggleRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  priceInputRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  priceInput: {
+    flex: 1,
+    height: 48,
+    borderRadius: 12,
+    borderWidth: 1,
+    paddingHorizontal: 16,
+    fontSize: 14,
+  },
+  modalFooter: {
+    padding: 24,
+    borderTopWidth: 1,
+  },
+  applyBtn: {
+    height: 52,
+    borderRadius: 100,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  applyBtnText: {
+    color: '#FFF',
+    fontSize: 16,
+    fontWeight: '800',
+  },
+  filterButton: {
+    width: 48,
+    height: 48,
+    borderRadius: 12,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
+  },
+  filterBadge: {
+    position: 'absolute',
+    top: -6,
+    right: -6,
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1.5,
+    borderColor: '#FFF',
+  },
+  filterBadgeText: {
+    fontSize: 9,
+    fontWeight: '900',
   },
 });

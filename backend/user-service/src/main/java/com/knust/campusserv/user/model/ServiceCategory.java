@@ -21,6 +21,9 @@ public class ServiceCategory {
     @Column(name = "active")
     private Boolean active = true;
 
+    @Column(name = "requires_dual_location")
+    private Boolean requiresDualLocation = false;
+
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
@@ -39,6 +42,9 @@ public class ServiceCategory {
 
     public Boolean getActive() { return active; }
     public void setActive(Boolean active) { this.active = active; }
+
+    public Boolean getRequiresDualLocation() { return requiresDualLocation; }
+    public void setRequiresDualLocation(Boolean requiresDualLocation) { this.requiresDualLocation = requiresDualLocation; }
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }

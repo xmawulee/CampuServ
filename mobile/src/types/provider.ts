@@ -4,6 +4,9 @@
 
 export type JobStatus =
   | 'ACTIVE'
+  | 'ACCEPTED'
+  | 'EN_ROUTE_TO_PICKUP'
+  | 'EN_ROUTE_TO_DROPOFF'
   | 'IN_PROGRESS'
   | 'AWAITING_CODE'
   | 'PROOF_SUBMITTED'
@@ -46,6 +49,20 @@ export interface ProviderJob {
   agreedPrice?: number;
   createdAt: string;
   updatedAt: string;
+  pickupLocation?: {
+    address: string;
+    latitude: number;
+    longitude: number;
+    placeId?: string;
+    landmark?: string;
+  };
+  dropoffLocation?: {
+    address: string;
+    latitude: number;
+    longitude: number;
+    placeId?: string;
+    landmark?: string;
+  };
 }
 
 // ─── Offer (from request-service) ────────────────────────

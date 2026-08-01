@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity, TextInput,
-  KeyboardAvoidingView, Platform, ScrollView, ActivityIndicator
+  KeyboardAvoidingView, Platform, ScrollView, ActivityIndicator, Alert
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { CustomIonicons as Ionicons } from '../../components/CustomIcons';
@@ -19,6 +19,19 @@ export default function RateProviderScreen({ route, navigation }: any) {
   const [comment, setComment] = useState('');
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('beforeRemove', (e: any) => {
+      if (!isSubmitting) return;
+      e.preventDefault();
+      Alert.alert(
+        'Submission in Progress',
+        'Your review is currently being submitted. Please wait.',
+        [{ text: 'OK', style: 'cancel' }]
+      );
+    });
+    return unsubscribe;
+  }, [navigation, isSubmitting]);
 
   const getRatingLabel = () => {
     switch (rating) {

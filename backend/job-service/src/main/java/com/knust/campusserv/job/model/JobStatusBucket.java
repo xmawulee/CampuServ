@@ -5,7 +5,7 @@ import java.util.List;
 
 public enum JobStatusBucket {
     ACTIVE(Arrays.asList("ACTIVE", "ACCEPTED")),
-    IN_PROGRESS(Arrays.asList("EN_ROUTE", "IN_PROGRESS", "AWAITING_CODE")),
+    IN_PROGRESS(Arrays.asList("EN_ROUTE", "IN_PROGRESS", "AWAITING_CODE", "EN_ROUTE_TO_PICKUP", "EN_ROUTE_TO_DROPOFF")),
     COMPLETED(Arrays.asList("PROOF_SUBMITTED", "COMPLETED", "AWAITING_PAYMENT", "CANCELLED")),
     DISPUTED(Arrays.asList("DISPUTED"));
 

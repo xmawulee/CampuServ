@@ -14,16 +14,19 @@ import {
   Modal,
   Dimensions,
   FlatList,
+  RefreshControl,
 } from 'react-native';
 import { CustomIonicons as Ionicons } from '../../components/CustomIcons';
 import * as ImagePicker from 'expo-image-picker';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import MapView, { Marker, Polyline } from 'react-native-maps';
 import * as Location from 'expo-location';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { api, BASE_URL } from '../../services/api';
+import RequestCard from '../../components/RequestCard';
 import { useTheme } from '../../styles/ThemeContext';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useBottomTabSpacing } from '../../hooks/useBottomTabSpacing';
 import { useAuthStore } from '../../store/authStore';
 import { createRequest } from '../../services/requestService';
 import { reverseGeocode, placesAutocomplete, getDirections, getPlaceDetails } from '../../services/locationService';
@@ -48,9 +51,235 @@ const BUDGET_SUGGESTIONS = [
 export default function PostRequestScreen({ route, navigation }: any) {
   const { colors, isDark } = useTheme();
   const insets = useSafeAreaInsets();
+  const bottomTabSpacing = useBottomTabSpacing();
   const token = useAuthStore((state) => state.accessToken);
+  const user = useAuthStore((state) => state.user);
   const { showToast } = useToast();
   const [sessionExpiredDialogVisible, setSessionExpiredDialogVisible] = useState(false);
+
+  // Active Requests Tab States & Query
+  const [activeTab, setActiveTab] = useState<'create' | 'active'>('create');
+  const [refreshingActiveRequests, setRefreshingActiveRequests] = useState(false);
+  const queryClient = useQueryClient();
+
+  const {
+    data: activeRequestsData = [],
+    isLoading: loadingActiveRequests,
+    refetch: refetchActiveRequests,
+  } = useQuery({
+    queryKey: ['myRequests-postscreen-active'],
+    queryFn: async () => {
+      if (!token) return [];
+      const res = await api.get('/requests', {
+        params: {
+          page: 0,
+          size: 50
+        }
+      });
+      const all = res.data?.content || [];
+      return all.filter((r: any) => r.requesterId === user?.id && r.status !== 'COMPLETED' && r.status !== 'CANCELLED');
+    },
+    enabled: activeTab === 'active' && !!token,
+  });
+
+  const handleRefreshActiveRequests = async () => {
+    setRefreshingActiveRequests(true);
+    await refetchActiveRequests();
+    setRefreshingActiveRequests(false);
+  };
+
+  const handleDeclineOffer = async (requestId: string, offerId: string) => {
+    // Optimistic update — mark the offer as DECLINED in the cache immediately
+    queryClient.setQueryData<any[]>(['myRequests-postscreen-active'], (old) =>
+      (old ?? []).map((req) =>
+        req.id === requestId
+          ? {
+              ...req,
+              offers: (req.offers ?? []).map((o: any) =>
+                o.id === offerId ? { ...o, status: 'DECLINED' } : o
+              ),
+            }
+          : req
+      )
+    );
+    try {
+      await api.put(`/requests/${requestId}/offers/${offerId}/decline`);
+      showToast({ status: 'info', title: 'Declined', subtitle: 'The offer was declined.' });
+    } catch (err: any) {
+      // Rollback on failure
+      refetchActiveRequests();
+      showToast({ status: 'error', title: 'Error', subtitle: err.response?.data || 'Failed to decline offer.' });
+    }
+  };
+
+  const handleAcceptOffer = async (requestId: string, offerId: string) => {
+    // Optimistic update — mark the offer as ACCEPTED in the cache immediately
+    queryClient.setQueryData<any[]>(['myRequests-postscreen-active'], (old) =>
+      (old ?? []).map((req) =>
+        req.id === requestId
+          ? {
+              ...req,
+              offers: (req.offers ?? []).map((o: any) =>
+                o.id === offerId ? { ...o, status: 'ACCEPTED' } : { ...o, status: o.status === 'PENDING' ? 'DECLINED' : o.status }
+              ),
+            }
+          : req
+      )
+    );
+    try {
+      await api.put(`/requests/${requestId}/offers/${offerId}/accept`);
+      showToast({ status: 'success', title: 'Accepted!', subtitle: 'Job created. Chat with the provider.' });
+    } catch (err: any) {
+      // Rollback on failure
+      refetchActiveRequests();
+      showToast({ status: 'error', title: 'Error', subtitle: err.response?.data || 'Failed to accept offer.' });
+    }
+  };
+
+  const renderRequestBids = ({ item }: { item: any }) => {
+    const catName = item.category?.name || '';
+    
+    const getCategoryStyles = (name: string) => {
+      const normalized = name.toLowerCase();
+      if (normalized.includes('laundry')) return { bg: '#FFF0E6', iconColor: '#FF6B35' };
+      if (normalized.includes('clean')) return { bg: '#E8F8F0', iconColor: '#27AE60' };
+      if (normalized.includes('tutor')) return { bg: '#EEF0FF', iconColor: '#5C6BC0' };
+      if (normalized.includes('errand')) return { bg: '#FFF9E6', iconColor: '#F39C12' };
+      if (normalized.includes('delivery')) return { bg: '#E0F7FA', iconColor: '#00838F' };
+      if (normalized.includes('event') || normalized.includes('setup')) return { bg: '#EDE7F6', iconColor: '#651FFF' };
+      return { bg: '#F8FAFC', iconColor: '#1565C0' };
+    };
+
+    const catStyle = getCategoryStyles(catName);
+
+    return (
+      <View style={[styles.bidsGroupCard, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
+        {/* Request Header */}
+        <TouchableOpacity 
+          style={styles.bidsGroupHeader}
+          onPress={() => navigation.navigate('RequestDetails', { requestId: item.id })}
+          activeOpacity={0.7}
+        >
+          <View style={[styles.bidsGroupIconBg, { backgroundColor: catStyle.bg }]}>
+            <Ionicons name={
+              catName.toLowerCase().includes('laundry') ? 'shirt-outline' :
+              catName.toLowerCase().includes('clean') ? 'sparkles-outline' :
+              catName.toLowerCase().includes('tutor') ? 'school-outline' :
+              catName.toLowerCase().includes('errand') ? 'bicycle-outline' :
+              catName.toLowerCase().includes('delivery') ? 'cube-outline' :
+              (catName.toLowerCase().includes('event') || catName.toLowerCase().includes('setup')) ? 'calendar-outline' : 'briefcase-outline'
+            } size={18} color={catStyle.iconColor} />
+          </View>
+          <View style={{ flex: 1, paddingRight: 8 }}>
+            <Text style={[styles.bidsGroupTitle, { color: colors.text }]} numberOfLines={1}>
+              {item.title}
+            </Text>
+            <Text style={{ fontSize: 11, color: colors.primary, fontWeight: '700', marginTop: 2 }}>
+              {catName} • Budget: GHS {item.budgetMin ? Number(item.budgetMin).toFixed(2) : 'Quote'}
+            </Text>
+          </View>
+          <View style={[styles.bidsCountBadge, { backgroundColor: colors.primaryLight }]}>
+            <Text style={[styles.bidsCountText, { color: colors.primary }]}>
+              {item.offers ? item.offers.length : 0} {item.offers && item.offers.length === 1 ? 'Bid' : 'Bids'}
+            </Text>
+          </View>
+          <Ionicons name="chevron-forward" size={16} color={colors.textMuted} style={{ marginLeft: 8 }} />
+        </TouchableOpacity>
+
+        {/* Bids List */}
+        {item.offers && item.offers.length > 0 ? (
+          <View style={{ marginTop: 4 }}>
+            {item.offers.map((offer: any) => (
+              <View key={offer.id} style={[styles.providerBidRow, { borderTopColor: colors.border, borderTopWidth: 1 }]}>
+                <View style={styles.providerRowTop}>
+                  <View style={[styles.providerAvatarWrap, { backgroundColor: colors.primaryLight }]}>
+                    {offer.providerAvatar ? (
+                      <Image source={{ uri: offer.providerAvatar }} style={{ width: '100%', height: '100%', borderRadius: 16 }} />
+                    ) : (
+                      <Ionicons name="person" size={16} color={colors.primary} />
+                    )}
+                  </View>
+                  <View style={{ flex: 1, paddingRight: 8 }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                      <Text style={[styles.providerNameText, { color: colors.text }]} numberOfLines={1}>
+                        {offer.providerName || 'Provider'}
+                      </Text>
+                      {offer.providerIsVerified && (
+                        <Ionicons name="checkmark-circle" size={14} color={colors.primary} />
+                      )}
+                    </View>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 2 }}>
+                      <Text style={{ fontSize: 12, fontWeight: '600', color: '#F59E0B' }}>
+                        ⭐ {Number(offer.providerRating || 5).toFixed(1)}
+                      </Text>
+                      <Text style={{ fontSize: 12, color: colors.textMuted }}>
+                        • {offer.providerCompletedJobs || 0} jobs done
+                      </Text>
+                    </View>
+                  </View>
+                  <View style={{ alignItems: 'flex-end' }}>
+                    <Text style={[styles.bidPriceText, { color: colors.primary }]}>
+                      GHS {Number(offer.price).toFixed(2)}
+                    </Text>
+                    <Text style={{ fontSize: 11, color: colors.textMuted, marginTop: 2 }}>
+                      ETA: {offer.eta || 'N/A'}
+                    </Text>
+                  </View>
+                </View>
+
+                {offer.message ? (
+                  <Text style={[styles.bidMessageText, { color: colors.text }]}>
+                    "{offer.message}"
+                  </Text>
+                ) : null}
+
+                {/* Bid Actions */}
+                {offer.status === 'PENDING' && item.status === 'OPEN' && (
+                  <View style={styles.bidActionRow}>
+                    <TouchableOpacity
+                      style={[styles.bidDeclineBtn, { backgroundColor: colors.inputBackground }]}
+                      onPress={() => handleDeclineOffer(item.id, offer.id)}
+                    >
+                      <Text style={[styles.bidDeclineText, { color: colors.text }]}>Decline</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[styles.bidAcceptBtn, { backgroundColor: colors.primary }]}
+                      onPress={() => handleAcceptOffer(item.id, offer.id)}
+                    >
+                      <Text style={styles.bidAcceptText}>Accept Bid</Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
+
+                {offer.status === 'ACCEPTED' && (
+                  <View style={[styles.bidStatusBadge, { backgroundColor: 'rgba(16, 185, 129, 0.12)' }]}>
+                    <Ionicons name="checkmark-circle" size={14} color="#10B981" />
+                    <Text style={{ fontSize: 12, fontWeight: '700', color: '#10B981', marginLeft: 4 }}>
+                      ACCEPTED & HIRED
+                    </Text>
+                  </View>
+                )}
+                {offer.status === 'DECLINED' && (
+                  <View style={[styles.bidStatusBadge, { backgroundColor: 'rgba(239, 68, 68, 0.12)' }]}>
+                    <Ionicons name="close-circle" size={14} color="#EF4444" />
+                    <Text style={{ fontSize: 12, fontWeight: '700', color: '#EF4444', marginLeft: 4 }}>
+                      DECLINED
+                    </Text>
+                  </View>
+                )}
+              </View>
+            ))}
+          </View>
+        ) : (
+          <View style={{ borderTopWidth: 1, borderTopColor: colors.border, marginTop: 12, paddingTop: 12, alignItems: 'center' }}>
+            <Text style={{ fontSize: 13, color: colors.textMuted, fontStyle: 'italic' }}>
+              No bids placed yet. Providers will bid shortly!
+            </Text>
+          </View>
+        )}
+      </View>
+    );
+  };
 
   // Fetch canonical categories from backend
   const { data: serverCategories = [], isSuccess: isCategoriesLoaded } = useQuery<any[]>({
@@ -72,6 +301,8 @@ export default function PostRequestScreen({ route, navigation }: any) {
         else if (normalizedName.includes('clean')) { mappedIcon = 'sparkles-outline'; bg = '#E8F8F0'; iconColor = '#27AE60'; }
         else if (normalizedName.includes('tutor')) { mappedIcon = 'school-outline'; bg = '#EEF0FF'; iconColor = '#5C6BC0'; }
         else if (normalizedName.includes('errand')) { mappedIcon = 'bicycle-outline'; bg = '#FFF9E6'; iconColor = '#F39C12'; }
+        else if (normalizedName.includes('delivery')) { mappedIcon = 'cube-outline'; bg = '#E0F7FA'; iconColor = '#00838F'; }
+        else if (normalizedName.includes('event') || normalizedName.includes('setup')) { mappedIcon = 'calendar-outline'; bg = '#EDE7F6'; iconColor = '#651FFF'; }
         else if (normalizedName.includes('tech') || normalizedName.includes('repair')) { mappedIcon = 'construct-outline'; bg = '#E6F4FF'; iconColor = '#1E88E5'; }
         else if (normalizedName.includes('design') || normalizedName.includes('print')) { mappedIcon = 'print-outline'; bg = '#FCE4EC'; iconColor = '#E91E63'; }
         else if (normalizedName.includes('style') || normalizedName.includes('groom')) { mappedIcon = 'cut-outline'; bg = '#F3E5F5'; iconColor = '#9C27B0'; }
@@ -84,8 +315,9 @@ export default function PostRequestScreen({ route, navigation }: any) {
           icon: mappedIcon,
           iconColor: iconColor,
           bg: bg,
+          requiresDualLocation: c.requiresDualLocation || c.requires_dual_location || false,
         };
-      }).filter((item, index, self) => index === self.findIndex((t) => t.icon === item.icon))
+      })
     : FALLBACK_CATEGORIES;
 
   // Form states
@@ -107,6 +339,18 @@ export default function PostRequestScreen({ route, navigation }: any) {
   const [locationLandmark, setLocationLandmark] = useState('');
   const [locationMethod, setLocationMethod] = useState<'auto_gps' | 'manual_pin' | 'search'>('auto_gps');
   const [showLocationPicker, setShowLocationPicker] = useState(false);
+
+  // Dual Location Support (for delivery requests)
+  const [activeLocationPicker, setActiveLocationPicker] = useState<'pickup' | 'dropoff' | null>(null);
+  const [pickupCoords, setPickupCoords] = useState<{ latitude: number; longitude: number } | null>(null);
+  const [pickupAddress, setPickupAddress] = useState('');
+  const [pickupPlaceId, setPickupPlaceId] = useState('');
+  const [pickupLandmark, setPickupLandmark] = useState('');
+
+  const [dropoffCoords, setDropoffCoords] = useState<{ latitude: number; longitude: number } | null>(null);
+  const [dropoffAddress, setDropoffAddress] = useState('');
+  const [dropoffPlaceId, setDropoffPlaceId] = useState('');
+  const [dropoffLandmark, setDropoffLandmark] = useState('');
 
   // UI States
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -135,10 +379,60 @@ export default function PostRequestScreen({ route, navigation }: any) {
 
   // Initialize Location Picker when modal opens
   useEffect(() => {
-    if (showLocationPicker) {
-      initLocationPicker();
+    if (showLocationPicker || activeLocationPicker !== null) {
+      if (activeLocationPicker === 'dropoff' && dropoffCoords) {
+        const dropoffReg = {
+          latitude: dropoffCoords.latitude,
+          longitude: dropoffCoords.longitude,
+          latitudeDelta: 0.009,
+          longitudeDelta: 0.009,
+        };
+        setPickerRegion(dropoffReg);
+        setPickerAddress(dropoffAddress);
+        setPickerPlaceId(dropoffPlaceId);
+        setLandmarkInput(dropoffLandmark);
+        setIsGeocoding(false);
+        setTimeout(() => {
+          mapRef.current?.animateToRegion(dropoffReg, 500);
+        }, 100);
+      } else if (activeLocationPicker === 'pickup' && pickupCoords) {
+        const pickupReg = {
+          latitude: pickupCoords.latitude,
+          longitude: pickupCoords.longitude,
+          latitudeDelta: 0.009,
+          longitudeDelta: 0.009,
+        };
+        setPickerRegion(pickupReg);
+        setPickerAddress(pickupAddress);
+        setPickerPlaceId(pickupPlaceId);
+        setLandmarkInput(pickupLandmark);
+        setIsGeocoding(false);
+        setTimeout(() => {
+          mapRef.current?.animateToRegion(pickupReg, 500);
+        }, 100);
+      } else if (!activeLocationPicker && locationCoords) {
+        const locReg = {
+          latitude: locationCoords.latitude,
+          longitude: locationCoords.longitude,
+          latitudeDelta: 0.009,
+          longitudeDelta: 0.009,
+        };
+        setPickerRegion(locReg);
+        setPickerAddress(locationAddress);
+        setPickerPlaceId(locationPlaceId);
+        setLandmarkInput(locationLandmark);
+        setIsGeocoding(false);
+        setTimeout(() => {
+          mapRef.current?.animateToRegion(locReg, 500);
+        }, 100);
+      } else {
+        setPickerAddress('');
+        setPickerPlaceId('');
+        setLandmarkInput('');
+        initLocationPicker();
+      }
     }
-  }, [showLocationPicker]);
+  }, [showLocationPicker, activeLocationPicker]);
 
   const initLocationPicker = async () => {
     setIsGeocoding(true);
@@ -264,11 +558,30 @@ export default function PostRequestScreen({ route, navigation }: any) {
       showToast({ status: 'error', title: 'Location Required', subtitle: 'Please select a valid location on the map.' });
       return;
     }
-    setLocationCoords({ latitude: pickerRegion.latitude, longitude: pickerRegion.longitude });
-    setLocationAddress(pickerAddress);
-    setLocationPlaceId(pickerPlaceId);
-    setLocationLandmark(landmarkInput);
+    if (activeLocationPicker === 'pickup') {
+      setPickupCoords({ latitude: pickerRegion.latitude, longitude: pickerRegion.longitude });
+      setPickupAddress(pickerAddress);
+      setPickupPlaceId(pickerPlaceId);
+      setPickupLandmark(landmarkInput);
+      
+      // Keep single location states updated for compatibility
+      setLocationCoords({ latitude: pickerRegion.latitude, longitude: pickerRegion.longitude });
+      setLocationAddress(pickerAddress);
+      setLocationPlaceId(pickerPlaceId);
+      setLocationLandmark(landmarkInput);
+    } else if (activeLocationPicker === 'dropoff') {
+      setDropoffCoords({ latitude: pickerRegion.latitude, longitude: pickerRegion.longitude });
+      setDropoffAddress(pickerAddress);
+      setDropoffPlaceId(pickerPlaceId);
+      setDropoffLandmark(landmarkInput);
+    } else {
+      setLocationCoords({ latitude: pickerRegion.latitude, longitude: pickerRegion.longitude });
+      setLocationAddress(pickerAddress);
+      setLocationPlaceId(pickerPlaceId);
+      setLocationLandmark(landmarkInput);
+    }
     setShowLocationPicker(false);
+    setActiveLocationPicker(null);
   };
 
   const scrollViewRef = useRef<ScrollView>(null);
@@ -453,10 +766,23 @@ export default function PostRequestScreen({ route, navigation }: any) {
       newErrors.budget = "Base price must be at least ₵5.";
     }
 
+    const isDelivery = selectedCategory?.requiresDualLocation;
+
     if (!locationType) {
       newErrors.location = "Please select a location type.";
-    } else if (locationType !== 'remote' && !locationAddress && !locationCoords) {
-      newErrors.location = "Please choose a location for your request.";
+    } else if (locationType !== 'remote') {
+      if (isDelivery) {
+        if (!pickupAddress || !pickupCoords) {
+          newErrors.pickupLocation = "Please set a pickup location.";
+        }
+        if (!dropoffAddress || !dropoffCoords) {
+          newErrors.dropoffLocation = "Please set a drop-off location.";
+        }
+      } else {
+        if (!locationAddress && !locationCoords) {
+          newErrors.location = "Please choose a location for your request.";
+        }
+      }
     }
 
     setErrors(newErrors);
@@ -466,7 +792,7 @@ export default function PostRequestScreen({ route, navigation }: any) {
       else if (newErrors.title) scrollViewRef.current?.scrollTo({ y: 120, animated: true });
       else if (newErrors.description) scrollViewRef.current?.scrollTo({ y: 240, animated: true });
       else if (newErrors.budget) scrollViewRef.current?.scrollTo({ y: 420, animated: true });
-      else if (newErrors.location) scrollViewRef.current?.scrollTo({ y: 620, animated: true });
+      else if (newErrors.location || newErrors.pickupLocation || newErrors.dropoffLocation) scrollViewRef.current?.scrollTo({ y: 620, animated: true });
       return;
     }
 
@@ -482,15 +808,37 @@ export default function PostRequestScreen({ route, navigation }: any) {
       formData.append('budgetMax', basePrice);
       formData.append('locationType', locationType === 'remote' ? 'REMOTE' : 'CHOOSE_LOCATION');
       if (locationType !== 'remote') {
-        if (locationCoords) {
-          formData.append('pickupLatitude', locationCoords.latitude.toString());
-          formData.append('pickupLongitude', locationCoords.longitude.toString());
+        if (isDelivery) {
+          if (pickupCoords) {
+            formData.append('pickupLatitude', pickupCoords.latitude.toString());
+            formData.append('pickupLongitude', pickupCoords.longitude.toString());
+          }
+          if (pickupAddress) {
+            formData.append('pickupAddress', pickupAddress);
+          }
+          formData.append('pickupPlaceId', pickupPlaceId || '');
+          formData.append('pickupLandmark', pickupLandmark || '');
+
+          if (dropoffCoords) {
+            formData.append('dropoffLatitude', dropoffCoords.latitude.toString());
+            formData.append('dropoffLongitude', dropoffCoords.longitude.toString());
+          }
+          if (dropoffAddress) {
+            formData.append('dropoffAddress', dropoffAddress);
+          }
+          formData.append('dropoffPlaceId', dropoffPlaceId || '');
+          formData.append('dropoffLandmark', dropoffLandmark || '');
+        } else {
+          if (locationCoords) {
+            formData.append('pickupLatitude', locationCoords.latitude.toString());
+            formData.append('pickupLongitude', locationCoords.longitude.toString());
+          }
+          if (locationAddress) {
+            formData.append('pickupAddress', locationAddress);
+          }
+          formData.append('pickupPlaceId', locationPlaceId || '');
+          formData.append('pickupLandmark', locationLandmark || '');
         }
-        if (locationAddress) {
-          formData.append('pickupAddress', locationAddress);
-        }
-        formData.append('pickupPlaceId', locationPlaceId || '');
-        formData.append('pickupLandmark', locationLandmark || '');
         formData.append('locationMethod', locationMethod);
         if (locationDetail.trim()) {
           formData.append('locationDetail', locationDetail.trim());
@@ -511,11 +859,40 @@ export default function PostRequestScreen({ route, navigation }: any) {
 
       const response = await createRequest(formData, token || '');
       
-      // Navigate to RequestDetailsScreen replacing the modal in history stack
-      navigation.replace('RequestDetails', { 
-        requestId: response.id,
-        showToastOnMount: "Request posted! We'll notify you when a provider responds."
-      });
+      if (route?.name === 'Search') {
+        navigation.navigate('RequestDetails', { 
+          requestId: response.id,
+          showToastOnMount: "Request posted! We'll notify you when a provider responds."
+        });
+
+        // Refetch active requests
+        refetchActiveRequests();
+
+        // Reset all states for next use
+        setSelectedCategory(null);
+        setTitle('');
+        setDescription('');
+        setPhotos([]);
+        setBasePrice('');
+        setLocationType('on_campus');
+        setLocationDetail('');
+        setDeliveryMode('broadcast');
+        setTargetProvider(null);
+        setIsTargetProviderLocked(false);
+        setLocationCoords(null);
+        setLocationAddress('');
+        setLocationPlaceId('');
+        setLocationLandmark('');
+        setLocationMethod('auto_gps');
+        setErrors({});
+        setBannerError(null);
+      } else {
+        // Navigate to RequestDetailsScreen replacing the modal in history stack
+        navigation.replace('RequestDetails', { 
+          requestId: response.id,
+          showToastOnMount: "Request posted! We'll notify you when a provider responds."
+        });
+      }
 
     } catch (err: any) {
       if (err.status === 401) {
@@ -550,20 +927,54 @@ export default function PostRequestScreen({ route, navigation }: any) {
     >
       {/* ── Fixed Header ── */}
       <View style={[styles.header, { backgroundColor: colors.cardBackground, borderBottomColor: colors.border }]}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.closeBtn}>
-          <Ionicons name="close" size={24} color={colors.text} />
-        </TouchableOpacity>
+        {navigation.canGoBack() && route?.name !== 'Search' ? (
+          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.closeBtn}>
+            <Ionicons name="close" size={24} color={colors.text} />
+          </TouchableOpacity>
+        ) : (
+          <View style={{ width: 40 }} />
+        )}
         <Text style={[styles.headerTitle, { color: colors.text }]}>New Request</Text>
         <View style={{ width: 40 }} />
       </View>
 
-      <ScrollView
-        ref={scrollViewRef}
-        style={styles.scroll}
-        contentContainerStyle={styles.scrollContent}
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
-      >
+      {/* Tab bar header */}
+      <View style={[styles.tabBarContainer, { paddingBottom: 12 }]}>
+        <View style={[styles.tabSegmentedControl, { backgroundColor: isDark ? colors.cardBackground : '#F1F5F9' }]}>
+          <TouchableOpacity
+            style={[
+              styles.tabSegmentButton,
+              activeTab === 'create' && [styles.tabSegmentActive, { backgroundColor: colors.cardBackground }]
+            ]}
+            onPress={() => setActiveTab('create')}
+          >
+            <Text style={[styles.tabSegmentText, { color: activeTab === 'create' ? colors.text : colors.textMuted }]}>
+              Post Request
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[
+              styles.tabSegmentButton,
+              activeTab === 'active' && [styles.tabSegmentActive, { backgroundColor: colors.cardBackground }]
+            ]}
+            onPress={() => setActiveTab('active')}
+          >
+            <Text style={[styles.tabSegmentText, { color: activeTab === 'active' ? colors.text : colors.textMuted }]}>
+              Incoming Bids
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      {activeTab === 'create' ? (
+        <View style={{ flex: 1 }}>
+          <ScrollView
+            ref={scrollViewRef}
+            style={styles.scroll}
+            contentContainerStyle={[styles.scrollContent, { paddingBottom: bottomTabSpacing + 24 }]}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+          >
         {bannerError && (
           <View style={[styles.bannerError, { backgroundColor: colors.errorLight, borderColor: colors.error }]}>
             <Ionicons name="alert-circle" size={20} color={colors.error} />
@@ -763,37 +1174,111 @@ export default function PostRequestScreen({ route, navigation }: any) {
           <View style={[styles.divider, { backgroundColor: colors.border }]} />
 
           <View style={styles.inputGroup}>
-            <Text style={[styles.inputLabel, { color: colors.textMuted }]}>Location</Text>
-            {errors.location && <Text style={styles.fieldError}>{errors.location}</Text>}
+            {selectedCategory?.requiresDualLocation ? (
+              <View style={{ gap: 16 }}>
+                <View>
+                  <Text style={[styles.inputLabel, { color: colors.textMuted }]}>Pickup Location</Text>
+                  {errors.pickupLocation && <Text style={styles.fieldError}>{errors.pickupLocation}</Text>}
+                  {pickupAddress ? (
+                    <View style={[styles.locationSelectedCard, { backgroundColor: colors.inputBackground, borderColor: colors.border }]}>
+                      <View style={styles.locationIconWrap}>
+                        <Ionicons name="location" size={20} color={colors.primary} />
+                      </View>
+                      <View style={{ flex: 1 }}>
+                        <Text style={[styles.locationAddressText, { color: colors.text }]} numberOfLines={2}>
+                          {pickupAddress}
+                        </Text>
+                        {pickupLandmark ? (
+                          <Text style={[styles.locationLandmarkText, { color: colors.textMuted }]} numberOfLines={1}>
+                            {pickupLandmark}
+                          </Text>
+                        ) : null}
+                      </View>
+                      <TouchableOpacity onPress={() => setActiveLocationPicker('pickup')} style={styles.locationEditBtn}>
+                        <Ionicons name="pencil" size={18} color={colors.primary} />
+                      </TouchableOpacity>
+                    </View>
+                  ) : (
+                    <TouchableOpacity
+                      style={[styles.locationEmptyCard, { backgroundColor: colors.inputBackground, borderColor: colors.border }]}
+                      onPress={() => setActiveLocationPicker('pickup')}
+                      disabled={isSubmitting}
+                    >
+                      <Ionicons name="map-outline" size={22} color={colors.primary} />
+                      <Text style={[styles.locationEmptyText, { color: colors.primary }]}>Set pickup location</Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
 
-            {locationAddress ? (
-              <View style={[styles.locationSelectedCard, { backgroundColor: colors.inputBackground, borderColor: colors.border }]}>
-                <View style={styles.locationIconWrap}>
-                  <Ionicons name="location" size={20} color={colors.primary} />
+                <View>
+                  <Text style={[styles.inputLabel, { color: colors.textMuted }]}>Drop-off Location</Text>
+                  {errors.dropoffLocation && <Text style={styles.fieldError}>{errors.dropoffLocation}</Text>}
+                  {dropoffAddress ? (
+                    <View style={[styles.locationSelectedCard, { backgroundColor: colors.inputBackground, borderColor: colors.border }]}>
+                      <View style={styles.locationIconWrap}>
+                        <Ionicons name="flag" size={20} color={colors.primary} />
+                      </View>
+                      <View style={{ flex: 1 }}>
+                        <Text style={[styles.locationAddressText, { color: colors.text }]} numberOfLines={2}>
+                          {dropoffAddress}
+                        </Text>
+                        {dropoffLandmark ? (
+                          <Text style={[styles.locationLandmarkText, { color: colors.textMuted }]} numberOfLines={1}>
+                            {dropoffLandmark}
+                          </Text>
+                        ) : null}
+                      </View>
+                      <TouchableOpacity onPress={() => setActiveLocationPicker('dropoff')} style={styles.locationEditBtn}>
+                        <Ionicons name="pencil" size={18} color={colors.primary} />
+                      </TouchableOpacity>
+                    </View>
+                  ) : (
+                    <TouchableOpacity
+                      style={[styles.locationEmptyCard, { backgroundColor: colors.inputBackground, borderColor: colors.border }]}
+                      onPress={() => setActiveLocationPicker('dropoff')}
+                      disabled={isSubmitting}
+                    >
+                      <Ionicons name="map-outline" size={22} color={colors.primary} />
+                      <Text style={[styles.locationEmptyText, { color: colors.primary }]}>Set drop-off location</Text>
+                    </TouchableOpacity>
+                  )}
                 </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={[styles.locationAddressText, { color: colors.text }]} numberOfLines={2}>
-                    {locationAddress}
-                  </Text>
-                  {locationLandmark ? (
-                    <Text style={[styles.locationLandmarkText, { color: colors.textMuted }]} numberOfLines={1}>
-                      {locationLandmark}
-                    </Text>
-                  ) : null}
-                </View>
-                <TouchableOpacity onPress={() => setShowLocationPicker(true)} style={styles.locationEditBtn}>
-                  <Ionicons name="pencil" size={18} color={colors.primary} />
-                </TouchableOpacity>
               </View>
             ) : (
-              <TouchableOpacity
-                style={[styles.locationEmptyCard, { backgroundColor: colors.inputBackground, borderColor: colors.border }]}
-                onPress={() => setShowLocationPicker(true)}
-                disabled={isSubmitting}
-              >
-                <Ionicons name="map-outline" size={22} color={colors.primary} />
-                <Text style={[styles.locationEmptyText, { color: colors.primary }]}>Set meeting location</Text>
-              </TouchableOpacity>
+              <View>
+                <Text style={[styles.inputLabel, { color: colors.textMuted }]}>Location</Text>
+                {errors.location && <Text style={styles.fieldError}>{errors.location}</Text>}
+
+                {locationAddress ? (
+                  <View style={[styles.locationSelectedCard, { backgroundColor: colors.inputBackground, borderColor: colors.border }]}>
+                    <View style={styles.locationIconWrap}>
+                      <Ionicons name="location" size={20} color={colors.primary} />
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={[styles.locationAddressText, { color: colors.text }]} numberOfLines={2}>
+                        {locationAddress}
+                      </Text>
+                      {locationLandmark ? (
+                        <Text style={[styles.locationLandmarkText, { color: colors.textMuted }]} numberOfLines={1}>
+                          {locationLandmark}
+                        </Text>
+                      ) : null}
+                    </View>
+                    <TouchableOpacity onPress={() => setShowLocationPicker(true)} style={styles.locationEditBtn}>
+                      <Ionicons name="pencil" size={18} color={colors.primary} />
+                    </TouchableOpacity>
+                  </View>
+                ) : (
+                  <TouchableOpacity
+                    style={[styles.locationEmptyCard, { backgroundColor: colors.inputBackground, borderColor: colors.border }]}
+                    onPress={() => setShowLocationPicker(true)}
+                    disabled={isSubmitting}
+                  >
+                    <Ionicons name="map-outline" size={22} color={colors.primary} />
+                    <Text style={[styles.locationEmptyText, { color: colors.primary }]}>Set meeting location</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
             )}
 
             <View style={[styles.inputWrapper, { backgroundColor: colors.inputBackground, borderColor: colors.border, marginTop: 12 }]}>
@@ -897,13 +1382,9 @@ export default function PostRequestScreen({ route, navigation }: any) {
           )}
         </View>
 
-        <View style={{ height: 120 }} />
-      </ScrollView>
-
-      {/* ── Sticky Submit Button ── */}
-      <View style={[styles.footer, { backgroundColor: colors.cardBackground, borderTopColor: colors.border, paddingBottom: Math.max(insets.bottom, 20) }]}>
+        {/* ── Submit Button (inside scroll) ── */}
         <TouchableOpacity
-          style={[styles.submitBtn, { backgroundColor: colors.primary }]}
+          style={[styles.submitBtn, { backgroundColor: colors.primary, marginHorizontal: 20, marginTop: 8 }]}
           onPress={handlePostRequest}
           disabled={isSubmitting}
         >
@@ -913,7 +1394,44 @@ export default function PostRequestScreen({ route, navigation }: any) {
             <Text style={styles.submitBtnText}>Post Request</Text>
           )}
         </TouchableOpacity>
-      </View>
+
+      </ScrollView>
+    </View>
+  ) : (
+    <View style={{ flex: 1 }}>
+      {loadingActiveRequests && !refreshingActiveRequests ? (
+        <View style={styles.centerLoader}>
+          <ActivityIndicator size="large" color={colors.primary} />
+        </View>
+      ) : (
+        <FlatList
+          data={activeRequestsData}
+          keyExtractor={(item) => item.id}
+          renderItem={renderRequestBids}
+          contentContainerStyle={{ paddingTop: 12, paddingBottom: bottomTabSpacing }}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshingActiveRequests}
+              onRefresh={handleRefreshActiveRequests}
+              colors={[colors.primary]}
+              tintColor={colors.primary}
+            />
+          }
+          ListEmptyComponent={
+            <View style={styles.emptyContainer}>
+              <View style={[styles.emptyIconWrap, { backgroundColor: 'rgba(255, 120, 70, 0.1)' }]}>
+                <Ionicons name="document-text-outline" size={56} color={colors.primary} />
+              </View>
+              <Text style={[styles.emptyTitle, { color: colors.text }]}>No incoming bids yet</Text>
+              <Text style={[styles.emptySubtext, { color: colors.textMuted }]}>
+                Bids placed by providers on your active requests will appear here.
+              </Text>
+            </View>
+          }
+        />
+      )}
+    </View>
+  )}
 
       {/* ── Fullscreen Image Preview Modal ── */}
       <Modal
@@ -938,9 +1456,9 @@ export default function PostRequestScreen({ route, navigation }: any) {
 
       {/* ── Location Picker Modal ── */}
       <Modal
-        visible={showLocationPicker}
+        visible={showLocationPicker || activeLocationPicker !== null}
         animationType="slide"
-        onRequestClose={() => setShowLocationPicker(false)}
+        onRequestClose={() => { setShowLocationPicker(false); setActiveLocationPicker(null); }}
       >
         <View style={[styles.pickerModalContainer, { backgroundColor: colors.background }]}>
           {/* Map Section */}
@@ -966,7 +1484,7 @@ export default function PostRequestScreen({ route, navigation }: any) {
           <View style={[styles.floatingPickerHeader, { paddingTop: Math.max(insets.top, 20) }]} pointerEvents="box-none">
             <View style={[styles.pickerSearchContainer, { backgroundColor: colors.cardBackground }]}>
               <TouchableOpacity
-                onPress={() => setShowLocationPicker(false)}
+                onPress={() => { setShowLocationPicker(false); setActiveLocationPicker(null); }}
                 style={styles.pickerCloseBtn}
                 accessibilityLabel="Close location picker"
               >
@@ -1020,7 +1538,9 @@ export default function PostRequestScreen({ route, navigation }: any) {
             behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
             style={[styles.pickerBottomSheet, { backgroundColor: colors.cardBackground }]}
           >
-            <Text style={[styles.bottomSheetTitle, { color: colors.text }]}>Address Location</Text>
+            <Text style={[styles.bottomSheetTitle, { color: colors.text }]}>
+              {activeLocationPicker === 'pickup' ? 'Select Pickup Location' : activeLocationPicker === 'dropoff' ? 'Select Drop-off Location' : 'Address Location'}
+            </Text>
             <View style={[styles.addressTextContainer, { backgroundColor: 'rgba(59, 130, 246, 0.08)' }]}>
               <View style={styles.addressLeftAccent} />
               <Ionicons name="location" size={20} color={colors.primary} style={{ marginRight: 12 }} />
@@ -1505,5 +2025,172 @@ const styles = StyleSheet.create({
     color: '#FFF',
     fontSize: 16,
     fontWeight: '800',
+  },
+  tabBarContainer: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    zIndex: 10,
+  },
+  tabSegmentedControl: {
+    flexDirection: 'row',
+    borderRadius: 100,
+    padding: 6,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  tabSegmentButton: {
+    flex: 1,
+    paddingVertical: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 100,
+  },
+  tabSegmentActive: {
+    elevation: 2,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+  },
+  tabSegmentText: {
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  centerLoader: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  emptyContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 32,
+    marginTop: 60,
+  },
+  emptyIconWrap: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 24,
+  },
+  emptyTitle: {
+    fontSize: 20,
+    fontWeight: '800',
+    marginBottom: 12,
+    letterSpacing: -0.5,
+  },
+  emptySubtext: {
+    fontSize: 15,
+    textAlign: 'center',
+    lineHeight: 24,
+    marginBottom: 32,
+  },
+  bidsGroupCard: {
+    borderRadius: 24,
+    borderWidth: 1,
+    padding: 16,
+    marginHorizontal: 16,
+    marginBottom: 16,
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.05,
+    shadowRadius: 12,
+  },
+  bidsGroupHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingBottom: 12,
+  },
+  bidsGroupIconBg: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  bidsGroupTitle: {
+    fontSize: 16,
+    fontWeight: '800',
+    letterSpacing: -0.2,
+  },
+  bidsCountBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 100,
+  },
+  bidsCountText: {
+    fontSize: 11,
+    fontWeight: '800',
+  },
+  providerBidRow: {
+    paddingVertical: 14,
+  },
+  providerRowTop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  providerAvatarWrap: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 10,
+  },
+  providerNameText: {
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  bidPriceText: {
+    fontSize: 15,
+    fontWeight: '800',
+  },
+  bidMessageText: {
+    fontSize: 13,
+    lineHeight: 18,
+    marginTop: 8,
+    fontStyle: 'italic',
+    paddingLeft: 42,
+  },
+  bidActionRow: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    gap: 12,
+    marginTop: 12,
+    paddingLeft: 42,
+  },
+  bidDeclineBtn: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 100,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  bidDeclineText: {
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  bidAcceptBtn: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 100,
+  },
+  bidAcceptText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#FFF',
+  },
+  bidStatusBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 8,
+    paddingLeft: 42,
   },
 });

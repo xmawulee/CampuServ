@@ -106,6 +106,32 @@ public class Job {
     @Column(name = "remote_info", columnDefinition = "TEXT")
     private String remoteInfo;
 
+    @Embedded
+    @AttributeOverrides({
+        @AttributeOverride(name = "address", column = @Column(name = "pickup_address")),
+        @AttributeOverride(name = "latitude", column = @Column(name = "pickup_latitude")),
+        @AttributeOverride(name = "longitude", column = @Column(name = "pickup_longitude")),
+        @AttributeOverride(name = "placeId", column = @Column(name = "pickup_place_id")),
+        @AttributeOverride(name = "landmark", column = @Column(name = "pickup_landmark"))
+    })
+    private StructuredLocation pickupLocation;
+
+    @Embedded
+    @AttributeOverrides({
+        @AttributeOverride(name = "address", column = @Column(name = "dropoff_address")),
+        @AttributeOverride(name = "latitude", column = @Column(name = "dropoff_latitude")),
+        @AttributeOverride(name = "longitude", column = @Column(name = "dropoff_longitude")),
+        @AttributeOverride(name = "placeId", column = @Column(name = "dropoff_place_id")),
+        @AttributeOverride(name = "landmark", column = @Column(name = "dropoff_landmark"))
+    })
+    private StructuredLocation dropoffLocation;
+
+    public StructuredLocation getPickupLocation() { return pickupLocation; }
+    public void setPickupLocation(StructuredLocation pickupLocation) { this.pickupLocation = pickupLocation; }
+
+    public StructuredLocation getDropoffLocation() { return dropoffLocation; }
+    public void setDropoffLocation(StructuredLocation dropoffLocation) { this.dropoffLocation = dropoffLocation; }
+
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "job_attachments", joinColumns = @JoinColumn(name = "job_id"))
     @Column(name = "url")

@@ -2,9 +2,8 @@
 
 import { useEffect, useState, useMemo } from 'react';
 import { api, getFullFileUrl } from '@/lib/api';
-import { Loader2, Search, Download, ArrowUpDown, ChevronLeft, ChevronRight, X, UserCheck, ShieldAlert, Clock, Filter } from 'lucide-react';
+import { Loader2, Search, Download, ArrowUpDown, ChevronLeft, ChevronRight, X, UserCheck, ShieldAlert, Clock, Filter, CheckCircle, ShieldX } from 'lucide-react';
 import { toast } from 'sonner';
-import { useRouter } from 'next/navigation';
 import {
   createColumnHelper,
   flexRender,
@@ -37,12 +36,12 @@ interface User {
 const columnHelper = createColumnHelper<User>();
 
 export default function UserPage() {
-  const router = useRouter();
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [globalFilter, setGlobalFilter] = useState('');
   const [roleComposition, setRoleComposition] = useState<string>('');
   const [selectedUserForDetail, setSelectedUserForDetail] = useState<User | null>(null);
+  const [actionLoading, setActionLoading] = useState(false);
 
   useEffect(() => {
     fetchUsers(roleComposition);
@@ -54,10 +53,30 @@ export default function UserPage() {
       const url = compFilter ? `/admin/users?roleComposition=${compFilter}` : '/admin/users';
       const res = await api.get(url);
       setUsers(res.data || []);
-    } catch (error) {
+    } catch {
       toast.error('Failed to load Users');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleUpdateStatus = async (userId: string, newStatus: 'ACTIVE' | 'SUSPENDED' | 'BANNED') => {
+    const actionVerb = newStatus === 'ACTIVE' ? 'activate' : newStatus === 'SUSPENDED' ? 'suspend' : 'ban';
+    if (!confirm(`Are you sure you want to ${actionVerb} this account?`)) return;
+    const reason = prompt(`Optional reason for setting status to ${newStatus}:`);
+    try {
+      setActionLoading(true);
+      await api.patch(`/admin/users/${userId}/status`, { accountStatus: newStatus, reason: reason || undefined });
+      toast.success(`Account status updated to ${newStatus}`);
+      if (selectedUserForDetail?.id === userId) {
+        setSelectedUserForDetail({ ...selectedUserForDetail, accountStatus: newStatus });
+      }
+      setUsers(prev => prev.map(u => u.id === userId ? { ...u, accountStatus: newStatus } : u));
+    } catch (err: any) {
+      const msg = err.response?.data?.message || err.response?.data || 'Failed to update account status';
+      toast.error(typeof msg === 'string' ? msg : 'Failed to update account status');
+    } finally {
+      setActionLoading(false);
     }
   };
 
@@ -358,12 +377,46 @@ export default function UserPage() {
                     </div>
                   )}
                 </div>
+
+                {/* Account Actions */}
+                <div className="space-y-3 pt-4 border-t border-gray-100">
+                  <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest">Admin Account Actions</h4>
+                  <div className="grid grid-cols-2 gap-3">
+                    {selectedUserForDetail.accountStatus !== 'ACTIVE' && (
+                      <button
+                        disabled={actionLoading}
+                        onClick={() => handleUpdateStatus(selectedUserForDetail.id, 'ACTIVE')}
+                        className="flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold py-2.5 px-3 rounded-xl transition-all disabled:opacity-50"
+                      >
+                        {actionLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />} Activate
+                      </button>
+                    )}
+                    {selectedUserForDetail.accountStatus !== 'SUSPENDED' && (
+                      <button
+                        disabled={actionLoading}
+                        onClick={() => handleUpdateStatus(selectedUserForDetail.id, 'SUSPENDED')}
+                        className="flex items-center justify-center gap-2 bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold py-2.5 px-3 rounded-xl transition-all disabled:opacity-50"
+                      >
+                        {actionLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <ShieldAlert className="w-4 h-4" />} Suspend
+                      </button>
+                    )}
+                    {selectedUserForDetail.accountStatus !== 'BANNED' && (
+                      <button
+                        disabled={actionLoading}
+                        onClick={() => handleUpdateStatus(selectedUserForDetail.id, 'BANNED')}
+                        className="flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 text-white text-xs font-bold py-2.5 px-3 rounded-xl transition-all disabled:opacity-50 col-span-2"
+                      >
+                        {actionLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <ShieldX className="w-4 h-4" />} Ban Account
+                      </button>
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
 
             <button
               onClick={() => setSelectedUserForDetail(null)}
-              className="w-full py-3 bg-slate-900 text-white font-bold rounded-xl hover:bg-slate-800 transition-colors"
+              className="w-full py-3 bg-slate-900 text-white font-bold rounded-xl hover:bg-slate-800 transition-colors mt-4"
             >
               Close Panel
             </button>

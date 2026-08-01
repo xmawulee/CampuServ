@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, FlatList, ActivityIndicator, Image, TouchableOpacity, Modal } from 'react-native';
-import { useRoute } from '@react-navigation/native';
+import { useRoute, useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { api } from '../../services/api';
 
 export const DisputeThreadScreen = () => {
     const route = useRoute();
+    const navigation = useNavigation();
     const { disputeId } = route.params as { disputeId: string };
     
     const [disputeData, setDisputeData] = useState<any>(null);
@@ -59,6 +61,14 @@ export const DisputeThreadScreen = () => {
 
     return (
         <View style={styles.container}>
+            <SafeAreaView edges={['top']} style={{ backgroundColor: '#121212' }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, height: 56, borderBottomWidth: 1, borderBottomColor: '#2C2C2C' }}>
+                    <TouchableOpacity onPress={() => navigation.goBack()} style={{ padding: 4, marginRight: 12 }}>
+                        <Ionicons name="arrow-back" size={24} color="#fff" />
+                    </TouchableOpacity>
+                    <Text style={{ fontSize: 18, fontWeight: '700', color: '#fff' }}>Dispute Details</Text>
+                </View>
+            </SafeAreaView>
             <View style={styles.headerCard}>
                 <Text style={styles.title}>Dispute Thread</Text>
                 <View style={styles.statusBadge}>

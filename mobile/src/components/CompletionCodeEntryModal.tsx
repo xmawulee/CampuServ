@@ -89,7 +89,7 @@ export default function CompletionCodeEntryModal({ visible, clientName, agreedPr
                 <View style={[styles.payoutBox, { backgroundColor: colors.background, borderColor: colors.border }]}>
                   <Text style={[styles.payoutLabel, { color: colors.textMuted }]}>Payout Amount</Text>
                   <Text style={[styles.payoutAmount, { color: colors.success }]}>
-                    +{(agreedPrice * 0.88).toFixed(2)} GHS
+                    +{(agreedPrice * 0.95).toFixed(2)} GHS
                   </Text>
                 </View>
               )}

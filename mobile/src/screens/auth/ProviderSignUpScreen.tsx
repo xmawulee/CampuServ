@@ -89,11 +89,34 @@ export default function ProviderSignUpScreen({ navigation }: any) {
     return Object.keys(err).length === 0;
   };
 
+  const checkEmailUniqueness = async (emailVal: string): Promise<boolean> => {
+    if (!emailVal.trim() || !KNUST_EMAIL_REGEX.test(emailVal.trim())) return true;
+    try {
+      await api.get(`/auth/check-email?email=${encodeURIComponent(emailVal.trim().toLowerCase())}`);
+      if (errors.email?.includes('already exists')) {
+        setErrors((e) => ({ ...e, email: undefined }));
+      }
+      return true;
+    } catch (err: any) {
+      if (err.response?.status === 409) {
+        setErrors((e) => ({ ...e, email: 'An account with this email already exists — try signing in instead' }));
+        return false;
+      }
+      return true;
+    }
+  };
+
   const handleSubmit = async () => {
     setBannerError(null);
     if (!validate() || isLoading) return;
 
     setIsLoading(true);
+    const isUnique = await checkEmailUniqueness(email);
+    if (!isUnique) {
+      setIsLoading(false);
+      return;
+    }
+
     try {
       const response = await api.post('/auth/register', {
         email: email.trim().toLowerCase(),
@@ -113,6 +136,7 @@ export default function ProviderSignUpScreen({ navigation }: any) {
         isVerified,
         verificationStatus,
         studentIdPhotoUrl,
+        emailVerified,
       } = response.data;
 
       const userObj = {
@@ -125,10 +149,10 @@ export default function ProviderSignUpScreen({ navigation }: any) {
         verificationStatus: verificationStatus ?? 'PENDING_VERIFICATION',
         profilePictureUrl,
         studentIdPhotoUrl: studentIdPhotoUrl || undefined,
+        emailVerified: emailVerified !== undefined ? emailVerified : false,
       };
 
       await setAuth(accessToken, refreshToken, userObj, 'PROVIDER');
-      navigation.navigate('IdCapture');
     } catch (error: any) {
       const responseData = error.response?.data;
       let serverMessage: string | null = null;
@@ -237,6 +261,7 @@ export default function ProviderSignUpScreen({ navigation }: any) {
                 onSubmitEditing={() => passwordRef.current?.focus()}
                 blurOnSubmit={false}
                 editable={!isLoading}
+                onBlur={() => checkEmailUniqueness(email)}
               />
               {email.length > 0 && (
                 <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4, gap: 4 }}>

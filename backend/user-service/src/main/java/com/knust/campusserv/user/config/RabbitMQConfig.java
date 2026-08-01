@@ -82,4 +82,32 @@ public class RabbitMQConfig {
     public Binding providerVerificationBinding(Queue providerVerificationQueue, TopicExchange providerVerificationExchange) {
         return BindingBuilder.bind(providerVerificationQueue).to(providerVerificationExchange).with("#");
     }
+
+    @Bean
+    public FanoutExchange accountDeletionExchange() {
+        return new FanoutExchange("account.deletion.exchange");
+    }
+
+    @Bean
+    public Queue userServiceDeletionQueue() {
+        return QueueBuilder.durable("user-service.account.deletion")
+                .withArgument("x-dead-letter-exchange", "dlx")
+                .withArgument("x-dead-letter-routing-key", "user-service.account.deletion.dlq")
+                .build();
+    }
+
+    @Bean
+    public Queue userServiceDeletionDlq() {
+        return QueueBuilder.durable("user-service.account.deletion.dlq").build();
+    }
+
+    @Bean
+    public Binding userServiceDeletionDlqBinding(Queue userServiceDeletionDlq, DirectExchange deadLetterExchange) {
+        return BindingBuilder.bind(userServiceDeletionDlq).to(deadLetterExchange).with("user-service.account.deletion.dlq");
+    }
+
+    @Bean
+    public Binding userServiceDeletionBinding(Queue userServiceDeletionQueue, FanoutExchange accountDeletionExchange) {
+        return BindingBuilder.bind(userServiceDeletionQueue).to(accountDeletionExchange);
+    }
 }

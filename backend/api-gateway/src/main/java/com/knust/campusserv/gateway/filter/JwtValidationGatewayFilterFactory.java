@@ -137,9 +137,14 @@ public class JwtValidationGatewayFilterFactory extends AbstractGatewayFilterFact
 
                 // Check if user is in deny-list (revoked/deleted) via in-memory map
                 Long revokeExpiry = revokedUsers.get(userId);
-                if (revokeExpiry != null && System.currentTimeMillis() < revokeExpiry) {
-                    System.out.println(">>> JwtValidationGatewayFilterFactory: Blocked revoked/restricted user: " + userId);
-                    return onAccountRestricted(exchange);
+                if (revokeExpiry != null) {
+                    if (System.currentTimeMillis() < revokeExpiry) {
+                        System.out.println(">>> JwtValidationGatewayFilterFactory: Blocked revoked/restricted user: " + userId);
+                        return onAccountRestricted(exchange);
+                    } else {
+                        // Evict expired entry from in-memory map to prevent memory leak
+                        revokedUsers.remove(userId);
+                    }
                 }
                 
                 String role = claims.get("role", String.class);
@@ -173,11 +178,16 @@ public class JwtValidationGatewayFilterFactory extends AbstractGatewayFilterFact
                path.startsWith("/auth/check-status") ||
                path.startsWith("/auth/resend-verification") ||
                path.startsWith("/auth/complete-verification") ||
+               path.startsWith("/auth/forgot-password") ||
+               path.startsWith("/auth/verify-reset-code") ||
+               path.startsWith("/auth/reset-password") ||
+               path.startsWith("/auth/reset-password-web") ||
                path.startsWith("/auth/files/") ||
                path.startsWith("/users/files/") ||
                path.startsWith("/categories") ||
                path.contains("/payments/webhook") ||
                path.startsWith("/ws/chats") ||
+               path.startsWith("/actuator/") ||
                path.startsWith("/internal/revoke-token/") ||
                path.startsWith("/internal/unrevoke-token/");
     }

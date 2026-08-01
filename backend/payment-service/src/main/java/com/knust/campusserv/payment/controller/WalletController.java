@@ -398,4 +398,57 @@ public class WalletController {
         }
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Wallet transaction not found.");
     }
+
+    @GetMapping("/internal/payments/check-deletion-eligibility/{userId}")
+    public ResponseEntity<?> checkDeletionEligibility(@PathVariable String userId) {
+        BigDecimal studentBalance = BigDecimal.ZERO;
+        BigDecimal studentHeld = BigDecimal.ZERO;
+        BigDecimal providerBalance = BigDecimal.ZERO;
+
+        try {
+            List<Map<String, Object>> studentWallets = jdbcTemplate.queryForList(
+                "SELECT balance, held_balance FROM student_wallets WHERE user_id = ?", userId
+            );
+            if (!studentWallets.isEmpty()) {
+                studentBalance = (BigDecimal) studentWallets.get(0).get("balance");
+                studentHeld = (BigDecimal) studentWallets.get(0).get("held_balance");
+            }
+        } catch (Exception e) {
+            log.warn("Failed to fetch student wallet balance: {}", e.getMessage());
+        }
+
+        try {
+            List<Map<String, Object>> providerWallets = jdbcTemplate.queryForList(
+                "SELECT balance FROM provider_wallets WHERE user_id = ?", userId
+            );
+            if (!providerWallets.isEmpty()) {
+                providerBalance = (BigDecimal) providerWallets.get(0).get("balance");
+            }
+        } catch (Exception e) {
+            log.warn("Failed to fetch provider wallet balance: {}", e.getMessage());
+        }
+
+        long pendingWithdrawals = 0;
+        try {
+            Long swCount = jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM student_wallet_transactions WHERE user_id = ? AND status IN ('PENDING', 'PROCESSING')",
+                Long.class, userId
+            );
+            Long pwCount = jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM provider_wallet_transactions WHERE user_id = ? AND status IN ('PENDING', 'PROCESSING')",
+                Long.class, userId
+            );
+            pendingWithdrawals = (swCount != null ? swCount : 0) + (pwCount != null ? pwCount : 0);
+        } catch (Exception e) {
+            log.warn("Failed to fetch pending withdrawals: {}", e.getMessage());
+        }
+
+        Map<String, Object> result = new HashMap<>();
+        result.put("studentBalance", studentBalance != null ? studentBalance : BigDecimal.ZERO);
+        result.put("studentHeld", studentHeld != null ? studentHeld : BigDecimal.ZERO);
+        result.put("providerBalance", providerBalance != null ? providerBalance : BigDecimal.ZERO);
+        result.put("pendingWithdrawals", pendingWithdrawals);
+
+        return ResponseEntity.ok(result);
+    }
 }

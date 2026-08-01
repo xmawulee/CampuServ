@@ -1,13 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
   StyleSheet, Text, View, TextInput, TouchableOpacity,
-  ActivityIndicator, Alert, ScrollView
+  ActivityIndicator, Alert, ScrollView, Switch, Platform
 } from 'react-native';
 import { CustomIonicons as Ionicons } from '../../components/CustomIcons';
 import { useAuthStore } from '../../store/authStore';
 import { api } from '../../services/api';
 import { useTheme } from '../../styles/ThemeContext';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useBottomTabSpacing } from '../../hooks/useBottomTabSpacing';
 import AvatarUploader from '../../components/AvatarUploader';
 import { useToast } from '../../styles/ToastContext';
 import AnimatedBackground from '../../components/AnimatedBackground';
@@ -16,6 +17,7 @@ export default function SettingsScreen({ navigation }: any) {
   const { user, roleMode, logout, setAuth } = useAuthStore();
   const { colors, isDark } = useTheme();
   const insets = useSafeAreaInsets();
+  const bottomTabSpacing = useBottomTabSpacing();
 
   const activeRoleView = roleMode || (user?.role === 'PROVIDER' ? 'PROVIDER' : 'STUDENT');
   const isViewingAsProvider = activeRoleView === 'PROVIDER';
@@ -26,6 +28,7 @@ export default function SettingsScreen({ navigation }: any) {
   const [profilePictureUrl, setProfilePictureUrl] = useState<string | null>(user?.profilePictureUrl || null);
   const [bio, setBio] = useState('');
   const [serviceCategory, setServiceCategory] = useState<string | null>(null);
+  const [notifyNewRequests, setNotifyNewRequests] = useState(true);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -45,6 +48,7 @@ export default function SettingsScreen({ navigation }: any) {
         setProfilePictureUrl(response.data.profilePictureUrl || null);
         setBio(response.data.bio || '');
         setServiceCategory(response.data.serviceCategory || null);
+        setNotifyNewRequests(response.data.notifyNewRequests !== false);
       } catch (e) { /* silent */ } finally { setLoading(false); }
     };
     fetchData();
@@ -58,6 +62,7 @@ export default function SettingsScreen({ navigation }: any) {
         fullName: fullName.trim(),
         bio: bio.trim(),
         serviceCategory: serviceCategory,
+        notifyNewRequests: notifyNewRequests,
       });
       if (user) {
         const updatedUser = { ...user, fullName: fullName.trim() };
@@ -82,7 +87,7 @@ export default function SettingsScreen({ navigation }: any) {
       <ScrollView
         style={[styles.container, { backgroundColor: 'transparent' }]}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: insets.bottom }}
+        contentContainerStyle={{ paddingBottom: bottomTabSpacing }}
       >
         {/* ── Profile Hero Section ── */}
         <View style={[styles.profileHero, { backgroundColor: colors.primary, paddingTop: Math.max(insets.top + 16, 40) }]}>
@@ -147,26 +152,10 @@ export default function SettingsScreen({ navigation }: any) {
           <View style={[styles.card, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
             {[
               {
-                icon: 'notifications-outline',
-                label: 'Notifications and Sounds',
-                sub: 'Manage alerts',
-                onPress: () => {
-                  // TODO: Navigate to Notifications Settings
-                }
-              },
-              {
                 icon: 'chatbubbles-outline',
                 label: 'My Chats',
                 sub: 'View conversations',
                 onPress: () => navigation.navigate('ChatList'),
-              },
-              {
-                icon: 'settings-outline',
-                label: 'App Settings',
-                sub: 'Preferences',
-                onPress: () => {
-                  // TODO: Navigate to App Settings
-                }
               },
               {
                 icon: 'help-circle-outline',
@@ -199,6 +188,43 @@ export default function SettingsScreen({ navigation }: any) {
               </TouchableOpacity>
             ))}
           </View>
+
+          {isViewingAsProvider && (
+            <View style={[styles.card, { backgroundColor: colors.cardBackground, borderColor: colors.border, marginTop: 16 }]}>
+              <Text style={{ fontSize: 16, fontWeight: '700', color: colors.text, marginBottom: 12, paddingHorizontal: 4 }}>
+                Preferences
+              </Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 12, paddingHorizontal: 4 }}>
+                <View style={{ flex: 1, paddingRight: 16 }}>
+                  <Text style={{ fontSize: 15, fontWeight: '600', color: colors.text }}>
+                    New Request Notifications
+                  </Text>
+                  <Text style={{ fontSize: 13, color: colors.textMuted, marginTop: 2 }}>
+                    Get notified when a new request matches your categories.
+                  </Text>
+                </View>
+                <Switch
+                  value={notifyNewRequests}
+                  onValueChange={async (val) => {
+                    setNotifyNewRequests(val);
+                    try {
+                      await api.put(`/users/${user?.id}/profile`, {
+                        fullName: fullName.trim(),
+                        bio: bio.trim(),
+                        serviceCategory: serviceCategory,
+                        notifyNewRequests: val,
+                      });
+                      showToast({ status: 'success', title: 'Success', subtitle: 'Notification settings updated.' });
+                    } catch (e) {
+                      showToast({ status: 'error', title: 'Error', subtitle: 'Failed to update notification settings.' });
+                    }
+                  }}
+                  trackColor={{ false: '#767577', true: colors.primary }}
+                  thumbColor={Platform.OS === 'android' ? (notifyNewRequests ? colors.primary : '#f4f3f4') : undefined}
+                />
+              </View>
+            </View>
+          )}
 
           {/* ── Logout ── */}
           <TouchableOpacity

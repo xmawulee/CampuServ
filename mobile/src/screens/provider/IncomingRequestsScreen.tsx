@@ -144,7 +144,7 @@ export default function IncomingRequestsScreen({ navigation }: any) {
           <View style={styles.cardFooter}>
             <View style={styles.cardMeta}>
               <Ionicons name="location-outline" size={12} color={colors.textMuted} />
-              <Text style={[styles.cardMetaText, { color: colors.textMuted }]}>
+              <Text style={[styles.cardMetaText, { color: colors.textMuted, flex: 1, marginRight: 8 }]} numberOfLines={1}>
                 {item.location || item.locationType || 'Campus'}
               </Text>
             </View>

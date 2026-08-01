@@ -22,6 +22,19 @@ export const WithdrawalScreen = () => {
     const navigation = useNavigation();
     const { showToast } = useToast();
 
+    useEffect(() => {
+        const unsubscribe = navigation.addListener('beforeRemove', (e) => {
+            if (!isSubmitting) return;
+            e.preventDefault();
+            Alert.alert(
+                'Transaction Processing',
+                'Your withdrawal is currently processing. Please do not leave this page or close the app.',
+                [{ text: 'OK', style: 'cancel' }]
+            );
+        });
+        return unsubscribe;
+    }, [navigation, isSubmitting]);
+
     const handleWithdraw = async () => {
         const numericAmount = parseFloat(amount);
         if (isNaN(numericAmount) || numericAmount <= 0) {

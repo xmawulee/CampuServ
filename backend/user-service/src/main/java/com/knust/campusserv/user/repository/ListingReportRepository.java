@@ -9,5 +9,6 @@ import java.util.List;
 @Repository
 public interface ListingReportRepository extends JpaRepository<ListingReport, String> {
     List<ListingReport> findByProviderId(String providerId);
+    List<ListingReport> findByReporterId(String reporterId);
     boolean existsByProviderIdAndReporterIdAndStatus(String providerId, String reporterId, String status);
 }

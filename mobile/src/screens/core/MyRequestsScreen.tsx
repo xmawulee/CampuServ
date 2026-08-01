@@ -13,6 +13,7 @@ import {
   Platform,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useBottomTabSpacing } from '../../hooks/useBottomTabSpacing';
 import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '../../store/authStore';
 import { useTheme } from '../../styles/ThemeContext';
@@ -51,6 +52,7 @@ export default function MyRequestsScreen({ navigation }: any) {
   const { colors, isDark } = useTheme();
   const { user, accessToken } = useAuthStore();
   const insets = useSafeAreaInsets();
+  const bottomTabSpacing = useBottomTabSpacing();
   const queryClient = useQueryClient();
   const { showToast } = useToast();
 
@@ -454,7 +456,7 @@ export default function MyRequestsScreen({ navigation }: any) {
           data={requests}
           renderItem={renderItem}
           keyExtractor={item => item.id}
-          contentContainerStyle={styles.listContainer}
+          contentContainerStyle={[styles.listContainer, { paddingBottom: bottomTabSpacing }]}
           ListEmptyComponent={renderEmptyState}
           ListFooterComponent={renderFooter}
           refreshControl={

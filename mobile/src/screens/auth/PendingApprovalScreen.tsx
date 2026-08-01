@@ -39,6 +39,19 @@ export default function PendingApprovalScreen({ navigation }: any) {
     );
   };
 
+  // Intercept back navigation attempts and block them if the user is authenticated
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('beforeRemove', (e: any) => {
+      const state = useAuthStore.getState();
+      if (!state.isAuthenticated || !state.user) {
+        // Allow navigation if the user is signing out
+        return;
+      }
+      e.preventDefault();
+    });
+    return unsubscribe;
+  }, [navigation]);
+
   useEffect(() => {
     if (!accessToken || !user) return;
 

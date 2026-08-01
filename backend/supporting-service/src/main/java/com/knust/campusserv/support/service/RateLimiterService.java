@@ -1,6 +1,7 @@
 package com.knust.campusserv.support.service;
 
 import org.springframework.stereotype.Service;
+import org.springframework.scheduling.annotation.Scheduled;
 
 import java.util.ArrayDeque;
 import java.util.Deque;
@@ -39,5 +40,17 @@ public class RateLimiterService {
 
         timestamps.addLast(now);
         return true;
+    }
+
+    @Scheduled(fixedDelay = 60000) // Every 1 minute
+    public synchronized void cleanupExpiredLogs() {
+        long now = System.currentTimeMillis();
+        userSendLog.entrySet().removeIf(entry -> {
+            Deque<Long> timestamps = entry.getValue();
+            while (!timestamps.isEmpty() && now - timestamps.peekFirst() > WINDOW_MILLIS) {
+                timestamps.pollFirst();
+            }
+            return timestamps.isEmpty();
+        });
     }
 }

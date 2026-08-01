@@ -31,6 +31,7 @@ public class UserProfileResponse {
     private BigDecimal basePrice;
     private String location;
     private String availabilityStatus;
+    private Boolean notifyNewRequests;
 
     // Getters and Setters
     public String getId() { return id; }
@@ -104,4 +105,7 @@ public class UserProfileResponse {
 
     public String getAvailabilityStatus() { return availabilityStatus; }
     public void setAvailabilityStatus(String availabilityStatus) { this.availabilityStatus = availabilityStatus; }
+
+    public Boolean getNotifyNewRequests() { return notifyNewRequests; }
+    public void setNotifyNewRequests(Boolean notifyNewRequests) { this.notifyNewRequests = notifyNewRequests; }
 }

@@ -55,6 +55,9 @@ public class ProviderProfile {
     @Column(name = "view_count")
     private Long viewCount = 0L;
 
+    @Column(name = "notify_new_requests")
+    private Boolean notifyNewRequests = true;
+
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "provider_key_services", joinColumns = @JoinColumn(name = "provider_id"))
     @Column(name = "service_tag")
@@ -108,4 +111,7 @@ public class ProviderProfile {
 
     public List<String> getKeyServices() { return keyServices != null ? keyServices : new ArrayList<>(); }
     public void setKeyServices(List<String> keyServices) { this.keyServices = keyServices; }
+
+    public Boolean getNotifyNewRequests() { return notifyNewRequests != null ? notifyNewRequests : true; }
+    public void setNotifyNewRequests(Boolean notifyNewRequests) { this.notifyNewRequests = notifyNewRequests; }
 }

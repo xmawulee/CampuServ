@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import MapView, { Marker, Polyline } from 'react-native-maps';
 import { CustomIonicons as Ionicons } from '../../components/CustomIcons';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '../../styles/ThemeContext';
 import { useAuthStore } from '../../store/authStore';
 import { getDirections, getRequestLocation } from '../../services/locationService';
@@ -256,6 +257,15 @@ export default function RiderLiveTrackingScreen({ route, navigation }: any) {
 
   return (
     <AnimatedBackground style={styles.container}>
+      {/* ── Header with Back Button ── */}
+      <SafeAreaView edges={['top']} style={{ backgroundColor: colors.cardBackground, zIndex: 11 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, height: 56, borderBottomWidth: 1, borderBottomColor: colors.border }}>
+          <TouchableOpacity onPress={() => navigation.goBack()} style={{ padding: 4, marginRight: 12 }}>
+            <Ionicons name="arrow-back" size={24} color={colors.text} />
+          </TouchableOpacity>
+          <Text style={{ fontSize: 18, fontWeight: '700', color: colors.text }}>Live Tracker</Text>
+        </View>
+      </SafeAreaView>
       
       {/* ── Top Status Bar ── */}
       <View style={[styles.topBanner, { backgroundColor: colors.cardBackground, borderBottomColor: colors.border }]}>

@@ -8,6 +8,7 @@ import { CustomIonicons as Ionicons } from '../../components/CustomIcons';
 import { useTheme } from '../../styles/ThemeContext';
 import { useFocusEffect } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useBottomTabSpacing } from '../../hooks/useBottomTabSpacing';
 import { getProviderJobs } from '../../services/jobService';
 import { useAuthStore } from '../../store/authStore';
 import { stompClient } from '../../services/socket';
@@ -21,6 +22,7 @@ type TabType = 'active' | 'history';
 export default function ProviderJobListScreen({ navigation }: any) {
   const { colors, isDark } = useTheme();
   const insets = useSafeAreaInsets();
+  const bottomTabSpacing = useBottomTabSpacing();
   const user = useAuthStore(s => s.user);
 
   const [activeTab, setActiveTab] = useState<TabType>('active');
@@ -212,7 +214,7 @@ export default function ProviderJobListScreen({ navigation }: any) {
           data={jobsByTab[activeTab]}
           keyExtractor={(item) => item.id}
           renderItem={renderItem}
-          contentContainerStyle={styles.listContent}
+          contentContainerStyle={[styles.listContent, { paddingBottom: bottomTabSpacing }]}
           onEndReached={onEndReached}
           onEndReachedThreshold={0.5}
           refreshControl={

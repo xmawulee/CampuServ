@@ -316,6 +316,16 @@ export default function SignInScreen({ route, navigation }: any) {
               {errors.password && <Text style={[styles.fieldError, { color: colors.error }]}>{errors.password}</Text>}
             </View>
 
+            {/* Forgot Password Link */}
+            <TouchableOpacity 
+              onPress={() => navigation.navigate('ForgotPassword')}
+              style={{ alignSelf: 'flex-end', marginTop: 4, marginBottom: 20 }}
+            >
+              <Text style={{ color: activeRole === 'CLIENT' ? '#4F46E5' : '#F97316', fontWeight: '600', fontSize: 13 }}>
+                Forgot password?
+              </Text>
+            </TouchableOpacity>
+
             {/* Sign In Button */}
             <TouchableOpacity
               style={styles.submitBtnTouch}

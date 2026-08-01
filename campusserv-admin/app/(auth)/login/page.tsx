@@ -43,6 +43,9 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-tr from-[#211F1D] via-[#2A2826] to-[#353331] flex items-center justify-center p-6 relative overflow-hidden font-sans">
+      {/* Seamless Animated Background Pattern */}
+      <div className="absolute inset-0 pointer-events-none animated-bg z-0 opacity-20" />
+
       {/* Decorative background abstract circles */}
       <div className="absolute inset-0 pointer-events-none z-0">
         <svg className="w-full h-full opacity-15" xmlns="http://www.w3.org/2000/svg">

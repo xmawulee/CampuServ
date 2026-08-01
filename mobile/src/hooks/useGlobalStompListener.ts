@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '../store/authStore';
 import { stompClient } from '../services/socket';
+import { useToast } from '../styles/ToastContext';
 
 /**
  * A global listener that maintains the STOMP connection when the user is logged in
@@ -10,6 +11,7 @@ import { stompClient } from '../services/socket';
 export function useGlobalStompListener() {
   const queryClient = useQueryClient();
   const { user, accessToken } = useAuthStore();
+  const { showToast } = useToast();
 
   useEffect(() => {
     if (!accessToken || !user?.id) {
@@ -26,12 +28,27 @@ export function useGlobalStompListener() {
     const notifTopic = `/topic/user/${user.id}/notifications`;
     const notifSubId = stompClient.subscribe(notifTopic, (msg: any) => {
       console.log('[Global STOMP] Notification received:', msg);
+
+      // Show in-app toast for provider-facing new request match notifications
+      if (msg?.type === 'MATCHING_REQUEST_CREATED') {
+        showToast({
+          status: 'info',
+          title: 'New Matching Request 📋',
+          subtitle: msg.message || 'A new request matches your service category.',
+        });
+        queryClient.invalidateQueries({ queryKey: ['providerIncomingRequests'] });
+        queryClient.invalidateQueries({ queryKey: ['notifications'] });
+        return;
+      }
+
       // Invalidate relevant caches globally
       queryClient.invalidateQueries({ queryKey: ['myRequests'] });
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
       queryClient.invalidateQueries({ queryKey: ['providerJobSummary'] });
       queryClient.invalidateQueries({ queryKey: ['wallet'] });
       queryClient.invalidateQueries({ queryKey: ['chat-list'] });
+      queryClient.invalidateQueries({ queryKey: ['transactionReceipt'] });
+      queryClient.invalidateQueries({ queryKey: ['walletReceipt'] });
       
       // If a specific job status changes, invalidate the job cache.
       // Often notifications contain jobId or requestId
@@ -65,5 +82,5 @@ export function useGlobalStompListener() {
         stompClient.unsubscribe(providerSubId);
       }
     };
-  }, [accessToken, user?.id, user?.isProvider, user?.role, queryClient]);
+  }, [accessToken, user?.id, user?.isProvider, user?.role, queryClient, showToast]);
 }

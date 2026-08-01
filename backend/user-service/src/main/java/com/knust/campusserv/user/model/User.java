@@ -58,6 +58,9 @@ public class User {
     @Column(name = "service_category")
     private String serviceCategory;
 
+    @Column(name = "student_id_photo_url")
+    private String studentIdPhotoUrl;
+
     // Getters and Setters
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
@@ -112,4 +115,7 @@ public class User {
 
     public String getPasswordHash() { return passwordHash; }
     public void setPasswordHash(String passwordHash) { this.passwordHash = passwordHash; }
+
+    public String getStudentIdPhotoUrl() { return studentIdPhotoUrl; }
+    public void setStudentIdPhotoUrl(String studentIdPhotoUrl) { this.studentIdPhotoUrl = studentIdPhotoUrl; }
 }

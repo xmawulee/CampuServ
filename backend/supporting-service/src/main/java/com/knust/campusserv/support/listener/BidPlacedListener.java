@@ -34,6 +34,12 @@ public class BidPlacedListener {
     @Autowired
     private SimpMessagingTemplate messagingTemplate;
 
+    @Autowired
+    private com.knust.campusserv.support.repository.NotificationRepository notificationRepository;
+
+    @Autowired
+    private org.springframework.jdbc.core.JdbcTemplate jdbcTemplate;
+
     @RabbitListener(queues = "bid_placed_queue")
     public void handleBidPlaced(Map<String, Object> event) {
         try {
@@ -47,6 +53,44 @@ public class BidPlacedListener {
 
             logger.info("BidPlacedListener: bid {} placed on request {} — broadcasting STOMP", offerId, requestId);
             messagingTemplate.convertAndSend("/topic/request." + requestId + ".bids", event);
+
+            String requesterId = (String) event.get("requesterId");
+            String providerId  = (String) event.get("providerId");
+            Number priceNum    = (Number) event.get("price");
+            double price       = priceNum != null ? priceNum.doubleValue() : 0.0;
+
+            if (requesterId != null && !requesterId.isBlank() && offerId != null && !offerId.isBlank()) {
+                if (!notificationRepository.existsByUserIdAndTypeAndReferenceId(requesterId, "BID_RECEIVED", offerId)) {
+                    String title = "Request";
+                    try {
+                        title = jdbcTemplate.queryForObject("SELECT title FROM service_requests WHERE id = ?", String.class, requestId);
+                    } catch (Exception e) {
+                        logger.warn("BidPlacedListener: request title not found for requestId={}", requestId);
+                    }
+
+                    String providerName = "Provider";
+                    try {
+                        providerName = jdbcTemplate.queryForObject("SELECT full_name FROM users WHERE id = ?", String.class, providerId);
+                    } catch (Exception e) {
+                        logger.warn("BidPlacedListener: provider name not found for providerId={}", providerId);
+                    }
+
+                    com.knust.campusserv.support.model.Notification notification = new com.knust.campusserv.support.model.Notification();
+                    notification.setId("ntf-" + java.util.UUID.randomUUID().toString());
+                    notification.setUserId(requesterId);
+                    notification.setTitle("New Bid Received");
+                    notification.setMessage(providerName + " bid GHS " + String.format("%.2f", price) + " on your request '" + title + "'");
+                    notification.setType("BID_RECEIVED");
+                    notification.setReferenceId(offerId);
+                    notification.setIsRead(false);
+                    notificationRepository.save(notification);
+
+                    messagingTemplate.convertAndSend("/topic/user/" + requesterId + "/notifications", notification);
+                    logger.info("BidPlacedListener: saved and broadcasted BID_RECEIVED notification to student {}", requesterId);
+                } else {
+                    logger.info("BidPlacedListener: duplicate bid.placed event detected for offerId={}, ignoring", offerId);
+                }
+            }
         } catch (Exception e) {
             logger.error("BidPlacedListener: failed to relay STOMP message for event {}: {}", event, e.getMessage(), e);
         }

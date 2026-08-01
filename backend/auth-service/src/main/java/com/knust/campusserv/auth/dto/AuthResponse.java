@@ -130,4 +130,8 @@ public class AuthResponse {
 
     public Integer getRejectionCount() { return rejectionCount; }
     public void setRejectionCount(Integer rejectionCount) { this.rejectionCount = rejectionCount; }
+
+    private Boolean emailVerified;
+    public Boolean getEmailVerified() { return emailVerified != null ? emailVerified : false; }
+    public void setEmailVerified(Boolean emailVerified) { this.emailVerified = emailVerified; }
 }

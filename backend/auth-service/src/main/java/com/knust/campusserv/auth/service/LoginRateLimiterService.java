@@ -1,6 +1,7 @@
 package com.knust.campusserv.auth.service;
 
 import org.springframework.stereotype.Service;
+import org.springframework.scheduling.annotation.Scheduled;
 import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -68,5 +69,17 @@ public class LoginRateLimiterService {
     public void resetAttempts(String key) {
         if (key == null || key.trim().isEmpty()) return;
         attemptsMap.remove(key.trim().toLowerCase());
+    }
+
+    @Scheduled(fixedDelay = 600000) // Every 10 minutes
+    public void cleanupExpiredAttempts() {
+        LocalDateTime now = LocalDateTime.now();
+        attemptsMap.entrySet().removeIf(entry -> {
+            AttemptRecord record = entry.getValue();
+            if (record.lockedUntil != null) {
+                return now.isAfter(record.lockedUntil);
+            }
+            return record.firstAttemptTime.plusMinutes(LOCKOUT_MINUTES).isBefore(now);
+        });
     }
 }

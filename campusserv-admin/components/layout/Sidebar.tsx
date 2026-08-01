@@ -15,7 +15,8 @@ import {
   Tag,
   Megaphone,
   Settings,
-  LogOut
+  LogOut,
+  Star
 } from 'lucide-react';
 
 export default function Sidebar() {
@@ -54,7 +55,8 @@ export default function Sidebar() {
     {
       title: 'PLATFORM',
       items: [
-        { name: 'Reports', href: '/reports', icon: Flag, badge: 0 },
+        { name: 'Reports & Fraud', href: '/reports', icon: Flag, badge: 0 },
+        { name: 'Reviews', href: '/reviews', icon: Star },
         { name: 'Categories', href: '/categories', icon: Tag },
         { name: 'Announcements', href: '/announcements', icon: Megaphone },
         { name: 'Settings', href: '/settings', icon: Settings },

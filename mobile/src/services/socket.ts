@@ -41,10 +41,85 @@ class StompClient {
     this.url = ENV.wsBaseUrl ?? 'ws://localhost:8086/chats/ws/connect';
   }
 
-  public connect(token?: string, onConnect?: () => void, onDisconnect?: () => void) {
+  private isTokenExpired(token: string | null): boolean {
+    if (!token) return true;
+    try {
+      const parts = token.split('.');
+      if (parts.length !== 3) return true;
+      
+      let payloadStr = '';
+      const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=';
+      const str = parts[1].replace(/=/g, '').replace(/-/g, '+').replace(/_/g, '/');
+      let output = '';
+      let bc = 0;
+      let bs = 0;
+      for (let i = 0; i < str.length; i++) {
+        const char = str[i];
+        const idx = chars.indexOf(char);
+        if (idx === -1) continue;
+        bs = bc % 4 ? bs * 64 + idx : idx;
+        if (bc++ % 4) {
+          output += String.fromCharCode(255 & (bs >> ((-2 * bc) & 6)));
+        }
+      }
+      payloadStr = output;
+      
+      const payload = JSON.parse(payloadStr);
+      if (!payload.exp) return false;
+      
+      const currentTime = Math.floor(Date.now() / 1000);
+      return payload.exp < (currentTime + 15);
+    } catch {
+      return true;
+    }
+  }
+
+  private async refreshExpiredToken(): Promise<boolean> {
+    try {
+      const getAuthStore = () => require('../store/authStore').useAuthStore;
+      const authStore = getAuthStore().getState();
+      const refreshToken = authStore.refreshToken;
+      if (!refreshToken) {
+        console.warn('STOMP: No refresh token available to refresh STOMP connection.');
+        return false;
+      }
+      
+      console.log('STOMP: Proactively refreshing expired token before connecting...');
+      const response = await fetch(`${ENV.apiBaseUrl ?? 'http://10.183.224.182:8080'}/auth/refresh`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ refreshToken })
+      });
+      if (response.ok) {
+        const data = await response.json();
+        const newAccessToken = data.accessToken;
+        if (newAccessToken) {
+          await authStore.updateAccessToken(newAccessToken);
+          this.token = newAccessToken;
+          console.log('STOMP: Proactive token refresh successful.');
+          return true;
+        }
+      } else {
+        console.warn('STOMP: Proactive token refresh failed with status:', response.status);
+      }
+    } catch (e) {
+      console.warn('STOMP: Error during proactive token refresh:', e);
+    }
+    return false;
+  }
+
+  public async connect(token?: string, onConnect?: () => void, onDisconnect?: () => void) {
     if (onConnect) this.onConnectCallback = onConnect;
     if (onDisconnect) this.onDisconnectCallback = onDisconnect;
     if (token) this.token = token;
+
+    if (this.isTokenExpired(this.token)) {
+      const refreshed = await this.refreshExpiredToken();
+      if (!refreshed) {
+        console.warn('STOMP: Authentication token is expired and proactive refresh failed. Aborting connection.');
+        return;
+      }
+    }
 
     if (this.ws && (this.ws.readyState === WebSocket.OPEN || this.ws.readyState === WebSocket.CONNECTING)) {
       if (this.connected && this.onConnectCallback) {
@@ -290,10 +365,10 @@ class StompClient {
 
   private scheduleReconnect() {
     if (this.reconnectTimer) return;
-    this.reconnectTimer = setTimeout(() => {
+    this.reconnectTimer = setTimeout(async () => {
       this.reconnectTimer = null;
       if (this.token) {
-        this.connect(this.token);
+        await this.connect(this.token);
       }
     }, 5000); // Reconnect in 5 seconds
   }

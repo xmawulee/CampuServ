@@ -70,6 +70,8 @@ public class RequestInternalController {
         resp.put("bidWindowCloses", req.getBidWindowCloses());
         resp.put("escrowHeld", req.getEscrowHeld());
         resp.put("targetProviderId", req.getTargetProviderId());
+        resp.put("pickupLocation", req.getPickupLocation());
+        resp.put("dropoffLocation", req.getDropoffLocation());
         
         String targetProviderName = null;
         if (req.getTargetProviderId() != null && !req.getTargetProviderId().isEmpty()) {

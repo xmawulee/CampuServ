@@ -83,6 +83,7 @@ public class UserController {
             resp.setWhatsappNumber(pp.getWhatsappNumber());
             resp.setViewCount(pp.getViewCount());
             resp.setKeyServices(pp.getKeyServices());
+            resp.setNotifyNewRequests(pp.getNotifyNewRequests());
             if ((portList == null || portList.isEmpty()) && pp.getPortfolioUrls() != null && !pp.getPortfolioUrls().trim().isEmpty()) {
                 portList = Arrays.stream(pp.getPortfolioUrls().split(","))
                         .map(String::trim)
@@ -574,6 +575,9 @@ public class UserController {
         }
         if (body.containsKey("whatsappNumber") && body.get("whatsappNumber") != null) {
             profile.setWhatsappNumber((String) body.get("whatsappNumber"));
+        }
+        if (body.containsKey("notifyNewRequests") && body.get("notifyNewRequests") != null) {
+            profile.setNotifyNewRequests((Boolean) body.get("notifyNewRequests"));
         }
         if (body.containsKey("keyServices") && body.get("keyServices") != null) {
             Object ksObj = body.get("keyServices");

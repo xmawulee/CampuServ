@@ -21,6 +21,7 @@ export interface User {
   whatsappNumber?: string;
   portfolio?: string[];
   keyServices?: string[];
+  emailVerified?: boolean;
 }
 
 interface AuthState {

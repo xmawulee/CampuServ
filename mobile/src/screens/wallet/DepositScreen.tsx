@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, Alert, FlatList } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
@@ -17,6 +17,19 @@ export const DepositScreen = () => {
     
     const navigation = useNavigation();
     const { showToast } = useToast();
+
+    useEffect(() => {
+        const unsubscribe = navigation.addListener('beforeRemove', (e) => {
+            if (!isSubmitting) return;
+            e.preventDefault();
+            Alert.alert(
+                'Transaction Processing',
+                'Your deposit is currently processing. Please do not leave this page or close the app.',
+                [{ text: 'OK', style: 'cancel' }]
+            );
+        });
+        return unsubscribe;
+    }, [navigation, isSubmitting]);
 
     const handleDeposit = async () => {
         const numericAmount = parseFloat(amount);

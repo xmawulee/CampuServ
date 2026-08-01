@@ -10,6 +10,7 @@ import java.util.Optional;
 @Repository
 public interface SavedListingRepository extends JpaRepository<SavedListing, String> {
     List<SavedListing> findByStudentId(String studentId);
+    List<SavedListing> findByProviderId(String providerId);
     Optional<SavedListing> findByStudentIdAndProviderId(String studentId, String providerId);
     boolean existsByStudentIdAndProviderId(String studentId, String providerId);
     void deleteByStudentIdAndProviderId(String studentId, String providerId);

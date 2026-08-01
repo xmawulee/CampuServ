@@ -33,6 +33,7 @@ public class InternalAuthFilter extends OncePerRequestFilter {
         if (path.equals("/actuator/health") || path.startsWith("/eureka/") || path.startsWith("/error") ||
             path.equals("/auth/login") || path.equals("/auth/register") || path.equals("/auth/refresh") ||
             path.equals("/auth/verify-email") || path.equals("/auth/check-status") || path.equals("/auth/resend-verification") ||
+            path.equals("/auth/forgot-password") || path.equals("/auth/reset-password") || path.equals("/auth/reset-password-web") ||
             path.startsWith("/auth/files/")) {
             filterChain.doFilter(request, response);
             return;

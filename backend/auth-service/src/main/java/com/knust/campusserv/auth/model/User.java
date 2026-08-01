@@ -65,9 +65,12 @@ public class User {
     @Column(name = "original_email")
     private String originalEmail;
 
+    @Column(name = "email_verified", nullable = false)
+    private Boolean emailVerified = false;
+
     // Backward compatibility alias
-    public Boolean getEmailVerified() { return true; }
-    public void setEmailVerified(Boolean emailVerified) {}
+    public Boolean getEmailVerified() { return emailVerified != null ? emailVerified : false; }
+    public void setEmailVerified(Boolean emailVerified) { this.emailVerified = emailVerified; }
 
     public String getOriginalEmail() { return originalEmail; }
     public void setOriginalEmail(String originalEmail) { this.originalEmail = originalEmail; }
@@ -201,6 +204,7 @@ public class User {
         if (!"SUSPENDED".equalsIgnoreCase(this.accountStatus) && 
             !"BANNED".equalsIgnoreCase(this.accountStatus) &&
             !"DELETED".equalsIgnoreCase(this.accountStatus) &&
+            !"DELETING".equalsIgnoreCase(this.accountStatus) &&
             !"INCOMPLETE".equalsIgnoreCase(this.accountStatus)) {
             this.accountStatus = Boolean.TRUE.equals(this.isVerified) ? "ACTIVE" : "PENDING_VERIFICATION";
         }

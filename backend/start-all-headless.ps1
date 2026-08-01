@@ -1,14 +1,22 @@
+# Load environment variables from .env file if it exists
+if (Test-Path "$PSScriptRoot\.env") {
+    Get-Content "$PSScriptRoot\.env" | ForEach-Object {
+        $line = $_.Trim()
+        if ($line -and -not $line.StartsWith("#")) {
+            $parts = $line.Split('=', 2)
+            if ($parts.Length -eq 2) {
+                $name = $parts[0].Trim()
+                $value = $parts[1].Trim().Trim('"').Trim("'")
+                [System.Environment]::SetEnvironmentVariable($name, $value)
+                $env:$name = $value
+            }
+        }
+    }
+}
+
 $env:SPRING_PROFILES_ACTIVE = "local-dev"
-$env:BREVO_API_KEY = "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"
-$env:BREVO_SENDER_EMAIL = "marshalldalton435@gmail.com"
-$env:BREVO_SENDER_NAME = "CampusServ"
 $env:EMAIL_VERIFICATION_URL = "http://localhost:8080/auth/verify-email"
 $env:UPLOAD_DIR = "$PSScriptRoot\uploads\"
-$env:JWT_SECRET = "dGhlLXN1cGVyLXNlY3JldC1jb25mZGVudGlhbC1qd3Qta2V5LWZvci1jYW1wdXNzZXJ2LWtudXN0LWdyb3VwLTg4"
-$env:INTERNAL_SERVICE_SECRET = "default_internal_service_secret_knust_campusserv_2026"
-$env:GOOGLE_API_KEY = "AIzaSyCO_EY_6hSn0bxRQJdZq9GLdX5_LIIhcK0"
-$env:ADMIN_SEED_EMAIL = "admin@campusserv.com"
-$env:ADMIN_SEED_PASSWORD = "admin123"
 
 # Start infrastructure
 docker-compose up -d
@@ -54,7 +62,7 @@ foreach ($module in $modules) {
     $logFile = "$PSScriptRoot\$module.log"
     $errFile = "$PSScriptRoot\$module-err.log"
     
-    Start-Process -FilePath "C:\Tools\maven\bin\mvn.cmd" -ArgumentList "spring-boot:run -Dspring-boot.run.jvmArguments=`"-Xmx192m -XX:TieredStopAtLevel=1`"" -WorkingDirectory "$PSScriptRoot\$module" -WindowStyle Hidden -RedirectStandardOutput $logFile -RedirectStandardError $errFile
+    Start-Process -FilePath "C:\Tools\maven\bin\mvn.cmd" -ArgumentList "spring-boot:run -Dspring-boot.run.jvmArguments=`"-Dspring.profiles.active=local-dev -DJWT_SECRET=$env:JWT_SECRET -DINTERNAL_SERVICE_SECRET=$env:INTERNAL_SERVICE_SECRET -DBREVO_API_KEY=$env:BREVO_API_KEY -DBREVO_SENDER_EMAIL=$env:BREVO_SENDER_EMAIL -DBREVO_SENDER_NAME=$env:BREVO_SENDER_NAME -Xmx192m -XX:TieredStopAtLevel=1`"" -WorkingDirectory "$PSScriptRoot\$module" -WindowStyle Hidden -RedirectStandardOutput $logFile -RedirectStandardError $errFile
     
     if ($module -eq "eureka-server") {
         Write-Host "Waiting 15 seconds for Eureka to initialize..."

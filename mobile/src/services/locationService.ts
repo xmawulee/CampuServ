@@ -240,6 +240,20 @@ export function getStaticMapUrl(lat: number, lng: number, zoom = 15, size = '600
   return `https://maps.googleapis.com/maps/api/staticmap?center=${lat},${lng}&zoom=${zoom}&size=${size}&markers=color:red|${lat},${lng}&key=${GOOGLE_MAPS_API_KEY}`;
 }
 
+export function getStaticMapRouteUrl(
+  pickupLat: number,
+  pickupLng: number,
+  dropoffLat: number,
+  dropoffLng: number,
+  zoom = 14,
+  size = '600x300'
+): string {
+  if (GOOGLE_MAPS_API_KEY === 'mock-key-for-development') {
+    return 'https://via.placeholder.com/600x300.png?text=Mock+Route+Map';
+  }
+  return `https://maps.googleapis.com/maps/api/staticmap?size=${size}&markers=color:green|label:P|${pickupLat},${pickupLng}&markers=color:red|label:D|${dropoffLat},${dropoffLng}&path=color:0x0000ff|weight:5|${pickupLat},${pickupLng}|${dropoffLat},${dropoffLng}&key=${GOOGLE_MAPS_API_KEY}`;
+}
+
 export async function getDistanceEstimate(requestId: string, lat: number, lng: number): Promise<{
   distanceText: string;
   durationText: string;

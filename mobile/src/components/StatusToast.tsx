@@ -139,7 +139,7 @@ export default function StatusToast({
           {title}
         </Text>
         {subtitle ? (
-          <Text style={styles.subtitle} numberOfLines={1}>
+          <Text style={[styles.subtitle, { color: 'rgba(255,255,255,0.88)' }]} numberOfLines={2}>
             {subtitle}
           </Text>
         ) : null}
@@ -147,7 +147,7 @@ export default function StatusToast({
 
       {/* Dismiss button */}
       <TouchableOpacity style={styles.closeBtn} onPress={dismiss} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-        <Ionicons name="close" size={16} color="#888" />
+        <Ionicons name="close" size={16} color="rgba(255,255,255,0.75)" />
       </TouchableOpacity>
     </Animated.View>
   );
@@ -190,7 +190,7 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     fontSize: 12,
-    color: '#666',
+    color: 'rgba(255,255,255,0.88)',
     marginTop: 1,
   },
   closeBtn: {

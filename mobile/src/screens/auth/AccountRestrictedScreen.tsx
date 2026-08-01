@@ -17,12 +17,25 @@ import { stompClient } from '../../services/socket';
 const SUPPORT_EMAIL = 'marshalldalton435@gmail.com';
 const SUPPORT_WHATSAPP = 'https://wa.me/233205352535';
 
-export default function AccountRestrictedScreen() {
+export default function AccountRestrictedScreen({ navigation }: any) {
   const { colors } = useTheme();
   const { user, updateUser, logout } = useAuthStore();
   const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const isBanned = user?.accountStatus === 'BANNED';
+
+  useEffect(() => {
+    if (!navigation) return;
+    const unsubscribe = navigation.addListener('beforeRemove', (e: any) => {
+      const state = useAuthStore.getState();
+      if (!state.isAuthenticated || !state.user) {
+        // Allow navigation if the user is signing out
+        return;
+      }
+      e.preventDefault();
+    });
+    return unsubscribe;
+  }, [navigation]);
 
   // Self-healing: poll + WebSocket listener to detect admin reinstatement.
   // If this screen is open and the admin reinstates the account, the user

@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, Alert, Image, ScrollView } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { api } from '../../services/api';
 
 export const RaiseDisputeScreen = () => {
@@ -58,9 +59,31 @@ export const RaiseDisputeScreen = () => {
         }
     };
 
+    useEffect(() => {
+        const unsubscribe = navigation.addListener('beforeRemove', (e) => {
+            if (!isSubmitting) return;
+            e.preventDefault();
+            Alert.alert(
+                'Submission in Progress',
+                'Your dispute is currently being submitted. Please wait.',
+                [{ text: 'OK', style: 'cancel' }]
+            );
+        });
+        return unsubscribe;
+    }, [navigation, isSubmitting]);
+
     return (
-        <ScrollView style={styles.container}>
-            <Text style={styles.title}>Raise a Dispute</Text>
+        <View style={{ flex: 1, backgroundColor: '#121212' }}>
+            <SafeAreaView edges={['top']} style={{ backgroundColor: '#121212' }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, height: 56, borderBottomWidth: 1, borderBottomColor: '#2C2C2C' }}>
+                    <TouchableOpacity onPress={() => navigation.goBack()} style={{ padding: 4, marginRight: 12 }}>
+                        <Ionicons name="arrow-back" size={24} color="#fff" />
+                    </TouchableOpacity>
+                    <Text style={{ fontSize: 18, fontWeight: '700', color: '#fff' }}>Raise Dispute</Text>
+                </View>
+            </SafeAreaView>
+            <ScrollView style={styles.container}>
+                <Text style={styles.title}>Raise a Dispute</Text>
             
             <Text style={styles.label}>Reason for Dispute</Text>
             <TextInput
@@ -98,6 +121,7 @@ export const RaiseDisputeScreen = () => {
                 </Text>
             </TouchableOpacity>
         </ScrollView>
+      </View>
     );
 };
 

@@ -25,6 +25,18 @@ export default function RejectedApplicationScreen({ navigation }: any) {
   const rejectionCount = user?.rejectionCount ?? 0;
   const isMaxRejectionsReached = rejectionCount >= 3;
 
+  React.useEffect(() => {
+    const unsubscribe = navigation.addListener('beforeRemove', (e: any) => {
+      const state = useAuthStore.getState();
+      if (!state.isAuthenticated || !state.user) {
+        // Allow navigation if the user is signing out
+        return;
+      }
+      e.preventDefault();
+    });
+    return unsubscribe;
+  }, [navigation]);
+
   const [isResetting, setIsResetting] = React.useState(false);
   const [errorMsg, setErrorMsg] = React.useState('');
 

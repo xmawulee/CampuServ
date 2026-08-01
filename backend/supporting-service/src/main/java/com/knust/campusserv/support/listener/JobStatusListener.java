@@ -72,6 +72,12 @@ public class JobStatusListener {
             case "IN_PROGRESS":
                 createNotification(requesterId, "Work Started", "Provider has started working on your request.", "JOB_STARTED", jobId);
                 break;
+            case "EN_ROUTE_TO_PICKUP":
+                createNotification(requesterId, "En Route to Pickup", "Provider is en route to pick up your package.", "JOB_STARTED", jobId);
+                break;
+            case "EN_ROUTE_TO_DROPOFF":
+                createNotification(requesterId, "En Route to Drop-off", "Provider has picked up your package and is en route to drop-off.", "JOB_STARTED", jobId);
+                break;
             case "PROOF_SUBMITTED":
                 createNotification(requesterId, "Proof Uploaded", "Provider has uploaded completion proof. Review and approve.", "JOB_COMPLETE", jobId);
                 createNotification(providerId, "Proof Received", "Your completion proof has been logged successfully.", "JOB_COMPLETE", jobId);

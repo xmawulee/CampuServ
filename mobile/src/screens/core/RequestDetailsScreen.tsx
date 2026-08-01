@@ -23,7 +23,7 @@ import { useToast } from '../../styles/ToastContext';
 import StatusDialog from '../../components/StatusDialog';
 import ImageViewerModal from '../../components/ImageViewerModal';
 import * as Location from 'expo-location';
-import { getRequestLocation, getDistanceEstimate, getStaticMapUrl } from '../../services/locationService';
+import { getRequestLocation, getDistanceEstimate, getStaticMapUrl, getStaticMapRouteUrl } from '../../services/locationService';
 import AnimatedBackground from '../../components/AnimatedBackground';
 
 export default function RequestDetailsScreen({ route, navigation }: any) {
@@ -371,24 +371,68 @@ export default function RequestDetailsScreen({ route, navigation }: any) {
         <View style={[styles.locationDetailsCard, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
           <Text style={[styles.sectionTitle, { color: colors.text, marginBottom: 16 }]}>Service Location</Text>
           
-          <View style={styles.locationDetailsRow}>
-            <View style={[styles.locIconContainer, { backgroundColor: 'rgba(21, 101, 192, 0.1)' }]}>
-              <Ionicons name="location" size={20} color={colors.primary} />
-            </View>
-            <Text style={[styles.locationDetailsAddress, { color: colors.text }]} numberOfLines={2}>
-              {requestLocation.pickupAddress}
-            </Text>
-          </View>
+          {(request.category?.requiresDualLocation || request.categoryRequiresDualLocation) ? (
+            <View style={{ gap: 16 }}>
+              <View>
+                <Text style={{ fontSize: 13, fontWeight: '700', color: colors.textMuted, marginBottom: 6 }}>PICKUP LOCATION</Text>
+                <View style={styles.locationDetailsRow}>
+                  <View style={[styles.locIconContainer, { backgroundColor: 'rgba(21, 101, 192, 0.1)' }]}>
+                    <Ionicons name="location" size={20} color={colors.primary} />
+                  </View>
+                  <Text style={[styles.locationDetailsAddress, { color: colors.text }]} numberOfLines={2}>
+                    {requestLocation.pickupAddress}
+                  </Text>
+                </View>
+                {requestLocation.pickupLandmark ? (
+                  <View style={[styles.landmarkDetailsBox, { backgroundColor: colors.inputBackground, marginTop: 6 }]}>
+                    <Ionicons name="information-circle" size={18} color={colors.primary} style={{ marginRight: 8 }} />
+                    <Text style={[styles.landmarkDetailsText, { color: colors.text }]}>
+                      Landmark: "{requestLocation.pickupLandmark}"
+                    </Text>
+                  </View>
+                ) : null}
+              </View>
 
-          {/* If there's an active provider landmark (released only after start task / IN_PROGRESS) */}
-          {requestLocation.pickupLandmark ? (
-            <View style={[styles.landmarkDetailsBox, { backgroundColor: colors.inputBackground }]}>
-              <Ionicons name="information-circle" size={18} color={colors.primary} style={{ marginRight: 8 }} />
-              <Text style={[styles.landmarkDetailsText, { color: colors.text }]}>
-                Landmark: "{requestLocation.pickupLandmark}"
-              </Text>
+              <View>
+                <Text style={{ fontSize: 13, fontWeight: '700', color: colors.textMuted, marginBottom: 6 }}>DROP-OFF LOCATION</Text>
+                <View style={styles.locationDetailsRow}>
+                  <View style={[styles.locIconContainer, { backgroundColor: 'rgba(21, 101, 192, 0.1)' }]}>
+                    <Ionicons name="flag" size={20} color={colors.primary} />
+                  </View>
+                  <Text style={[styles.locationDetailsAddress, { color: colors.text }]} numberOfLines={2}>
+                    {requestLocation.dropoffAddress}
+                  </Text>
+                </View>
+                {requestLocation.dropoffLandmark ? (
+                  <View style={[styles.landmarkDetailsBox, { backgroundColor: colors.inputBackground, marginTop: 6 }]}>
+                    <Ionicons name="information-circle" size={18} color={colors.primary} style={{ marginRight: 8 }} />
+                    <Text style={[styles.landmarkDetailsText, { color: colors.text }]}>
+                      Landmark: "{requestLocation.dropoffLandmark}"
+                    </Text>
+                  </View>
+                ) : null}
+              </View>
             </View>
-          ) : null}
+          ) : (
+            <View>
+              <View style={styles.locationDetailsRow}>
+                <View style={[styles.locIconContainer, { backgroundColor: 'rgba(21, 101, 192, 0.1)' }]}>
+                  <Ionicons name="location" size={20} color={colors.primary} />
+                </View>
+                <Text style={[styles.locationDetailsAddress, { color: colors.text }]} numberOfLines={2}>
+                  {requestLocation.pickupAddress}
+                </Text>
+              </View>
+              {requestLocation.pickupLandmark ? (
+                <View style={[styles.landmarkDetailsBox, { backgroundColor: colors.inputBackground, marginTop: 8 }]}>
+                  <Ionicons name="information-circle" size={18} color={colors.primary} style={{ marginRight: 8 }} />
+                  <Text style={[styles.landmarkDetailsText, { color: colors.text }]}>
+                    Landmark: "{requestLocation.pickupLandmark}"
+                  </Text>
+                </View>
+              ) : null}
+            </View>
+          )}
 
           {/* Pre-bid distance and walking ETA for Provider */}
           {isProvider && distanceEstimate && (
@@ -406,20 +450,39 @@ export default function RequestDetailsScreen({ route, navigation }: any) {
           )}
 
           {/* Static Map Thumbnail */}
-          {requestLocation.pickupLatitude && requestLocation.pickupLongitude ? (
-            <View style={styles.staticMapContainer}>
-              <Image
-                source={{
-                  uri: getStaticMapUrl(
-                    requestLocation.pickupLatitude,
-                    requestLocation.pickupLongitude
-                  )
-                }}
-                style={styles.staticMapImage}
-                resizeMode="cover"
-              />
-            </View>
-          ) : null}
+          {(request.category?.requiresDualLocation || request.categoryRequiresDualLocation) ? (
+            requestLocation.pickupLatitude && requestLocation.pickupLongitude && requestLocation.dropoffLatitude && requestLocation.dropoffLongitude ? (
+              <View style={styles.staticMapContainer}>
+                <Image
+                  source={{
+                    uri: getStaticMapRouteUrl(
+                      Number(requestLocation.pickupLatitude),
+                      Number(requestLocation.pickupLongitude),
+                      Number(requestLocation.dropoffLatitude),
+                      Number(requestLocation.dropoffLongitude)
+                    )
+                  }}
+                  style={styles.staticMapImage}
+                  resizeMode="cover"
+                />
+              </View>
+            ) : null
+          ) : (
+            requestLocation.pickupLatitude && requestLocation.pickupLongitude ? (
+              <View style={styles.staticMapContainer}>
+                <Image
+                  source={{
+                    uri: getStaticMapUrl(
+                      Number(requestLocation.pickupLatitude),
+                      Number(requestLocation.pickupLongitude)
+                    )
+                  }}
+                  style={styles.staticMapImage}
+                  resizeMode="cover"
+                />
+              </View>
+            ) : null
+          )}
 
           {/* Navigation Action Buttons */}
           {job && (

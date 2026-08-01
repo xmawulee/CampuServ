@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   StyleSheet,
   Text,
@@ -16,6 +16,7 @@ import { useToast } from '../../styles/ToastContext';
 import StatusDialog from '../../components/StatusDialog';
 import { useTheme } from '../../styles/ThemeContext';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useQuery } from '@tanstack/react-query';
 import { api } from '../../services/api';
 import {
   formatReceiptDateTime,
@@ -31,31 +32,29 @@ export default function TransactionReceiptScreen({ route, navigation }: any) {
   const { colors, isDark } = useTheme();
   const insets = useSafeAreaInsets();
 
-  const [receipt, setReceipt] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
   const { showToast } = useToast();
   const [reportDialogVisible, setReportDialogVisible] = useState(false);
 
-  useEffect(() => {
-    const fetchReceipt = async () => {
-      try {
-        const response = await api.get(`/payments/transactions/${transactionId}`);
-        setReceipt(response.data);
-      } catch (err: any) {
-        showToast({ status: 'error', title: 'Error', subtitle: 'Failed to load transaction receipt details.' });
-        navigation.goBack();
-      } finally {
-        setLoading(false);
-      }
-    };
+  const { data: receipt, isLoading: loading, error } = useQuery<any>({
+    queryKey: ['transactionReceipt', transactionId],
+    queryFn: () => api.get(`/payments/transactions/${transactionId}`).then((r) => r.data),
+    enabled: !!transactionId,
+    retry: 1,
+  });
 
-    if (transactionId) {
-      fetchReceipt();
-    } else {
+  React.useEffect(() => {
+    if (!transactionId) {
       showToast({ status: 'error', title: 'Error', subtitle: 'No transaction ID specified.' });
       navigation.goBack();
     }
-  }, [transactionId, navigation]);
+  }, [transactionId, navigation, showToast]);
+
+  React.useEffect(() => {
+    if (error) {
+      showToast({ status: 'error', title: 'Error', subtitle: 'Failed to load transaction receipt details.' });
+      navigation.goBack();
+    }
+  }, [error, navigation, showToast]);
 
   const handleShareReceipt = async () => {
     if (!receipt) return;

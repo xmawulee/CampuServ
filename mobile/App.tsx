@@ -8,6 +8,7 @@ import * as Font from 'expo-font';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 
 import AppNavigator from './src/navigation/AppNavigator';
+import * as Linking from 'expo-linking';
 import { useAuthStore } from './src/store/authStore';
 import { ThemeProvider, useTheme } from './src/styles/ThemeContext';
 import { navigationRef } from './src/navigation/navigationRef';
@@ -75,10 +76,11 @@ function AppContent() {
   const navKey = isAuthenticated ? `authenticated-${user?.role ?? 'unknown'}` : 'unauthenticated';
   
   const linking = {
-    prefixes: ['campusserv://', 'https://campusserv.app'],
+    prefixes: [Linking.createURL('/'), 'campusserv://', 'https://campusserv.app', 'http://localhost:8080'],
     config: {
       screens: {
         VerifyEmail: 'verify-email',
+        ResetPassword: 'reset-password',
       },
     },
   };

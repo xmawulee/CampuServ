@@ -59,7 +59,7 @@ eureka:
     lease-expiration-duration-in-seconds: 4
 
 jwt:
-  secret: ${JWT_SECRET}
+  secret: ${JWT_SECRET:dGhlLXN1cGVyLXNlY3JldC1jb25mZGVudGlhbC1qd3Qta2V5LWZvci1jYW1wdXNzZXJ2LWtudXN0LWdyb3VwLTg4}
 
 management:
   endpoints:

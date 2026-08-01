@@ -24,6 +24,9 @@ public class AdminNotificationListener {
     @Autowired
     private SimpMessagingTemplate messagingTemplate;
 
+    @Autowired
+    private org.springframework.jdbc.core.JdbcTemplate jdbcTemplate;
+
     @RabbitListener(queues = "admin_notifications_queue")
     public void handleAdminNotification(NotificationPayload payload) {
         logger.info("Received admin notification: {}", payload.getType());
@@ -93,16 +96,57 @@ public class AdminNotificationListener {
                 String summary = payload.getSummary();
                 if (summary != null && summary.startsWith("TARGET:")) {
                     String targetProviderId = summary.substring(7);
-                    com.knust.campusserv.support.model.Notification userNotification = new com.knust.campusserv.support.model.Notification();
-                    userNotification.setId("ntf-" + java.util.UUID.randomUUID().toString());
-                    userNotification.setUserId(targetProviderId);
-                    userNotification.setTitle("Direct Hire Request");
-                    userNotification.setMessage("A student has sent you a direct service request.");
-                    userNotification.setType("DIRECT_HIRE_REQUEST");
-                    userNotification.setReferenceId(payload.getEntityId());
-                    userNotification.setIsRead(false);
-                    notificationRepository.save(userNotification);
-                    messagingTemplate.convertAndSend("/topic/user/" + targetProviderId + "/notifications", userNotification);
+                    if (!notificationRepository.existsByUserIdAndTypeAndReferenceId(targetProviderId, "DIRECT_HIRE_REQUEST", payload.getEntityId())) {
+                        com.knust.campusserv.support.model.Notification userNotification = new com.knust.campusserv.support.model.Notification();
+                        userNotification.setId("ntf-" + java.util.UUID.randomUUID().toString());
+                        userNotification.setUserId(targetProviderId);
+                        userNotification.setTitle("Direct Hire Request");
+                        userNotification.setMessage("A student has sent you a direct service request.");
+                        userNotification.setType("DIRECT_HIRE_REQUEST");
+                        userNotification.setReferenceId(payload.getEntityId());
+                        userNotification.setIsRead(false);
+                        notificationRepository.save(userNotification);
+                        messagingTemplate.convertAndSend("/topic/user/" + targetProviderId + "/notifications", userNotification);
+                    }
+                } else if (summary != null && summary.startsWith("CATEGORY:")) {
+                    String categoryId = summary.substring(9);
+                    String requestTitle = "Request";
+                    String categoryName = "Category";
+                    try {
+                        requestTitle = jdbcTemplate.queryForObject("SELECT title FROM service_requests WHERE id = ?", String.class, payload.getEntityId());
+                        categoryName = jdbcTemplate.queryForObject("SELECT name FROM service_categories WHERE id = ?", String.class, categoryId);
+                    } catch (Exception ex) {
+                        logger.warn("AdminNotificationListener: failed to retrieve details for request.created: {}", ex.getMessage());
+                    }
+
+                    try {
+                        java.util.List<java.util.Map<String, Object>> providers = jdbcTemplate.queryForList(
+                            "SELECT DISTINCT u.id FROM users u " +
+                            "JOIN provider_categories pc ON u.id = pc.provider_id " +
+                            "JOIN provider_profiles pp ON u.id = pp.id " +
+                            "WHERE pc.category_id = ? " +
+                            "  AND u.is_verified = true " +
+                            "  AND (u.primary_role = 'PROVIDER' OR (u.secondary_role = 'PROVIDER' AND u.secondary_role_status = 'APPROVED') OR u.is_provider = true) " +
+                            "  AND (pp.notify_new_requests IS NULL OR pp.notify_new_requests = true)", categoryId);
+
+                        for (java.util.Map<String, Object> prov : providers) {
+                            String pId = (String) prov.get("id");
+                            if (pId != null && !notificationRepository.existsByUserIdAndTypeAndReferenceId(pId, "MATCHING_REQUEST_CREATED", payload.getEntityId())) {
+                                com.knust.campusserv.support.model.Notification userNotification = new com.knust.campusserv.support.model.Notification();
+                                userNotification.setId("ntf-" + java.util.UUID.randomUUID().toString());
+                                userNotification.setUserId(pId);
+                                userNotification.setTitle("New Matching Request");
+                                userNotification.setMessage("New request '" + requestTitle + "' matches your service category '" + categoryName + "'");
+                                userNotification.setType("MATCHING_REQUEST_CREATED");
+                                userNotification.setReferenceId(payload.getEntityId());
+                                userNotification.setIsRead(false);
+                                notificationRepository.save(userNotification);
+                                messagingTemplate.convertAndSend("/topic/user/" + pId + "/notifications", userNotification);
+                            }
+                        }
+                    } catch (Exception ex) {
+                        logger.error("AdminNotificationListener: failed to dispatch CATEGORY request.created notifications: {}", ex.getMessage());
+                    }
                 }
 
             } else if ("request.cancelled".equals(payload.getType())) {
@@ -112,10 +156,125 @@ public class AdminNotificationListener {
                     cancelPayload.put("type", "REQUEST_CANCELLED");
                     cancelPayload.put("requestId", requestId);
 
-                    // Broadcast to bidding providers and anyone watching open feed
                     messagingTemplate.convertAndSend("/topic/request." + requestId + ".bids", cancelPayload);
                     messagingTemplate.convertAndSend("/topic/requests.feed", cancelPayload);
                     logger.info("Broadcasted request.cancelled STOMP event for request: {}", requestId);
+
+                    try {
+                        String title = jdbcTemplate.queryForObject("SELECT title FROM service_requests WHERE id = ?", String.class, requestId);
+                        java.util.List<String> providerIds = jdbcTemplate.queryForList(
+                            "SELECT DISTINCT provider_id FROM offers WHERE request_id = ? AND status = 'PENDING'",
+                            String.class, requestId);
+                        for (String pId : providerIds) {
+                            if (pId != null && !notificationRepository.existsByUserIdAndTypeAndReferenceId(pId, "REQUEST_CANCELLED", requestId)) {
+                                com.knust.campusserv.support.model.Notification userNotification = new com.knust.campusserv.support.model.Notification();
+                                userNotification.setId("ntf-" + java.util.UUID.randomUUID().toString());
+                                userNotification.setUserId(pId);
+                                userNotification.setTitle("Request Cancelled");
+                                userNotification.setMessage("The request '" + title + "' you bid on has been cancelled by the student.");
+                                userNotification.setType("REQUEST_CANCELLED");
+                                userNotification.setReferenceId(requestId);
+                                userNotification.setIsRead(false);
+                                notificationRepository.save(userNotification);
+                                messagingTemplate.convertAndSend("/topic/user/" + pId + "/notifications", userNotification);
+                            }
+                        }
+                    } catch (Exception ex) {
+                        logger.warn("AdminNotificationListener: failed to process request.cancelled notification dispatch: {}", ex.getMessage());
+                    }
+                }
+            } else if ("offer.accepted".equals(payload.getType())) {
+                String requestId = payload.getRequestId();
+                String offerId = payload.getOfferId();
+                String providerId = payload.getProviderId();
+                String requesterId = payload.getRequesterId();
+
+                if (requestId != null && offerId != null) {
+                    String title = "Request";
+                    String providerName = "Provider";
+                    try {
+                        title = jdbcTemplate.queryForObject("SELECT title FROM service_requests WHERE id = ?", String.class, requestId);
+                        providerName = jdbcTemplate.queryForObject("SELECT full_name FROM users WHERE id = ?", String.class, providerId);
+                    } catch (Exception ex) {
+                        logger.warn("AdminNotificationListener: failed to retrieve details for offer.accepted: {}", ex.getMessage());
+                    }
+
+                    if (providerId != null && !notificationRepository.existsByUserIdAndTypeAndReferenceId(providerId, "BID_ACCEPTED", offerId)) {
+                        com.knust.campusserv.support.model.Notification winnerNotif = new com.knust.campusserv.support.model.Notification();
+                        winnerNotif.setId("ntf-" + java.util.UUID.randomUUID().toString());
+                        winnerNotif.setUserId(providerId);
+                        winnerNotif.setTitle("Bid Accepted");
+                        winnerNotif.setMessage("Your bid was accepted! You have a new job '" + title + "'");
+                        winnerNotif.setType("BID_ACCEPTED");
+                        winnerNotif.setReferenceId(offerId);
+                        winnerNotif.setIsRead(false);
+                        notificationRepository.save(winnerNotif);
+                        messagingTemplate.convertAndSend("/topic/user/" + providerId + "/notifications", winnerNotif);
+                    }
+
+                    if (requesterId != null && !notificationRepository.existsByUserIdAndTypeAndReferenceId(requesterId, "JOB_STARTED", offerId)) {
+                        com.knust.campusserv.support.model.Notification studentNotif = new com.knust.campusserv.support.model.Notification();
+                        studentNotif.setId("ntf-" + java.util.UUID.randomUUID().toString());
+                        studentNotif.setUserId(requesterId);
+                        studentNotif.setTitle("Job Initialized");
+                        studentNotif.setMessage("You accepted " + providerName + "'s bid for '" + title + "'. Escrow held.");
+                        studentNotif.setType("JOB_STARTED");
+                        studentNotif.setReferenceId(offerId);
+                        studentNotif.setIsRead(false);
+                        notificationRepository.save(studentNotif);
+                        messagingTemplate.convertAndSend("/topic/user/" + requesterId + "/notifications", studentNotif);
+                    }
+
+                    try {
+                        java.util.List<String> otherProviders = jdbcTemplate.queryForList(
+                            "SELECT DISTINCT provider_id FROM offers WHERE request_id = ? AND provider_id != ?",
+                            String.class, requestId, providerId);
+                        for (String otherPId : otherProviders) {
+                            if (otherPId != null && !notificationRepository.existsByUserIdAndTypeAndReferenceId(otherPId, "BID_REJECTED", requestId)) {
+                                com.knust.campusserv.support.model.Notification loserNotif = new com.knust.campusserv.support.model.Notification();
+                                loserNotif.setId("ntf-" + java.util.UUID.randomUUID().toString());
+                                loserNotif.setUserId(otherPId);
+                                loserNotif.setTitle("Request Closed");
+                                loserNotif.setMessage("Your bid on '" + title + "' was not selected this time.");
+                                loserNotif.setType("BID_REJECTED");
+                                loserNotif.setReferenceId(requestId);
+                                loserNotif.setIsRead(false);
+                                notificationRepository.save(loserNotif);
+                                messagingTemplate.convertAndSend("/topic/user/" + otherPId + "/notifications", loserNotif);
+                            }
+                        }
+                    } catch (Exception ex) {
+                        logger.error("AdminNotificationListener: failed to dispatch BID_REJECTED notifications: {}", ex.getMessage());
+                    }
+                }
+            } else if ("offer.withdrawn".equals(payload.getType())) {
+                String requestId = payload.getRequestId();
+                String offerId = payload.getOfferId();
+                String providerId = payload.getProviderId();
+                String requesterId = payload.getRequesterId();
+
+                if (requestId != null && offerId != null && requesterId != null) {
+                    String title = "Request";
+                    String providerName = "Provider";
+                    try {
+                        title = jdbcTemplate.queryForObject("SELECT title FROM service_requests WHERE id = ?", String.class, requestId);
+                        providerName = jdbcTemplate.queryForObject("SELECT full_name FROM users WHERE id = ?", String.class, providerId);
+                    } catch (Exception ex) {
+                        logger.warn("AdminNotificationListener: failed to retrieve details for offer.withdrawn: {}", ex.getMessage());
+                    }
+
+                    if (!notificationRepository.existsByUserIdAndTypeAndReferenceId(requesterId, "BID_WITHDRAWN", offerId)) {
+                        com.knust.campusserv.support.model.Notification userNotification = new com.knust.campusserv.support.model.Notification();
+                        userNotification.setId("ntf-" + java.util.UUID.randomUUID().toString());
+                        userNotification.setUserId(requesterId);
+                        userNotification.setTitle("Bid Withdrawn");
+                        userNotification.setMessage(providerName + " withdrew their bid on your request '" + title + "'");
+                        userNotification.setType("BID_WITHDRAWN");
+                        userNotification.setReferenceId(offerId);
+                        userNotification.setIsRead(false);
+                        notificationRepository.save(userNotification);
+                        messagingTemplate.convertAndSend("/topic/user/" + requesterId + "/notifications", userNotification);
+                    }
                 }
             } else if (payload.getType() != null && payload.getType().startsWith("job.")) {
                 java.util.Map<String, Object> jobPayload = new java.util.HashMap<>();
