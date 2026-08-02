@@ -109,18 +109,28 @@ export default function StatusToast({
     },
   });
 
-  const bg          = isDark ? tokens.bgDark      : tokens.bg;
-  const iconBg      = isDark ? tokens.iconBgDark  : tokens.iconBg;
-  const titleColor  = isDark ? tokens.titleColorDark : tokens.titleColor;
-  const TOP_OFFSET  = insets.top + 12 + stackIndex * 76;
+  const { colors } = useTheme();
+
+  // Map semantic statuses directly to the theme's colors
+  let statusColor = colors.primary;
+  if (status === 'success') {
+    statusColor = colors.success;
+  } else if (status === 'error') {
+    statusColor = colors.error;
+  } else if (status === 'warning') {
+    statusColor = colors.warning;
+  }
+
+  const TOP_OFFSET = insets.top + 12 + stackIndex * 82;
 
   return (
     <Animated.View
       style={[
         styles.container,
         {
-          backgroundColor: bg,
-          borderColor: tokens.borderColor,
+          backgroundColor: colors.cardBackground,
+          borderColor: colors.border,
+          borderLeftColor: statusColor,
           top: TOP_OFFSET,
           transform: [{ translateY }, { translateX }],
           opacity,
@@ -128,26 +138,26 @@ export default function StatusToast({
       ]}
       {...panResponder.panHandlers}
     >
-      {/* Icon badge */}
-      <View style={[styles.iconBadge, { backgroundColor: iconBg }]}>
-        <Ionicons name={tokens.icon} size={18} color={tokens.iconColor} />
+      {/* Icon badge with semantic status color fill */}
+      <View style={[styles.iconBadge, { backgroundColor: statusColor }]}>
+        <Ionicons name={tokens.icon} size={16} color="#FFFFFF" />
       </View>
 
-      {/* Text */}
+      {/* Text block with custom design system typography */}
       <View style={styles.textBlock}>
-        <Text style={[styles.title, { color: titleColor }]} numberOfLines={1}>
+        <Text style={[styles.title, { color: colors.text }]} numberOfLines={1}>
           {title}
         </Text>
         {subtitle ? (
-          <Text style={[styles.subtitle, { color: 'rgba(255,255,255,0.88)' }]} numberOfLines={2}>
+          <Text style={[styles.subtitle, { color: colors.textMuted }]} numberOfLines={2}>
             {subtitle}
           </Text>
         ) : null}
       </View>
 
-      {/* Dismiss button */}
+      {/* Close button with matching text-muted color */}
       <TouchableOpacity style={styles.closeBtn} onPress={dismiss} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-        <Ionicons name="close" size={16} color="rgba(255,255,255,0.75)" />
+        <Ionicons name="close" size={16} color={colors.textMuted} />
       </TouchableOpacity>
     </Animated.View>
   );
@@ -160,22 +170,23 @@ const styles = StyleSheet.create({
     right: 16,
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: 18,
+    borderRadius: 14,
     borderWidth: 1,
+    borderLeftWidth: 6,
     paddingVertical: 12,
     paddingHorizontal: 14,
     zIndex: 9999,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.14,
-    shadowRadius: 10,
-    elevation: 8,
-    gap: 10,
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 4,
+    gap: 12,
   },
   iconBadge: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
+    width: 30,
+    height: 30,
+    borderRadius: 15,
     alignItems: 'center',
     justifyContent: 'center',
     flexShrink: 0,
@@ -185,13 +196,14 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 14,
-    fontWeight: '700',
+    fontFamily: 'Outfit-SemiBold',
+    fontWeight: '600',
     letterSpacing: 0.1,
   },
   subtitle: {
     fontSize: 12,
-    color: 'rgba(255,255,255,0.88)',
-    marginTop: 1,
+    fontFamily: 'Inter-Medium',
+    marginTop: 2,
   },
   closeBtn: {
     padding: 2,

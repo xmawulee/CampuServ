@@ -8,15 +8,16 @@ if (Test-Path "$PSScriptRoot\.env") {
                 $name = $parts[0].Trim()
                 $value = $parts[1].Trim().Trim('"').Trim("'")
                 [System.Environment]::SetEnvironmentVariable($name, $value)
-                $env:$name = $value
+                Set-Item "env:$name" $value
             }
         }
     }
 }
-
 $env:SPRING_PROFILES_ACTIVE = "local-dev"
 $env:EMAIL_VERIFICATION_URL = "http://localhost:8080/auth/verify-email"
 $env:UPLOAD_DIR = "$PSScriptRoot\uploads\"
+Remove-Item Env:PORT -ErrorAction SilentlyContinue
+
 
 # Start infrastructure
 docker-compose up -d

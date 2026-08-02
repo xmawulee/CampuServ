@@ -49,16 +49,26 @@ export default function Toast({ message, visible, type }: ToastProps) {
     }
   }, [visible]);
 
-  const bg     = isDark ? tokens.bgDark     : tokens.bg;
-  const iconBg = isDark ? tokens.iconBgDark : tokens.iconBg;
+  const { colors } = useTheme();
+
+  // Map semantic statuses directly to the theme's colors
+  let statusColor = colors.primary;
+  if (status === 'success') {
+    statusColor = colors.success;
+  } else if (status === 'error') {
+    statusColor = colors.error;
+  } else if (status === 'warning') {
+    statusColor = colors.warning;
+  }
 
   return (
     <Animated.View
       style={[
         styles.container,
         {
-          backgroundColor: bg,
-          borderColor: tokens.borderColor,
+          backgroundColor: colors.cardBackground,
+          borderColor: colors.border,
+          borderLeftColor: statusColor,
           top: insets.top + 12,
           transform: [{ translateY }],
           opacity,
@@ -66,10 +76,11 @@ export default function Toast({ message, visible, type }: ToastProps) {
       ]}
       pointerEvents="none"
     >
-      <View style={[styles.iconBadge, { backgroundColor: iconBg }]}>
-        <Ionicons name={tokens.icon} size={16} color={tokens.iconColor} />
+      {/* Icon badge with semantic status color fill */}
+      <View style={[styles.iconBadge, { backgroundColor: statusColor }]}>
+        <Ionicons name={tokens.icon} size={16} color="#FFFFFF" />
       </View>
-      <Text style={[styles.text, { color: tokens.titleColor }]} numberOfLines={2}>
+      <Text style={[styles.text, { color: colors.text }]} numberOfLines={2}>
         {message}
       </Text>
     </Animated.View>
@@ -83,17 +94,18 @@ const styles = StyleSheet.create({
     right: 16,
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: 18,
+    borderRadius: 14,
     borderWidth: 1,
+    borderLeftWidth: 6,
     paddingVertical: 12,
     paddingHorizontal: 14,
     zIndex: 9999,
-    gap: 10,
+    gap: 12,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.14,
-    shadowRadius: 10,
-    elevation: 8,
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 4,
   },
   iconBadge: {
     width: 30,
@@ -106,6 +118,7 @@ const styles = StyleSheet.create({
   text: {
     flex: 1,
     fontSize: 13,
+    fontFamily: 'Outfit-SemiBold',
     fontWeight: '600',
   },
 });
