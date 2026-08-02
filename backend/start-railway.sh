@@ -39,6 +39,6 @@ for service in $services; do
     sleep 10
 done
 
-# Start API Gateway in foreground to keep container alive
+# Start API Gateway in foreground (without exec, to keep parent shell alive and prevent background jobs receiving SIGHUP)
 echo "Starting API Gateway in foreground..."
-exec java $GATEWAY_JVM_OPTS -jar /app/api-gateway.jar
+java $GATEWAY_JVM_OPTS -jar /app/api-gateway.jar
