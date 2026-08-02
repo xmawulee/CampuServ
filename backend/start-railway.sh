@@ -29,6 +29,9 @@ echo "=================================================="
 echo "All microservices launched. Tailing logs of API-Gateway..."
 echo "=================================================="
 
-# Ensure the log file exists before tailing
-touch /app/api-gateway.log
-tail -f /app/api-gateway.log
+# Ensure log files exist so tail doesn't fail
+for service in auth-service user-service request-service job-service payment-service supporting-service api-gateway eureka-server; do
+    touch /app/$service.log
+done
+
+tail -f /app/*.log
