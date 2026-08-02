@@ -30,10 +30,30 @@ java $EUREKA_JVM_OPTS -jar /app/eureka-server.jar &
 echo "Waiting 15 seconds for Eureka to start..."
 sleep 15
 
-# Start all microservices sequentially in the background with a 10s stagger
-# to prevent CPU spikes and connection timeout conflicts during parallel JPA boot.
-services="auth-service user-service request-service job-service payment-service supporting-service"
-for service in $services; do
+# Start auth-service FIRST — it owns all Flyway migrations.
+# All other services must wait until auth-service Tomcat is up (port 8087),
+# which guarantees every DDL migration has been applied before Hibernate
+# validation runs in the remaining services.
+echo "Starting auth-service (runs Flyway migrations)..."
+java $MICROSERVICE_JVM_OPTS -jar /app/auth-service.jar &
+
+echo "Waiting for auth-service to complete Flyway migrations (max 5 min)..."
+WAIT_SECS=0
+MAX_WAIT=300
+while ! nc -z localhost 8087 2>/dev/null; do
+    sleep 5
+    WAIT_SECS=$((WAIT_SECS + 5))
+    if [ $WAIT_SECS -ge $MAX_WAIT ]; then
+        echo "WARNING: Timeout waiting for auth-service after ${MAX_WAIT}s. Proceeding anyway..."
+        break
+    fi
+    echo "  ...auth-service not ready yet (${WAIT_SECS}s elapsed)"
+done
+echo "Auth-service ready — Flyway migrations complete. Starting remaining services..."
+
+# Start remaining microservices with a short stagger
+remaining_services="user-service request-service job-service payment-service supporting-service"
+for service in $remaining_services; do
     echo "Starting $service..."
     java $MICROSERVICE_JVM_OPTS -jar /app/$service.jar &
     sleep 10
