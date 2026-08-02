@@ -9,9 +9,18 @@ echo "=================================================="
 echo "Starting CampusServ Monolithic-Container Stack..."
 echo "=================================================="
 
+# Hyper-optimized Jvm flags for 512MB RAM container constraint:
+# - -Xint: Interpreted mode (disables JIT compiler, saves massive native memory)
+# - -Xmx32m -Xms32m: Limit heap footprint
+# - -Xss256k: Reduce thread stack size
+# - -XX:ReservedCodeCacheSize=8m: Limit JIT code cache
+# - -XX:MaxMetaspaceSize=48m: Limit class metadata memory
+# - -XX:CICompilerCount=1: Limit compiler threads
+JVM_OPTS="-Xint -Xmx32m -Xms32m -Xss256k -XX:ReservedCodeCacheSize=8m -XX:MaxMetaspaceSize=48m -XX:CICompilerCount=1 -Dspring.profiles.active=local-dev"
+
 # Start Eureka Server first (Registry)
 echo "Starting Eureka Server on port 8761..."
-java -Dspring.profiles.active=local-dev -Xmx96m -XX:TieredStopAtLevel=1 -jar /app/eureka-server.jar &
+java $JVM_OPTS -jar /app/eureka-server.jar &
 
 # Wait for Eureka to initialize
 echo "Waiting 12 seconds for Eureka to start..."
@@ -21,10 +30,10 @@ sleep 12
 services="auth-service user-service request-service job-service payment-service supporting-service"
 for service in $services; do
     echo "Starting $service..."
-    java -Dspring.profiles.active=local-dev -Xmx96m -XX:TieredStopAtLevel=1 -jar /app/$service.jar &
+    java $JVM_OPTS -jar /app/$service.jar &
     sleep 3
 done
 
 # Start API Gateway in foreground to keep container alive
 echo "Starting API Gateway in foreground..."
-exec java -Dspring.profiles.active=local-dev -Xmx96m -XX:TieredStopAtLevel=1 -jar /app/api-gateway.jar
+exec java $JVM_OPTS -jar /app/api-gateway.jar
