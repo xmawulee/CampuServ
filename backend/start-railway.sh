@@ -16,7 +16,7 @@ echo "=================================================="
 # - -XX:ReservedCodeCacheSize=8m: Limit JIT code cache
 # - -XX:MaxMetaspaceSize=48m: Limit class metadata memory
 # - -XX:CICompilerCount=1: Limit compiler threads
-JVM_OPTS="-Xint -Xmx32m -Xms32m -Xss256k -XX:ReservedCodeCacheSize=8m -XX:MaxMetaspaceSize=48m -XX:CICompilerCount=1 -Dspring.profiles.active=local-dev"
+JVM_OPTS="-Xint -Xmx32m -Xms32m -Xss256k -XX:ReservedCodeCacheSize=8m -XX:CICompilerCount=1 -Dspring.profiles.active=local-dev"
 
 # Start Eureka Server first (Registry)
 echo "Starting Eureka Server on port 8761..."
