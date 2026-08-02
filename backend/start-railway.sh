@@ -18,24 +18,25 @@ echo "=================================================="
 
 COMMON_JVM_OPTS="-Xint -Xss256k -XX:+UseSerialGC -XX:ReservedCodeCacheSize=8m -XX:CICompilerCount=1 -Dspring.profiles.active=local-dev"
 
-EUREKA_JVM_OPTS="$COMMON_JVM_OPTS -Xmx24m -Xms24m"
-GATEWAY_JVM_OPTS="$COMMON_JVM_OPTS -Xmx32m -Xms32m"
+EUREKA_JVM_OPTS="$COMMON_JVM_OPTS -Xmx48m -Xms48m"
+GATEWAY_JVM_OPTS="$COMMON_JVM_OPTS -Xmx48m -Xms48m"
 MICROSERVICE_JVM_OPTS="$COMMON_JVM_OPTS -Xmx48m -Xms48m"
 
 # Start Eureka Server first (Registry)
 echo "Starting Eureka Server on port 8761..."
 java $EUREKA_JVM_OPTS -jar /app/eureka-server.jar &
 
-# Wait for Eureka to initialize
-echo "Waiting 12 seconds for Eureka to start..."
-sleep 12
+# Wait for Eureka to initialize fully
+echo "Waiting 15 seconds for Eureka to start..."
+sleep 15
 
-# Start all microservices in the background
+# Start all microservices sequentially in the background with a 10s stagger
+# to prevent CPU spikes and connection timeout conflicts during parallel JPA boot.
 services="auth-service user-service request-service job-service payment-service supporting-service"
 for service in $services; do
     echo "Starting $service..."
     java $MICROSERVICE_JVM_OPTS -jar /app/$service.jar &
-    sleep 3
+    sleep 10
 done
 
 # Start API Gateway in foreground to keep container alive
