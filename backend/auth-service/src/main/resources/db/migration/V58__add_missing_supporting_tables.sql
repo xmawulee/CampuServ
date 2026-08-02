@@ -1,5 +1,6 @@
--- V3: Create missing database tables required by the supporting-service entities.
--- This resolves SchemaManagementExceptions on startup due to strict ddl-auto validation.
+-- V58: Create missing database tables required by the supporting-service entities.
+-- Since supporting-service has Flyway disabled (managed by the main migration sequence),
+-- this migration is defined here in auth-service so that it is executed during initial startup.
 
 CREATE TABLE IF NOT EXISTS admin_audit_logs (
     id UUID PRIMARY KEY,
