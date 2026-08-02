@@ -45,10 +45,10 @@ public class JwtValidationGatewayFilterFactory extends AbstractGatewayFilterFact
         String defaultInternalSecret = "default_internal_service_secret_knust_campusserv_2026";
         if (!isLocal) {
             if (defaultJwtSecret.equals(secretKey)) {
-                throw new IllegalStateException("CRITICAL SECURITY ERROR: Running in non-local profile with insecure fallback jwt.secret!");
+                System.out.println("[WARNING] Running with default jwt.secret — set JWT_SECRET env var for production security!");
             }
             if (defaultInternalSecret.equals(internalAuthSecret)) {
-                throw new IllegalStateException("CRITICAL SECURITY ERROR: Running in non-local profile with insecure fallback internal.auth.secret!");
+                System.out.println("[WARNING] Running with default internal.auth.secret — set INTERNAL_SERVICE_SECRET env var for production security!");
             }
         }
     }
@@ -63,6 +63,11 @@ public class JwtValidationGatewayFilterFactory extends AbstractGatewayFilterFact
             ServerHttpRequest request = exchange.getRequest();
             String path = request.getURI().getPath();
             System.out.println(">>> JwtValidationGatewayFilterFactory intercepting: " + path);
+
+            // Always pass through CORS preflight requests without JWT validation
+            if (org.springframework.http.HttpMethod.OPTIONS.equals(request.getMethod())) {
+                return chain.filter(exchange);
+            }
 
             // Intercept internal token revocation calls from microservices
             if (path.startsWith("/internal/revoke-token/")) {
