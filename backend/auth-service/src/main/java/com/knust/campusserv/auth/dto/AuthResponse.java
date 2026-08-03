@@ -134,4 +134,8 @@ public class AuthResponse {
     private Boolean emailVerified;
     public Boolean getEmailVerified() { return emailVerified != null ? emailVerified : false; }
     public void setEmailVerified(Boolean emailVerified) { this.emailVerified = emailVerified; }
+
+    private String termsAcceptedVersion;
+    public String getTermsAcceptedVersion() { return termsAcceptedVersion; }
+    public void setTermsAcceptedVersion(String termsAcceptedVersion) { this.termsAcceptedVersion = termsAcceptedVersion; }
 }

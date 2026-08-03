@@ -8,8 +8,10 @@ import com.knust.campusserv.auth.dto.VerifyResetCodeRequest;
 import com.knust.campusserv.auth.model.RefreshToken;
 import com.knust.campusserv.auth.model.User;
 import com.knust.campusserv.auth.model.EmailVerificationCode;
+import com.knust.campusserv.auth.model.ProviderTermsAcceptance;
 import com.knust.campusserv.auth.repository.RefreshTokenRepository;
 import com.knust.campusserv.auth.repository.UserRepository;
+import com.knust.campusserv.auth.repository.ProviderTermsAcceptanceRepository;
 import java.util.HexFormat;
 import com.knust.campusserv.auth.service.LoginRateLimiterService;
 import org.springframework.web.client.RestTemplate;
@@ -92,6 +94,9 @@ public class AuthController {
     @Autowired
     private com.knust.campusserv.auth.repository.EmailVerificationCodeRepository emailVerificationCodeRepository;
 
+    @Autowired
+    private ProviderTermsAcceptanceRepository providerTermsAcceptanceRepository;
+
     @Autowired(required = false)
     private org.springframework.data.redis.core.StringRedisTemplate redisTemplate;
 
@@ -128,6 +133,7 @@ public class AuthController {
         );
         resp.setRejectionCount(user.getRejectionCount() != null ? user.getRejectionCount() : 0);
         resp.setEmailVerified(user.getEmailVerified());
+        resp.setTermsAcceptedVersion(user.getTermsAcceptedVersion());
         return resp;
     }
 
@@ -499,8 +505,24 @@ public class AuthController {
         return ResponseEntity.ok(buildAuthResponse(saved, null, null));
     }
 
+    @GetMapping("/terms")
+    public ResponseEntity<?> getTerms() {
+        Map<String, String> response = new HashMap<>();
+        response.put("version", "v1");
+        response.put("terms", "1. Eligibility: You must be a currently enrolled student at KNUST.\n" +
+                "2. Verification: You agree to provide a valid KNUST student ID photo. Providing fraudulent details will result in permanent suspension.\n" +
+                "3. Conduct: You agree to perform tasks professionally, maintain honest communication, and comply with all CampusServ guidelines.\n" +
+                "4. Payments: Payments are processed via CampusServ escrow. You must not accept or request direct offline payments.\n" +
+                "5. Commission: CampusServ reserves the right to charge service fees/commission on completed jobs as specified in the pricing details.");
+        return ResponseEntity.ok(response);
+    }
+
     @PostMapping("/submit-provider-application")
-    public ResponseEntity<?> submitProviderApplication(@RequestHeader("X-User-Id") String userId) {
+    @org.springframework.transaction.annotation.Transactional
+    public ResponseEntity<?> submitProviderApplication(
+            @RequestHeader("X-User-Id") String userId,
+            @RequestBody(required = false) Map<String, String> body,
+            jakarta.servlet.http.HttpServletRequest request) {
         Optional<User> userOpt = userRepository.findById(userId);
         if (userOpt.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found.");
@@ -513,6 +535,12 @@ public class AuthController {
         if (!"INCOMPLETE".equalsIgnoreCase(user.getAccountStatus()) && !"PENDING_VERIFICATION".equalsIgnoreCase(user.getAccountStatus())) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Application already submitted or processed.");
         }
+
+        String termsVersion = body != null ? body.get("termsVersion") : null;
+        if (termsVersion == null || termsVersion.trim().isEmpty()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Terms & Conditions version must be accepted and specified.");
+        }
+
         if (user.getStudentIdPhotoUrl() == null || user.getStudentIdPhotoUrl().trim().isEmpty()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Student ID photo is required before submitting.");
         }
@@ -529,6 +557,26 @@ public class AuthController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("At least one service category is required before submitting.");
         }
 
+        // Record terms acceptance
+        Optional<ProviderTermsAcceptance> existingAcceptance = providerTermsAcceptanceRepository.findByUserIdAndTermsVersion(userId, termsVersion);
+        if (existingAcceptance.isEmpty()) {
+            ProviderTermsAcceptance acceptance = new ProviderTermsAcceptance();
+            acceptance.setId("pta-" + UUID.randomUUID().toString());
+            acceptance.setUserId(userId);
+            acceptance.setTermsVersion(termsVersion);
+            acceptance.setTermsAcceptedAt(LocalDateTime.now());
+            
+            // Resolve IP address
+            String ipAddress = request.getHeader("X-Forwarded-For");
+            if (ipAddress == null || ipAddress.isEmpty()) {
+                ipAddress = request.getRemoteAddr();
+            }
+            acceptance.setIpAddress(ipAddress);
+            
+            providerTermsAcceptanceRepository.save(acceptance);
+        }
+
+        user.setTermsAcceptedVersion(termsVersion);
         user.setPrimaryRoleVerified(false);
         user.setAccountStatus("PENDING_VERIFICATION");
         user.setUpdatedAt(LocalDateTime.now());
@@ -563,6 +611,7 @@ public class AuthController {
 
         // Reset accountStatus to INCOMPLETE so they enter the onboarding wizard
         user.setAccountStatus("INCOMPLETE");
+        user.setTermsAcceptedVersion(null);
         // We do NOT clear verificationStatus yet, let them keep REJECTED so they know why until they resubmit
         user.setUpdatedAt(LocalDateTime.now());
         User saved = userRepository.save(user);

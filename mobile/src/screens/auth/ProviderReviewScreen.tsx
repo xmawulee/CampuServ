@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   StyleSheet,
   Text,
@@ -20,16 +20,56 @@ export default function ProviderReviewScreen({ navigation }: any) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
+  const [termsText, setTermsText] = useState<string>('');
+  const [termsVersion, setTermsVersion] = useState<string>('v1');
+  const [isLoadingTerms, setIsLoadingTerms] = useState(true);
+  const [accepted, setAccepted] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    const loadTerms = async () => {
+      try {
+        setIsLoadingTerms(true);
+        const res = await api.get('/auth/terms');
+        if (active && res.data) {
+          setTermsText(res.data.terms);
+          setTermsVersion(res.data.version);
+        }
+      } catch (err) {
+        console.warn('Failed to fetch terms from server, falling back to local bundle:', err);
+        if (active) {
+          setTermsText(
+            "1. Eligibility: You must be a currently enrolled student at KNUST.\n" +
+            "2. Verification: You agree to provide a valid KNUST student ID photo. Providing fraudulent details will result in permanent suspension.\n" +
+            "3. Conduct: You agree to perform tasks professionally, maintain honest communication, and comply with all CampusServ guidelines.\n" +
+            "4. Payments: Payments are processed via CampusServ escrow. You must not accept or request direct offline payments.\n" +
+            "5. Commission: CampusServ reserves the right to charge service fees/commission on completed jobs as specified in the pricing details."
+          );
+          setTermsVersion('v1');
+        }
+      } finally {
+        if (active) setIsLoadingTerms(false);
+      }
+    };
+    loadTerms();
+    return () => {
+      active = false;
+    };
+  }, []);
+
   const handleSubmit = async () => {
+    if (!accepted || isSubmitting) return;
+
     setIsSubmitting(true);
     setErrorMsg('');
 
     try {
-      // Explicitly submit the application to enter PENDING_VERIFICATION queue
-      await api.post(`/auth/submit-provider-application`);
+      // Explicitly submit the application with accepted termsVersion to enter PENDING_VERIFICATION queue
+      await api.post(`/auth/submit-provider-application`, { termsVersion });
 
       await updateUser({
         accountStatus: 'PENDING_VERIFICATION',
+        termsAcceptedVersion: termsVersion,
       });
 
       setIsSubmitting(false);
@@ -40,6 +80,8 @@ export default function ProviderReviewScreen({ navigation }: any) {
       let message = 'Failed to submit application. Please try again.';
       if (err?.response?.data && typeof err.response.data === 'string') {
         message = err.response.data;
+      } else if (err?.response?.data?.message && typeof err.response.data.message === 'string') {
+        message = err.response.data.message;
       }
       setErrorMsg(message);
     }
@@ -97,14 +139,45 @@ export default function ProviderReviewScreen({ navigation }: any) {
           <Text style={[styles.value, { color: colors.text }]}>{user?.bio || 'No bio provided.'}</Text>
         </View>
 
+        {/* Terms & Conditions Section */}
+        <View style={styles.termsSection}>
+          <Text style={[styles.cardTitle, { color: colors.text }]}>Provider Terms & Agreements</Text>
+          <View style={[styles.termsBox, { borderColor: colors.border, backgroundColor: colors.cardBackground }]}>
+            {isLoadingTerms ? (
+              <ActivityIndicator size="small" color={colors.primary} style={{ marginVertical: 20 }} />
+            ) : (
+              <ScrollView nestedScrollEnabled style={styles.termsTextScroll}>
+                <Text style={[styles.termsText, { color: colors.text }]}>{termsText}</Text>
+              </ScrollView>
+            )}
+          </View>
+          
+          <TouchableOpacity 
+            style={styles.checkboxRow} 
+            onPress={() => setAccepted(!accepted)}
+            activeOpacity={0.8}
+          >
+            <View style={[
+              styles.checkbox, 
+              { borderColor: accepted ? colors.primary : colors.border },
+              accepted && { backgroundColor: colors.primary }
+            ]}>
+              {accepted && <Ionicons name="checkmark" size={14} color="#FFF" />}
+            </View>
+            <Text style={[styles.checkboxLabel, { color: colors.text }]}>
+              I read and agree to the Provider Terms & Conditions
+            </Text>
+          </TouchableOpacity>
+        </View>
+
         <TouchableOpacity
           style={[
             styles.submitBtn,
             { backgroundColor: colors.primary },
-            isSubmitting && styles.submitBtnDisabled,
+            (!accepted || isSubmitting) && styles.submitBtnDisabled,
           ]}
           onPress={handleSubmit}
-          disabled={isSubmitting}
+          disabled={!accepted || isSubmitting}
         >
           {isSubmitting ? (
             <ActivityIndicator size="small" color="#FFF" />
@@ -173,4 +246,43 @@ const styles = StyleSheet.create({
   },
   submitBtnDisabled: { opacity: 0.5 },
   submitBtnText: { color: '#FFF', fontSize: 16, fontWeight: '700' },
+  
+  termsSection: {
+    marginBottom: 24,
+  },
+  termsBox: {
+    borderWidth: 1,
+    borderRadius: 12,
+    height: 140,
+    padding: 12,
+    marginBottom: 16,
+  },
+  termsTextScroll: {
+    flex: 1,
+  },
+  termsText: {
+    fontSize: 12,
+    lineHeight: 18,
+    fontFamily: 'Inter-Medium',
+  },
+  checkboxRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingVertical: 4,
+  },
+  checkbox: {
+    width: 22,
+    height: 22,
+    borderRadius: 6,
+    borderWidth: 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  checkboxLabel: {
+    flex: 1,
+    fontSize: 13,
+    fontWeight: '600',
+    fontFamily: 'Inter-Medium',
+  },
 });

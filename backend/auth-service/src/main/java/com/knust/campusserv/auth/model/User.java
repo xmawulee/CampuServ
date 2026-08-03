@@ -68,6 +68,12 @@ public class User {
     @Column(name = "email_verified", nullable = false)
     private Boolean emailVerified = false;
 
+    @Column(name = "terms_accepted_version")
+    private String termsAcceptedVersion;
+
+    public String getTermsAcceptedVersion() { return termsAcceptedVersion; }
+    public void setTermsAcceptedVersion(String termsAcceptedVersion) { this.termsAcceptedVersion = termsAcceptedVersion; }
+
     // Backward compatibility alias
     public Boolean getEmailVerified() { return emailVerified != null ? emailVerified : false; }
     public void setEmailVerified(Boolean emailVerified) { this.emailVerified = emailVerified; }

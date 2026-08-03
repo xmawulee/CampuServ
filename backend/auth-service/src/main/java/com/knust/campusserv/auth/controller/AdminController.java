@@ -58,7 +58,7 @@ public class AdminController {
         // Pending provider verifications
         long pending = userRepository.findAll().stream()
                 .filter(u -> ("PROVIDER".equalsIgnoreCase(u.getSecondaryRole()) && "PENDING_VERIFICATION".equalsIgnoreCase(u.getSecondaryRoleStatus())) ||
-                             "PENDING_VERIFICATION".equalsIgnoreCase(u.getVerificationStatus()))
+                             ("PENDING_VERIFICATION".equalsIgnoreCase(u.getVerificationStatus()) && "PENDING_VERIFICATION".equalsIgnoreCase(u.getAccountStatus())))
                 .count();
         counts.put("pendingProviders", (int) pending);
         counts.put("pendingVerifications", (int) pending);
@@ -132,7 +132,7 @@ public class AdminController {
     public ResponseEntity<?> getVerificationQueue() {
         List<com.knust.campusserv.auth.dto.PendingProviderResponse> pendingUsers = userRepository.findAll().stream()
                 .filter(u -> ("PROVIDER".equalsIgnoreCase(u.getSecondaryRole()) && "PENDING_VERIFICATION".equalsIgnoreCase(u.getSecondaryRoleStatus())) || 
-                             "PENDING_VERIFICATION".equalsIgnoreCase(u.getVerificationStatus()))
+                             ("PENDING_VERIFICATION".equalsIgnoreCase(u.getVerificationStatus()) && "PENDING_VERIFICATION".equalsIgnoreCase(u.getAccountStatus())))
                 .map(u -> {
                     u.setServiceCategory(resolveUserServiceCategory(u));
                     List<String> duplicates = userRepository.findAll().stream()
