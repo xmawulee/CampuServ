@@ -20,7 +20,7 @@ import { useToast } from '../../styles/ToastContext';
 import { stompClient } from '../../services/socket';
 import CompletionCodeClientModal from '../../components/CompletionCodeClientModal';
 import CompletionCodeEntryModal from '../../components/CompletionCodeEntryModal';
-import AnimatedBackground from '../../components/AnimatedBackground';
+
 
 // Status steps for on-site jobs (code-exchange based)
 const STATUS_STEPS_ONSITE = ['ACCEPTED', 'IN_PROGRESS', 'AWAITING_CODE', 'COMPLETED'];
@@ -432,7 +432,7 @@ export default function ActiveJobScreen({ navigation, route }: any) {
   }
 
   return (
-    <AnimatedBackground style={{ flex: 1 }}>
+    <View style={{ flex: 1 }}>
       <SafeAreaView edges={['top']} style={{ backgroundColor: colors.cardBackground, zIndex: 10, ...styles.headerShadow }}>
         <View style={styles.header}>
           <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
@@ -742,7 +742,7 @@ export default function ActiveJobScreen({ navigation, route }: any) {
         imageUrl={selectedImage}
         onClose={() => setSelectedImage(null)}
       />
-    </AnimatedBackground>
+    </View>
   );
 }
 

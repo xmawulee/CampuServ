@@ -5,6 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { api } from '../../services/api';
 import { useToast } from '../../styles/ToastContext';
 import { useAuthStore } from '../../store/authStore';
+import { useTheme } from '../../styles/ThemeContext';
 
 export const WithdrawalScreen = () => {
     const { user } = useAuthStore();
@@ -21,6 +22,7 @@ export const WithdrawalScreen = () => {
     
     const navigation = useNavigation();
     const { showToast } = useToast();
+    const { colors, isDark } = useTheme();
 
     useEffect(() => {
         const unsubscribe = navigation.addListener('beforeRemove', (e) => {
@@ -77,43 +79,47 @@ export const WithdrawalScreen = () => {
 
     const renderMethod = ({ item }: { item: any }) => (
         <TouchableOpacity 
-            style={[styles.methodCard, selectedMethodId === item.id && styles.methodCardSelected]}
+            style={[
+                styles.methodCard, 
+                { backgroundColor: colors.cardBackground, borderColor: colors.border },
+                selectedMethodId === item.id && { borderColor: colors.primary, backgroundColor: colors.primaryLight }
+            ]}
             onPress={() => setSelectedMethodId(item.id)}
         >
             <View style={styles.methodInfo}>
                 <Ionicons 
                     name={item.type === 'MOMO' ? 'phone-portrait-outline' : 'card-outline'} 
                     size={24} 
-                    color={selectedMethodId === item.id ? '#4A90E2' : '#888'} 
+                    color={selectedMethodId === item.id ? colors.primary : colors.textMuted} 
                 />
                 <View style={styles.methodTextContainer}>
-                    <Text style={styles.methodProvider}>{item.provider}</Text>
-                    <Text style={styles.methodAccount}>**** {item.accountNumber.slice(-4)}</Text>
+                    <Text style={[styles.methodProvider, { color: colors.text }]}>{item.provider}</Text>
+                    <Text style={[styles.methodAccount, { color: colors.textMuted }]}>**** {item.accountNumber.slice(-4)}</Text>
                 </View>
             </View>
             {selectedMethodId === item.id && (
-                <Ionicons name="checkmark-circle" size={24} color="#4A90E2" />
+                <Ionicons name="checkmark-circle" size={24} color={colors.primary} />
             )}
         </TouchableOpacity>
     );
 
     return (
-        <View style={styles.container}>
-            <Text style={styles.title}>Withdraw Funds</Text>
+        <View style={[styles.container, { backgroundColor: colors.background }]}>
+            <Text style={[styles.title, { color: colors.text }]}>Withdraw Funds</Text>
 
             <View style={styles.amountContainer}>
-                <Text style={styles.currencySymbol}>GHS</Text>
+                <Text style={[styles.currencySymbol, { color: colors.textMuted }]}>GHS</Text>
                 <TextInput
-                    style={styles.amountInput}
+                    style={[styles.amountInput, { color: colors.text }]}
                     placeholder="0.00"
-                    placeholderTextColor="#555"
+                    placeholderTextColor={colors.placeholderText}
                     keyboardType="numeric"
                     value={amount}
                     onChangeText={setAmount}
                 />
             </View>
 
-            <Text style={styles.sectionTitle}>Select Payout Method (Simulation)</Text>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>Select Payout Method (Simulation)</Text>
             
             <FlatList
                 data={payoutMethods}
@@ -122,11 +128,15 @@ export const WithdrawalScreen = () => {
             />
 
             <TouchableOpacity 
-                style={[styles.withdrawButton, (isSubmitting || !selectedMethodId) && styles.withdrawButtonDisabled]} 
+                style={[
+                    styles.withdrawButton, 
+                    { backgroundColor: colors.primary },
+                    (isSubmitting || !selectedMethodId) && { backgroundColor: isDark ? colors.border : '#E2E8F0' }
+                ]} 
                 onPress={handleWithdraw}
                 disabled={isSubmitting || !selectedMethodId}
             >
-                <Text style={styles.withdrawButtonText}>
+                <Text style={[styles.withdrawButtonText, (isSubmitting || !selectedMethodId) && { color: colors.textMuted }]}>
                     {isSubmitting ? 'Processing...' : 'Withdraw'}
                 </Text>
             </TouchableOpacity>
@@ -137,11 +147,9 @@ export const WithdrawalScreen = () => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#121212',
         padding: 20,
     },
     title: {
-        color: '#fff',
         fontSize: 24,
         fontWeight: 'bold',
         marginBottom: 30,
@@ -153,20 +161,17 @@ const styles = StyleSheet.create({
         marginBottom: 40,
     },
     currencySymbol: {
-        color: '#888',
         fontSize: 28,
         marginRight: 10,
         fontWeight: 'bold',
     },
     amountInput: {
-        color: '#fff',
         fontSize: 48,
         fontWeight: 'bold',
         minWidth: 150,
         textAlign: 'center',
     },
     sectionTitle: {
-        color: '#fff',
         fontSize: 16,
         fontWeight: '600',
         marginBottom: 15,
@@ -175,16 +180,10 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        backgroundColor: '#1E1E1E',
         padding: 15,
         borderRadius: 8,
         marginBottom: 10,
         borderWidth: 1,
-        borderColor: '#1E1E1E',
-    },
-    methodCardSelected: {
-        borderColor: '#4A90E2',
-        backgroundColor: 'rgba(74, 144, 226, 0.1)',
     },
     methodInfo: {
         flexDirection: 'row',
@@ -194,25 +193,19 @@ const styles = StyleSheet.create({
         marginLeft: 15,
     },
     methodProvider: {
-        color: '#fff',
         fontSize: 16,
         fontWeight: '500',
     },
     methodAccount: {
-        color: '#888',
         fontSize: 14,
         marginTop: 2,
     },
     withdrawButton: {
-        backgroundColor: '#4CD964',
         borderRadius: 8,
         paddingVertical: 15,
         alignItems: 'center',
         marginTop: 20,
         marginBottom: 40,
-    },
-    withdrawButtonDisabled: {
-        backgroundColor: '#333',
     },
     withdrawButtonText: {
         color: '#fff',
@@ -222,17 +215,14 @@ const styles = StyleSheet.create({
     emptyContainer: {
         alignItems: 'center',
         padding: 20,
-        backgroundColor: '#1E1E1E',
         borderRadius: 8,
     },
     emptyText: {
-        color: '#888',
         marginBottom: 15,
     },
     addMethodButton: {
         paddingHorizontal: 20,
         paddingVertical: 10,
-        backgroundColor: '#333',
         borderRadius: 20,
     },
     addMethodText: {

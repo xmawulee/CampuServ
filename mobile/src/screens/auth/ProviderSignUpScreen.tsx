@@ -177,18 +177,12 @@ export default function ProviderSignUpScreen({ navigation }: any) {
     ? (['#0B0F19', '#02040A'] as const)
     : (['#F3F6FA', '#E3E8F0'] as const);
 
-  const providerBtnGradient = isDark ? (['#065F46', '#047857'] as const) : (['#10B981', '#059669'] as const);
+  const providerBtnGradient = isDark ? (['#FF8A66', '#FF9470'] as const) : ([colors.primary, colors.primaryDark] as const);
 
   return (
-    <LinearGradient colors={backgroundColors} style={{ flex: 1 }}>
+    <View style={{ flex: 1, backgroundColor: 'transparent' }}>
       <SafeAreaView style={[styles.container, { paddingBottom: insets.bottom }]}>
         <StatusBar barStyle={isDark ? "light-content" : "dark-content"} translucent backgroundColor="transparent" />
-
-        {/* Decorative Concentric Rings in Background */}
-        <View style={styles.logoRingContainer}>
-          <View style={[styles.logoRing, { borderColor: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(16,185,129,0.04)', width: 180, height: 180, borderRadius: 90 }]} />
-          <View style={[styles.logoRing, { borderColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(16,185,129,0.06)', width: 140, height: 140, borderRadius: 70 }]} />
-        </View>
 
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -212,7 +206,7 @@ export default function ProviderSignUpScreen({ navigation }: any) {
             {/* Logo */}
             <Image 
               source={logoImage} 
-              style={styles.logo} 
+              style={[styles.logo, { tintColor: colors.primary }]} 
               resizeMode="contain"
             />
 
@@ -340,8 +334,8 @@ export default function ProviderSignUpScreen({ navigation }: any) {
             </View>
 
             {/* Info callout */}
-            <View style={[styles.infoBox, { backgroundColor: isDark ? 'rgba(16, 185, 129, 0.08)' : colors.successLight, borderColor: '#10B981', borderWidth: 1 }]}>
-              <Ionicons name="information-circle-outline" size={18} color="#10B981" />
+            <View style={[styles.infoBox, { backgroundColor: isDark ? 'rgba(255, 120, 70, 0.08)' : colors.primaryLight, borderColor: colors.primary, borderWidth: 1 }]}>
+              <Ionicons name="information-circle-outline" size={18} color={colors.primary} />
               <Text style={[styles.infoText, { color: colors.textMuted }]}>
                 After registration, you'll take a photo of your Student ID for identity verification. Admin approval is required before your provider profile goes live.
               </Text>
@@ -388,7 +382,7 @@ export default function ProviderSignUpScreen({ navigation }: any) {
           </ScrollView>
         </KeyboardAvoidingView>
       </SafeAreaView>
-    </LinearGradient>
+    </View>
   );
 }
 
@@ -437,35 +431,35 @@ const styles = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', gap: 6,
     alignSelf: 'flex-start', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20,
   },
-  badgeText: { fontSize: 12, fontWeight: '700', color: '#10B981' },
-  heading: { fontSize: 28, fontWeight: '900', letterSpacing: -0.5, marginBottom: 8 },
-  subheading: { fontSize: 14, lineHeight: 20, marginBottom: 24, fontWeight: '500' },
+  badgeText: { fontSize: 12, fontFamily: 'Outfit-Bold', color: '#10B981' },
+  heading: { fontSize: 32, fontWeight: '900', letterSpacing: -1, marginBottom: 8 },
+  subheading: { fontSize: 14, fontFamily: 'Inter-Medium', lineHeight: 20, marginBottom: 24 },
   errorBanner: {
     flexDirection: 'row', alignItems: 'center', gap: 8,
     borderWidth: 1, borderRadius: 12, padding: 12, marginBottom: 20,
   },
   errorBannerText: { flex: 1, fontSize: 13, fontWeight: '600' },
   form: { gap: 4 },
-  label: { fontSize: 11, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 6 },
+  label: { fontSize: 13, fontFamily: 'Outfit-Bold', textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 6 },
   labelTop: { marginTop: 14 },
   input: {
     borderRadius: 18,
     paddingHorizontal: 16, paddingVertical: 14,
-    fontSize: 15, fontWeight: '600',
+    fontSize: 15, fontFamily: 'Inter-Medium',
   },
   passwordRow: {
     flexDirection: 'row', alignItems: 'center',
     borderRadius: 18,
     paddingHorizontal: 16,
   },
-  passwordInput: { flex: 1, paddingVertical: 14, fontSize: 15, fontWeight: '600' },
+  passwordInput: { flex: 1, paddingVertical: 14, fontSize: 15, fontFamily: 'Inter-Medium' },
   eyeBtn: { padding: 4 },
   fieldError: { fontSize: 12, fontWeight: '600', marginTop: 4 },
   infoBox: {
     flexDirection: 'row', gap: 10, alignItems: 'flex-start',
     borderWidth: 1, borderRadius: 18, padding: 14, marginTop: 20,
   },
-  infoText: { flex: 1, fontSize: 13, lineHeight: 18, fontWeight: '500' },
+  infoText: { flex: 1, fontSize: 13, lineHeight: 18, fontFamily: 'Inter-Medium' },
   submitBtnTouch: {
     marginTop: 24,
     shadowColor: '#000',
@@ -475,12 +469,12 @@ const styles = StyleSheet.create({
     elevation: 6,
   },
   submitBtn: {
-    height: 56, borderRadius: 18, alignItems: 'center', justifyContent: 'center',
+    height: 56, borderRadius: 30, alignItems: 'center', justifyContent: 'center',
   },
-  submitBtnDisabled: { opacity: 0.65 },
+  submitBtnDisabled: { opacity: 0.85 },
   submitBtnInner: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  submitBtnText: { color: '#FFF', fontSize: 16, fontWeight: '800' },
+  submitBtnText: { color: '#FFF', fontSize: 16, fontFamily: 'Outfit-Bold' },
   footerRow: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginTop: 24 },
-  footerText: { fontSize: 14, fontWeight: '500' },
-  footerLink: { fontSize: 14, fontWeight: '700' },
+  footerText: { fontSize: 14, fontFamily: 'Inter-Medium' },
+  footerLink: { fontSize: 14, fontFamily: 'Outfit-Bold' },
 });

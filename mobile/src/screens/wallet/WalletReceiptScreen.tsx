@@ -24,7 +24,7 @@ import {
   amountColor,
   walletTxnStatusColor
 } from '../../utils/walletReceiptHelpers';
-import AnimatedBackground from '../../components/AnimatedBackground';
+
 
 export default function WalletReceiptScreen() {
   const route = useRoute<any>();
@@ -114,7 +114,7 @@ export default function WalletReceiptScreen() {
   const amountPrefix = isWithdrawal ? '-' : '';
 
   return (
-    <AnimatedBackground style={styles.mainContainer}>
+    <View style={styles.mainContainer}>
       {/* Header Bar */}
       <View style={styles.headerBar}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
@@ -338,7 +338,7 @@ export default function WalletReceiptScreen() {
         onCancel={() => setReportDialogVisible(false)}
         onClose={() => setReportDialogVisible(false)}
       />
-    </AnimatedBackground>
+    </View>
   );
 }
 

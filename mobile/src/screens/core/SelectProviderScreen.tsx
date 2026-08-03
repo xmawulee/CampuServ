@@ -12,7 +12,7 @@ import { CustomIonicons as Ionicons } from '../../components/CustomIcons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { api, BASE_URL } from '../../services/api';
 import { useTheme } from '../../styles/ThemeContext';
-import AnimatedBackground from '../../components/AnimatedBackground';
+
 
 export default function SelectProviderScreen({ route, navigation }: any) {
   const { categoryId, categoryName } = route.params || {};
@@ -107,7 +107,7 @@ export default function SelectProviderScreen({ route, navigation }: any) {
   );
 
   return (
-    <AnimatedBackground style={styles.container}>
+    <View style={styles.container}>
       <View style={[styles.topBar, { backgroundColor: colors.cardBackground, paddingTop: Math.max(insets.top, 16) }]}>
         <View style={styles.topBarContent}>
           <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
@@ -154,7 +154,7 @@ export default function SelectProviderScreen({ route, navigation }: any) {
           }
         />
       )}
-    </AnimatedBackground>
+    </View>
   );
 }
 

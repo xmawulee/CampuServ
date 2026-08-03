@@ -24,7 +24,7 @@ import StatusDialog from '../../components/StatusDialog';
 import ImageViewerModal from '../../components/ImageViewerModal';
 import * as Location from 'expo-location';
 import { getRequestLocation, getDistanceEstimate, getStaticMapUrl, getStaticMapRouteUrl } from '../../services/locationService';
-import AnimatedBackground from '../../components/AnimatedBackground';
+
 
 export default function RequestDetailsScreen({ route, navigation }: any) {
   const { requestId } = route.params;
@@ -274,7 +274,7 @@ export default function RequestDetailsScreen({ route, navigation }: any) {
   const providerReceives = parseFloat((offerPrice - providerFee).toFixed(2));
 
   return (
-    <AnimatedBackground style={{ flex: 1 }}>
+    <View style={{ flex: 1 }}>
       {/* ── Fixed Header ── */}
       <View style={[styles.header, { backgroundColor: colors.cardBackground }]}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.closeBtn}>
@@ -813,7 +813,7 @@ export default function RequestDetailsScreen({ route, navigation }: any) {
         onCancel={() => setCancelDialog(false)}
         onClose={() => setCancelDialog(false)}
       />
-    </AnimatedBackground>
+    </View>
   );
 }
 

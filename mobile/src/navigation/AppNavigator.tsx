@@ -11,6 +11,7 @@ import { stompClient } from '../services/socket';
 import { ToastProvider, useToast } from '../styles/ToastContext';
 import { OfflineBanner } from '../components/OfflineBanner';
 import { useGlobalStompListener } from '../hooks/useGlobalStompListener';
+import AnimatedBackground from '../components/AnimatedBackground';
 
 // ── Screens ────────────────────────────────────────────────────────────────
 import RoleSelectScreen from '../screens/auth/RoleSelectScreen';
@@ -77,7 +78,9 @@ function CustomTabBar({ state, descriptors, navigation, colors, isDark }: any) {
         right: 16,
         height: 64,
         borderRadius: 32,
-        backgroundColor: isDark ? '#1E1E1E' : '#FFFFFF',
+        backgroundColor: isDark ? colors.cardBackground : '#FFFFFF',
+        borderWidth: isDark ? 1 : 0,
+        borderColor: isDark ? colors.border : 'transparent',
         elevation: 10,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 4 },
@@ -439,7 +442,7 @@ function AppNavigatorInner() {
     </>
   );
 
-  return (
+  const navigator = (
     <Stack.Navigator
       key={activeViewKey}
       screenOptions={{
@@ -447,7 +450,7 @@ function AppNavigatorInner() {
         headerShadowVisible: false,
         headerTintColor: colors.text,
         headerTitleStyle: { fontWeight: '700', fontSize: 17 },
-        contentStyle: { backgroundColor: 'transparent' },
+        contentStyle: { backgroundColor: route === 'auth' ? 'transparent' : colors.background },
       }}
     >
       {/* ── Unauthenticated ── */}
@@ -529,6 +532,12 @@ function AppNavigatorInner() {
       )}
     </Stack.Navigator>
   );
+
+  if (route === 'auth') {
+    return <AnimatedBackground style={{ flex: 1 }}>{navigator}</AnimatedBackground>;
+  }
+
+  return navigator;
 }
 
 export default function AppNavigator() {

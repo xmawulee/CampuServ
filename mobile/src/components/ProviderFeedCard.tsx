@@ -4,6 +4,7 @@ import { CustomIonicons as Ionicons } from './CustomIcons';
 import RatingBadge from './RatingBadge';
 import { ProviderResponse, toggleSaveListing } from '../services/userService';
 import { BASE_URL } from '../services/api';
+import { useTheme } from '../styles/ThemeContext';
 
 interface ProviderFeedCardProps {
   provider: ProviderResponse;
@@ -12,6 +13,8 @@ interface ProviderFeedCardProps {
 }
 
 const ProviderFeedCard = React.memo(function ProviderFeedCard({ provider, onPress, onSaveToggle }: ProviderFeedCardProps) {
+  const { colors } = useTheme();
+  const styles = React.useMemo(() => getStyles(colors), [colors]);
   const [isSaved, setIsSaved] = useState<boolean>(!!provider.isSaved);
   const [loadingSave, setLoadingSave] = useState<boolean>(false);
 
@@ -58,13 +61,13 @@ const ProviderFeedCard = React.memo(function ProviderFeedCard({ provider, onPres
           <Image source={{ uri: heroUrl }} style={styles.heroImage} resizeMode="cover" />
         ) : (
           <View style={styles.placeholderBanner}>
-            <Ionicons name="briefcase-outline" size={40} color="#94A3B8" />
+            <Ionicons name="briefcase-outline" size={40} color={colors.textMuted} />
           </View>
         )}
 
         {/* Status Badge */}
         <View style={styles.statusBadge}>
-          <Ionicons name="checkmark-circle" size={14} color="#10B981" />
+          <Ionicons name="checkmark-circle" size={14} color={colors.success} />
           <Text style={styles.statusBadgeText}>Verified Pro</Text>
         </View>
 
@@ -76,12 +79,12 @@ const ProviderFeedCard = React.memo(function ProviderFeedCard({ provider, onPres
           activeOpacity={0.7}
         >
           {loadingSave ? (
-            <ActivityIndicator size="small" color="#0056D2" />
+            <ActivityIndicator size="small" color={colors.primary} />
           ) : (
             <Ionicons 
               name={isSaved ? "bookmark" : "bookmark-outline"} 
               size={20} 
-              color={isSaved ? "#0056D2" : "#64748B"} 
+              color={isSaved ? colors.primary : colors.textMuted} 
             />
           )}
         </TouchableOpacity>
@@ -91,9 +94,6 @@ const ProviderFeedCard = React.memo(function ProviderFeedCard({ provider, onPres
       <View style={styles.content}>
         <View style={styles.headerRow}>
           <Text style={styles.name} numberOfLines={1}>{provider.fullName}</Text>
-          <View style={styles.priceContainer}>
-            <Text style={styles.priceText}>Contact for quote</Text>
-          </View>
         </View>
 
         {/* Rating and Completed Jobs */}
@@ -111,7 +111,7 @@ const ProviderFeedCard = React.memo(function ProviderFeedCard({ provider, onPres
               if (!trimmedCat) return null;
               return (
                 <View key={index} style={styles.categoryBadge}>
-                  <Ionicons name="pricetag-outline" size={10} color="#0056D2" style={{ marginRight: 4 }} />
+                  <Ionicons name="pricetag-outline" size={10} color={colors.primaryDark} style={{ marginRight: 4 }} />
                   <Text style={styles.categoryBadgeText} numberOfLines={1}>Category: {trimmedCat}</Text>
                 </View>
 
@@ -140,26 +140,26 @@ const ProviderFeedCard = React.memo(function ProviderFeedCard({ provider, onPres
             )}
           </View>
         )}
+      </View>
 
-        {/* Footer Metrics */}
-        <View style={styles.footerRow}>
-          <View style={styles.metricItem}>
-            <Ionicons name="eye-outline" size={14} color="#64748B" />
-            <Text style={styles.metricText}>{provider.viewCount || 0} views</Text>
-          </View>
-          <View style={styles.metricItem}>
-            <Ionicons name="location-outline" size={14} color="#64748B" />
-            <Text style={styles.metricText}>{provider.location || 'Campus Area'}</Text>
-          </View>
+      {/* Footer Metrics */}
+      <View style={[styles.footerRow, { backgroundColor: colors.primaryLight }]}>
+        <View style={styles.metricItem}>
+          <Ionicons name="eye-outline" size={14} color={colors.primaryDark} />
+          <Text style={[styles.metricText, { color: colors.primaryDark }]}>{provider.viewCount || 0} views</Text>
+        </View>
+        <View style={styles.metricItem}>
+          <Ionicons name="location-outline" size={14} color={colors.primaryDark} />
+          <Text style={[styles.metricText, { color: colors.primaryDark }]}>{provider.location || 'Campus Area'}</Text>
         </View>
       </View>
     </TouchableOpacity>
   );
 });
 
-const styles = StyleSheet.create({
+const getStyles = (colors: any) => StyleSheet.create({
   card: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.cardBackground,
     borderRadius: 16,
     marginHorizontal: 16,
     marginVertical: 8,
@@ -170,12 +170,12 @@ const styles = StyleSheet.create({
     elevation: 4,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: '#F1F5F9',
+    borderColor: colors.border,
   },
   imageContainer: {
     height: 140,
     width: '100%',
-    backgroundColor: '#F8FAFC',
+    backgroundColor: colors.inputBackground,
     position: 'relative',
   },
   heroImage: {
@@ -187,7 +187,7 @@ const styles = StyleSheet.create({
     height: '100%',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#E2E8F0',
+    backgroundColor: colors.inputBackground,
   },
   statusBadge: {
     position: 'absolute',
@@ -195,7 +195,7 @@ const styles = StyleSheet.create({
     left: 12,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    backgroundColor: colors.cardBackground,
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 20,
@@ -209,7 +209,7 @@ const styles = StyleSheet.create({
   statusBadgeText: {
     fontSize: 12,
     fontFamily: 'Inter-Medium',
-    color: '#0F172A',
+    color: colors.text,
   },
   saveButton: {
     position: 'absolute',
@@ -218,7 +218,7 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    backgroundColor: colors.cardBackground,
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#000',
@@ -239,12 +239,12 @@ const styles = StyleSheet.create({
   name: {
     fontSize: 18,
     fontFamily: 'Inter-Bold',
-    color: '#0F172A',
+    color: colors.text,
     flex: 1,
     marginRight: 8,
   },
   priceContainer: {
-    backgroundColor: '#EFF6FF',
+    backgroundColor: colors.primaryLight,
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 8,
@@ -252,7 +252,7 @@ const styles = StyleSheet.create({
   priceText: {
     fontSize: 14,
     fontFamily: 'Inter-SemiBold',
-    color: '#0056D2',
+    color: colors.primaryDark,
   },
   ratingRow: {
     flexDirection: 'row',
@@ -261,18 +261,18 @@ const styles = StyleSheet.create({
   },
   bullet: {
     marginHorizontal: 6,
-    color: '#94A3B8',
+    color: colors.textMuted,
     fontSize: 12,
   },
   completedJobsText: {
     fontSize: 12,
     fontFamily: 'Inter-Regular',
-    color: '#64748B',
+    color: colors.textMuted,
   },
   bio: {
     fontSize: 13,
     fontFamily: 'Inter-Regular',
-    color: '#475569',
+    color: colors.textMuted,
     lineHeight: 18,
     marginBottom: 12,
   },
@@ -292,8 +292,8 @@ const styles = StyleSheet.create({
   categoryBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#EFF6FF',
-    borderColor: '#DBEAFE',
+    backgroundColor: colors.primaryLight,
+    borderColor: colors.primaryLight,
     borderWidth: 1,
     paddingHorizontal: 8,
     paddingVertical: 3,
@@ -302,40 +302,43 @@ const styles = StyleSheet.create({
   categoryBadgeText: {
     fontSize: 11,
     fontFamily: 'Inter-SemiBold',
-    color: '#1E40AF',
+    color: colors.primaryDark,
     textTransform: 'capitalize',
   },
   tagPill: {
-    backgroundColor: '#F1F5F9',
+    backgroundColor: colors.inputBackground,
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 12,
     maxWidth: 120,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   tagText: {
     fontSize: 11,
     fontFamily: 'Inter-Medium',
-    color: '#334155',
+    color: colors.textMuted,
   },
   tagPillMore: {
-    backgroundColor: '#E2E8F0',
+    backgroundColor: colors.inputBackground,
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   tagTextMore: {
     fontSize: 11,
     fontFamily: 'Inter-SemiBold',
-    color: '#475569',
+    color: colors.textMuted,
   },
   footerRow: {
     flexDirection: 'row',
     justifyContent: 'flex-start',
     alignItems: 'center',
     gap: 16,
-    borderTopWidth: 1,
-    borderTopColor: '#F8FAFC',
-    paddingTop: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
   },
   metricItem: {
     flexDirection: 'row',
@@ -345,7 +348,7 @@ const styles = StyleSheet.create({
   metricText: {
     fontSize: 12,
     fontFamily: 'Inter-Regular',
-    color: '#64748B',
+    color: colors.textMuted,
   },
 });
 

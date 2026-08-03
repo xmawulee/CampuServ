@@ -28,7 +28,7 @@ import {
 import RequestCard from '../../components/RequestCard';
 import RequestCardSkeleton from '../../components/RequestCardSkeleton';
 import { useToast } from '../../styles/ToastContext';
-import AnimatedBackground from '../../components/AnimatedBackground';
+
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -375,7 +375,7 @@ export default function MyRequestsScreen({ navigation }: any) {
       title = 'No active requests';
       subtext = 'Tap the button below to post your first request and get started.';
       showActionButton = true;
-      iconBg = 'rgba(21, 101, 192, 0.1)';
+      iconBg = colors.primaryLight;
       iconColor = colors.primary;
     } else if (activeTab === 'completed') {
       icon = 'checkmark-circle-outline';
@@ -411,10 +411,10 @@ export default function MyRequestsScreen({ navigation }: any) {
   };
 
   return (
-    <AnimatedBackground style={styles.container}>
+    <View style={styles.container}>
       {/* Tab bar header */}
       <View style={[styles.tabBarContainer, { paddingTop: Math.max(insets.top, 16) }]}>
-        <View style={[styles.segmentedControl, { backgroundColor: isDark ? colors.cardBackground : '#F1F5F9' }]}>
+        <View style={[styles.segmentedControl, { backgroundColor: isDark ? colors.cardBackground : colors.primaryLight }]}>
           {(['active', 'completed', 'cancelled'] as const).map((tab) => {
             const isActive = activeTab === tab;
             const count = counts[tab];
@@ -426,14 +426,14 @@ export default function MyRequestsScreen({ navigation }: any) {
                 accessibilityState={{ selected: isActive }}
                 style={[
                   styles.segmentButton,
-                  isActive && [styles.segmentActive, { backgroundColor: colors.cardBackground, shadowColor: isDark ? '#000' : '#000' }]
+                  isActive && [styles.segmentActive, { backgroundColor: colors.primary, shadowColor: isDark ? '#000' : colors.primaryDark }]
                 ]}
                 onPress={() => setActiveTab(tab as any)}
               >
                 <Text
                   style={[
                     styles.segmentText,
-                    { color: isActive ? colors.text : colors.textMuted },
+                    { color: isActive ? '#FFFFFF' : colors.textMuted },
                   ]}
                 >
                   {label} {count > 0 ? `(${count})` : ''}
@@ -488,7 +488,7 @@ export default function MyRequestsScreen({ navigation }: any) {
         onCancel={closeDialog}
         onClose={closeDialog}
       />
-      </AnimatedBackground>
+      </View>
   );
 }
 

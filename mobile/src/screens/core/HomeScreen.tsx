@@ -767,8 +767,9 @@ export default function HomeScreen({ route, navigation }: any) {
                 <Switch
                   value={tempVerifiedOnly}
                   onValueChange={setTempVerifiedOnly}
-                  trackColor={{ false: colors.border, true: colors.primary }}
-                  thumbColor={Platform.OS === 'android' ? '#FFF' : undefined}
+                  trackColor={{ false: colors.primary, true: colors.primary }}
+                  thumbColor="#FFFFFF"
+                  ios_backgroundColor={colors.primary}
                 />
               </View>
 
@@ -840,7 +841,7 @@ export default function HomeScreen({ route, navigation }: any) {
 
         {/* Center: App Logo */}
         <View style={{ flex: 1, alignItems: 'center' }}>
-          <Text style={{ fontSize: 24, fontWeight: '900', color: colors.text, letterSpacing: -0.5 }}>
+          <Text style={{ fontSize: 32, fontWeight: '900', color: colors.text, letterSpacing: -1 }}>
             Campu<Text style={{ color: colors.primary }}>Serv</Text>
           </Text>
         </View>
@@ -914,14 +915,7 @@ export default function HomeScreen({ route, navigation }: any) {
             {/* Service Feed Search & Filters */}
             {!isProvider && (
               <View style={{ paddingHorizontal: 16, marginBottom: 16, marginTop: 8 }}>
-                {greetingText ? (
-                  <Text style={{ fontSize: 24, fontWeight: '800', color: colors.text, marginBottom: 6 }}>
-                    {greetingText}
-                  </Text>
-                ) : null}
-                <Text style={{ fontSize: 11, fontWeight: '800', color: colors.textMuted, textTransform: 'uppercase', marginBottom: 8, letterSpacing: 0.8 }}>
-                  Explore Campus Services
-                </Text>
+
                 
                 {/* Feed Search Input and Filter Button */}
                 <View style={{ flexDirection: 'row', gap: 10, alignItems: 'center' }}>

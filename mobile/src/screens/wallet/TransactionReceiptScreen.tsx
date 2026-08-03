@@ -25,7 +25,7 @@ import {
   statusColor,
   generateTxnId
 } from '../../utils/receiptHelpers';
-import AnimatedBackground from '../../components/AnimatedBackground';
+
 
 export default function TransactionReceiptScreen({ route, navigation }: any) {
   const { transactionId } = route.params;
@@ -130,7 +130,7 @@ export default function TransactionReceiptScreen({ route, navigation }: any) {
   }
 
   return (
-    <AnimatedBackground style={styles.mainContainer}>
+    <View style={styles.mainContainer}>
       {/* Custom Header Bar */}
       <View style={styles.headerBar}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
@@ -406,7 +406,7 @@ export default function TransactionReceiptScreen({ route, navigation }: any) {
         onCancel={() => setReportDialogVisible(false)}
         onClose={() => setReportDialogVisible(false)}
       />
-    </AnimatedBackground>
+    </View>
   );
 }
 

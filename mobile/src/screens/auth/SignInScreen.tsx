@@ -177,20 +177,16 @@ export default function SignInScreen({ route, navigation }: any) {
     ? (['#0B0F19', '#02040A'] as const)
     : (['#F3F6FA', '#E3E8F0'] as const);
 
-  const clientBtnGradient = isDark ? (['#312E81', '#1E3A8A'] as const) : (['#4F46E5', '#3B82F6'] as const);
-  const providerBtnGradient = isDark ? (['#7C2D12', '#78350F'] as const) : (['#F97316', '#EA580C'] as const);
+  const clientBtnGradient = [colors.primary, colors.primaryDark] as const;
+  const providerBtnGradient = [colors.primary, colors.primaryDark] as const;
   const submitBtnColors = activeRole === 'CLIENT' ? clientBtnGradient : providerBtnGradient;
 
   return (
-    <LinearGradient colors={backgroundColors} style={{ flex: 1 }}>
+    <View style={{ flex: 1, backgroundColor: 'transparent' }}>
       <SafeAreaView style={[styles.container, { paddingBottom: insets.bottom }]}>
         <StatusBar barStyle={isDark ? "light-content" : "dark-content"} translucent backgroundColor="transparent" />
 
-        {/* Decorative Concentric Rings in Background */}
-        <View style={styles.logoRingContainer}>
-          <View style={[styles.logoRing, { borderColor: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(99,102,241,0.04)', width: 180, height: 180, borderRadius: 90 }]} />
-          <View style={[styles.logoRing, { borderColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(99,102,241,0.06)', width: 140, height: 140, borderRadius: 70 }]} />
-        </View>
+
 
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -215,7 +211,7 @@ export default function SignInScreen({ route, navigation }: any) {
             {/* Logo */}
             <Image 
               source={logoImage} 
-              style={styles.logo} 
+              style={[styles.logo, { tintColor: colors.primary }]} 
               resizeMode="contain"
             />
 
@@ -226,15 +222,15 @@ export default function SignInScreen({ route, navigation }: any) {
             </Text>
 
             {/* Segmented Control */}
-            <View style={[styles.segContainer, { backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : colors.inputBackground, borderColor: isDark ? 'rgba(255,255,255,0.05)' : 'transparent', borderWidth: isDark ? 1 : 0 }]}>
+            <View style={[styles.segContainer, { backgroundColor: colors.primaryLight }]}>
               {(['CLIENT', 'PROVIDER'] as const).map((r) => (
                 <TouchableOpacity
                   key={r}
-                  style={[styles.segTab, activeRole === r && (isDark ? styles.segTabActiveDark : styles.segTabActiveLight)]}
+                  style={[styles.segTab, activeRole === r && { backgroundColor: colors.primary }]}
                   onPress={() => { setActiveRole(r); setBannerError(null); }}
                   disabled={isLoading}
                 >
-                  <Text style={[styles.segText, { color: activeRole === r ? colors.text : colors.textMuted }, activeRole === r && styles.segTextActive]}>
+                  <Text style={[styles.segText, { color: activeRole === r ? '#FFFFFF' : colors.primaryDark }, activeRole === r && styles.segTextActive]}>
                     {r === 'CLIENT' ? 'Client' : 'Provider'}
                   </Text>
                 </TouchableOpacity>
@@ -258,7 +254,7 @@ export default function SignInScreen({ route, navigation }: any) {
                 { 
                   backgroundColor: isDark ? 'rgba(255,255,255,0.02)' : colors.inputBackground, 
                   borderColor: emailFocused 
-                    ? (activeRole === 'CLIENT' ? '#4F46E5' : '#F97316') 
+                    ? colors.primary
                     : (isDark ? 'rgba(255,255,255,0.08)' : 'transparent') 
                 }
               ]}>
@@ -290,7 +286,7 @@ export default function SignInScreen({ route, navigation }: any) {
                 { 
                   backgroundColor: isDark ? 'rgba(255,255,255,0.02)' : colors.inputBackground, 
                   borderColor: passwordFocused 
-                    ? (activeRole === 'CLIENT' ? '#4F46E5' : '#F97316') 
+                    ? colors.primary 
                     : (isDark ? 'rgba(255,255,255,0.08)' : 'transparent') 
                 }
               ]}>
@@ -321,7 +317,7 @@ export default function SignInScreen({ route, navigation }: any) {
               onPress={() => navigation.navigate('ForgotPassword')}
               style={{ alignSelf: 'flex-end', marginTop: 4, marginBottom: 20 }}
             >
-              <Text style={{ color: activeRole === 'CLIENT' ? '#4F46E5' : '#F97316', fontWeight: '600', fontSize: 13 }}>
+              <Text style={{ color: colors.primary, fontWeight: '600', fontSize: 13 }}>
                 Forgot password?
               </Text>
             </TouchableOpacity>
@@ -357,7 +353,7 @@ export default function SignInScreen({ route, navigation }: any) {
           </ScrollView>
         </KeyboardAvoidingView>
       </SafeAreaView>
-    </LinearGradient>
+    </View>
   );
 }
 
@@ -402,35 +398,22 @@ const styles = StyleSheet.create({
     shadowRadius: 10,
   },
   heading: { fontSize: 32, fontWeight: '900', letterSpacing: -1, marginBottom: 8 },
-  subheading: { fontSize: 15, lineHeight: 22, marginBottom: 28, fontWeight: '500' },
+  subheading: { fontSize: 15, fontFamily: 'Inter-Medium', lineHeight: 22, marginBottom: 28 },
   segContainer: {
     flexDirection: 'row',
-    borderRadius: 16,
+    borderRadius: 30,
     padding: 4,
     marginBottom: 24,
   },
   segTab: {
     flex: 1,
     height: 44,
-    borderRadius: 12,
+    borderRadius: 26,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  segTabActiveLight: {
-    backgroundColor: '#FFFFFF',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  segTabActiveDark: {
-    backgroundColor: 'rgba(255,255,255,0.08)',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
-  },
-  segText: { fontSize: 15, fontWeight: '600' },
-  segTextActive: { fontWeight: '800' },
+  segText: { fontSize: 15, fontFamily: 'Inter-Medium' },
+  segTextActive: { fontFamily: 'Outfit-Bold' },
   errorBanner: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -445,8 +428,8 @@ const styles = StyleSheet.create({
   errorText: { flex: 1, fontSize: 13, fontWeight: '600', lineHeight: 18 },
   fieldGroup: { marginBottom: 18 },
   fieldLabel: {
-    fontSize: 11,
-    fontWeight: '800',
+    fontSize: 13,
+    fontFamily: 'Outfit-Bold',
     letterSpacing: 1.2,
     textTransform: 'uppercase',
     marginBottom: 8,
@@ -459,7 +442,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   inputIcon: { marginRight: 10 },
-  input: { flex: 1, paddingVertical: 15, fontSize: 15, fontWeight: '600' },
+  input: { flex: 1, paddingVertical: 15, fontSize: 15, fontFamily: 'Inter-Medium' },
   eyeBtn: { padding: 4 },
   fieldError: { fontSize: 12, fontWeight: '600', marginTop: 6 },
   submitBtnTouch: {
@@ -472,13 +455,13 @@ const styles = StyleSheet.create({
   },
   submitBtn: {
     height: 56,
-    borderRadius: 18,
+    borderRadius: 30, // Pill shape
     alignItems: 'center',
     justifyContent: 'center',
   },
-  submitBtnDisabled: { opacity: 0.65 },
-  submitBtnText: { color: '#FFF', fontSize: 16, fontWeight: '800' },
+  submitBtnDisabled: { opacity: 0.85 },
+  submitBtnText: { color: '#FFF', fontSize: 16, fontFamily: 'Outfit-Bold' },
   footer: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginTop: 28 },
-  footerText: { fontSize: 14, fontWeight: '500' },
-  footerLink: { fontSize: 14, fontWeight: '700' },
+  footerText: { fontSize: 14, fontFamily: 'Inter-Medium' },
+  footerLink: { fontSize: 14, fontFamily: 'Outfit-Bold' },
 });

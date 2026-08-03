@@ -52,7 +52,8 @@ export default function UserPage() {
     try {
       const url = compFilter ? `/admin/users?roleComposition=${compFilter}` : '/admin/users';
       const res = await api.get(url);
-      setUsers(res.data || []);
+      const data = res.data || [];
+      setUsers(data.filter((u: User) => u.accountStatus !== 'DELETED'));
     } catch {
       toast.error('Failed to load Users');
     } finally {
@@ -75,6 +76,22 @@ export default function UserPage() {
     } catch (err: any) {
       const msg = err.response?.data?.message || err.response?.data || 'Failed to update account status';
       toast.error(typeof msg === 'string' ? msg : 'Failed to update account status');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleDeleteUser = async (userId: string) => {
+    if (!confirm(`Are you sure you want to completely delete this account? This action cannot be easily undone.`)) return;
+    try {
+      setActionLoading(true);
+      await api.delete(`/admin/users/${userId}`);
+      toast.success(`Account deleted successfully`);
+      setSelectedUserForDetail(null);
+      setUsers(prev => prev.filter(u => u.id !== userId));
+    } catch (err: any) {
+      const msg = err.response?.data?.message || err.response?.data || 'Failed to delete account';
+      toast.error(typeof msg === 'string' ? msg : 'Failed to delete account');
     } finally {
       setActionLoading(false);
     }
@@ -244,7 +261,11 @@ export default function UserPage() {
                   </tr>
                 ) : (
                   table.getRowModel().rows.map(row => (
-                    <tr key={row.id} className="hover:bg-slate-50/80 transition-colors">
+                    <tr 
+                      key={row.id} 
+                      className="hover:bg-slate-50/80 transition-colors cursor-pointer"
+                      onClick={() => setSelectedUserForDetail(row.original)}
+                    >
                       {row.getVisibleCells().map(cell => (
                         <td key={cell.id} className="px-6 py-4 whitespace-nowrap">
                           {flexRender(cell.column.columnDef.cell, cell.getContext())}
@@ -400,13 +421,22 @@ export default function UserPage() {
                         {actionLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <ShieldAlert className="w-4 h-4" />} Suspend
                       </button>
                     )}
-                    {selectedUserForDetail.accountStatus !== 'BANNED' && (
+                    {selectedUserForDetail.accountStatus !== 'BANNED' && selectedUserForDetail.accountStatus !== 'DELETED' && (
                       <button
                         disabled={actionLoading}
                         onClick={() => handleUpdateStatus(selectedUserForDetail.id, 'BANNED')}
-                        className="flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 text-white text-xs font-bold py-2.5 px-3 rounded-xl transition-all disabled:opacity-50 col-span-2"
+                        className="flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 text-white text-xs font-bold py-2.5 px-3 rounded-xl transition-all disabled:opacity-50"
                       >
                         {actionLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <ShieldX className="w-4 h-4" />} Ban Account
+                      </button>
+                    )}
+                    {selectedUserForDetail.accountStatus !== 'DELETED' && (
+                      <button
+                        disabled={actionLoading}
+                        onClick={() => handleDeleteUser(selectedUserForDetail.id)}
+                        className="flex items-center justify-center gap-2 bg-slate-900 hover:bg-slate-950 text-white text-xs font-bold py-2.5 px-3 rounded-xl transition-all disabled:opacity-50 col-span-2"
+                      >
+                        {actionLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <X className="w-4 h-4" />} Delete Account
                       </button>
                     )}
                   </div>

@@ -56,7 +56,8 @@ export default function ProvidersPage() {
           accountStatus: statusFilter !== 'ALL' ? statusFilter : undefined,
         },
       });
-      setProviders(res.data || []);
+      const data = res.data || [];
+      setProviders(data.filter((p: Provider) => p.accountStatus !== 'DELETED'));
     } catch (error) {
       toast.error('Failed to load provider roster');
     } finally {

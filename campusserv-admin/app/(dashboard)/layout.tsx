@@ -36,8 +36,6 @@ export default function DashboardLayout({
 
   return (
     <div className="min-h-screen bg-[#E6E6E6] flex relative overflow-hidden">
-      {/* Seamless Animated Background Pattern */}
-      <div className="absolute inset-0 pointer-events-none animated-bg z-0 opacity-25" />
 
       <div className="relative z-10 flex w-full">
         <Sidebar />

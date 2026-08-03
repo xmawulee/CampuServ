@@ -9,7 +9,7 @@ import { useTheme } from '../../styles/ThemeContext';
 import { useFocusEffect } from '@react-navigation/native';
 import { getProviders, ProviderResponse } from '../../services/userService';
 import ProviderFeedCard from '../../components/ProviderFeedCard';
-import AnimatedBackground from '../../components/AnimatedBackground';
+
 
 const { width } = Dimensions.get('window');
 
@@ -84,7 +84,7 @@ export default function CategoryProvidersScreen({ route, navigation }: any) {
   }, [navigation, categoryName]);
 
   return (
-    <AnimatedBackground style={styles.container}>
+    <View style={styles.container}>
       <View style={[styles.header, { backgroundColor: colors.cardBackground }]}>
         <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
           <Ionicons name="arrow-back" size={24} color={colors.text} />
@@ -124,7 +124,7 @@ export default function CategoryProvidersScreen({ route, navigation }: any) {
           )}
         />
       )}
-    </AnimatedBackground>
+    </View>
   );
 }
 

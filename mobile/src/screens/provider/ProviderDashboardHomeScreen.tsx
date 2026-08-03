@@ -17,7 +17,7 @@ import { stompClient } from '../../services/socket';
 import { RoleSwitcher } from '../../components/RoleSwitcher';
 import { useQuery } from '@tanstack/react-query';
 import { getChats } from '../../services/chatService';
-import AnimatedBackground from '../../components/AnimatedBackground';
+
 
 type DashboardStats = {
   balance: number;
@@ -108,7 +108,7 @@ export default function ProviderDashboardHomeScreen({ navigation }: any) {
   }
 
   return (
-    <AnimatedBackground style={styles.container}>
+    <View style={styles.container}>
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={[styles.scrollContent, { paddingBottom: bottomTabSpacing }]}
@@ -303,7 +303,7 @@ export default function ProviderDashboardHomeScreen({ navigation }: any) {
           })
         )}
       </ScrollView>
-    </AnimatedBackground>
+    </View>
   );
 }
 

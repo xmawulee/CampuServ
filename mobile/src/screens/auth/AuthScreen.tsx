@@ -210,7 +210,7 @@ export default function AuthScreen({ navigation }: any) {
           
           {/* Logo Area */}
           <View style={styles.logoArea}>
-            <Image source={logoImage} style={styles.logo} resizeMode="contain" />
+            <Image source={logoImage} style={[styles.logo, { tintColor: colors.primary }]} resizeMode="contain" />
             <Text style={styles.tagline}>Your campus. Your services.</Text>
           </View>
 

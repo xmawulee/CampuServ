@@ -8,7 +8,7 @@ import { CustomIonicons as Ionicons } from '../../components/CustomIcons';
 import { useTheme } from '../../styles/ThemeContext';
 import { api } from '../../services/api';
 import { useToast } from '../../styles/ToastContext';
-import AnimatedBackground from '../../components/AnimatedBackground';
+
 
 export default function RateProviderScreen({ route, navigation }: any) {
   const { jobId, providerName, providerId, categoryName, avatarInitial } = route.params;
@@ -88,7 +88,7 @@ export default function RateProviderScreen({ route, navigation }: any) {
   const availableTags = getAvailableTags();
 
   return (
-    <AnimatedBackground style={styles.container}>
+    <View style={styles.container}>
       <KeyboardAvoidingView 
         style={{ flex: 1 }} 
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -180,7 +180,7 @@ export default function RateProviderScreen({ route, navigation }: any) {
         </View>
 
       </KeyboardAvoidingView>
-    </AnimatedBackground>
+    </View>
   );
 }
 

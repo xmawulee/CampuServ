@@ -9,9 +9,9 @@ export default {
     orientation: "portrait",
     icon: "./assets/icon.png",
     splash: {
-      image: "./assets/splash-icon.png",
+      image: "./assets/logo-transparent.png",
       resizeMode: "contain",
-      backgroundColor: "#E6E6E6"
+      backgroundColor: "#ffffff"
     },
     assetBundlePatterns: ["**/*"],
     userInterfaceStyle: "automatic",

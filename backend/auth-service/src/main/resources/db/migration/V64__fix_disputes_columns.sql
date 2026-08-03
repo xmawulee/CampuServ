@@ -8,7 +8,15 @@ BEGIN
         FROM information_schema.columns 
         WHERE table_name='disputes' AND column_name='description'
     ) THEN
-        ALTER TABLE disputes RENAME COLUMN description TO reason;
+        IF NOT EXISTS (
+            SELECT 1 
+            FROM information_schema.columns 
+            WHERE table_name='disputes' AND column_name='reason'
+        ) THEN
+            ALTER TABLE disputes RENAME COLUMN description TO reason;
+        ELSE
+            ALTER TABLE disputes DROP COLUMN description;
+        END IF;
     END IF;
 END $$;
 

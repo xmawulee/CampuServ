@@ -28,13 +28,16 @@ const queryClient = new QueryClient({
 
 import { useGlobalStompListener } from './src/hooks/useGlobalStompListener';
 
+import AnimatedSplashScreen from './src/components/AnimatedSplashScreen';
+
 function AppContent() {
   useGlobalStompListener();
   const loadStoredAuth = useAuthStore((state) => state.loadStoredAuth);
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const user = useAuthStore((state) => state.user);
-  const { isDark } = useTheme();
+  const { isDark, colors } = useTheme();
   const [appIsReady, setAppIsReady] = useState(false);
+  const [splashAnimationComplete, setSplashAnimationComplete] = useState(false);
 
   // Fonts are now rendered via SVG using lucide-react-native to bypass Expo Go native font cache bugs
   const fontsLoaded = true;
@@ -57,22 +60,12 @@ function AppContent() {
     prepare();
   }, [loadStoredAuth]);
 
-  useEffect(() => {
-    if (appIsReady && fontsLoaded) {
-      SplashScreen.hideAsync().catch(() => {});
-    }
-  }, [appIsReady, fontsLoaded]);
+  // We no longer call SplashScreen.hideAsync() here. 
+  // AnimatedSplashScreen component handles hiding the native splash screen.
 
-  if (!appIsReady || !fontsLoaded) {
-    if (fontError) {
-      console.warn("Font loading error:", fontError);
-    }
-    return null;
-  }
+  const isReady = appIsReady && fontsLoaded;
 
   // This key changes whenever the authentication state changes (login/logout/role change).
-  // A new key forces NavigationContainer to fully remount, which causes AppNavigator to
-  // re-evaluate its route decision tree and navigate to the correct screen set.
   const navKey = isAuthenticated ? `authenticated-${user?.role ?? 'unknown'}` : 'unauthenticated';
   
   const linking = {
@@ -85,22 +78,32 @@ function AppContent() {
     },
   };
 
-  const navTheme = isDark ? DarkTheme : DefaultTheme;
-  const transparentTheme = {
-    ...navTheme,
+  const baseTheme = isDark ? DarkTheme : DefaultTheme;
+  const navTheme = {
+    ...baseTheme,
     colors: {
-      ...navTheme.colors,
-      background: 'transparent',
+      ...baseTheme.colors,
+      background: colors.background,
+      card: colors.cardBackground,
+      text: colors.text,
+      border: colors.border,
+      primary: colors.primary,
     },
   };
 
+
   return (
-    <AnimatedBackground>
-      <NavigationContainer key={navKey} ref={navigationRef} linking={linking} theme={transparentTheme}>
-        <AppNavigator />
-        <StatusBar style={isDark ? 'light' : 'dark'} />
-      </NavigationContainer>
-    </AnimatedBackground>
+    <AnimatedSplashScreen 
+      isAppReady={isReady} 
+      onAnimationComplete={() => setSplashAnimationComplete(true)}
+    >
+      {isReady ? (
+          <NavigationContainer key={navKey} ref={navigationRef} linking={linking} theme={navTheme}>
+            <AppNavigator />
+            <StatusBar style={isDark ? 'light' : 'dark'} />
+          </NavigationContainer>
+      ) : null}
+    </AnimatedSplashScreen>
   );
 }
 

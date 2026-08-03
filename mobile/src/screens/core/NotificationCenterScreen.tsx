@@ -17,7 +17,6 @@ import { CustomIonicons as Ionicons } from '../../components/CustomIcons';
 import { api } from '../../services/api';
 import { useTheme } from '../../styles/ThemeContext';
 import { useToast } from '../../styles/ToastContext';
-import AnimatedBackground from '../../components/AnimatedBackground';
 
 // ─────────────────────────────────────────────────────────
 //  Types
@@ -331,15 +330,16 @@ export default function NotificationCenterScreen({ navigation }: any) {
   const unreadCount = (filteredNotifications ?? []).filter((n) => !n.read).length;
 
   return (
-    <AnimatedBackground style={styles.container}>
+    <View style={styles.container}>
       {/* Header */}
-      <View style={[styles.header, { backgroundColor: colors.cardBackground }]}>
-        <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
-          <Ionicons name="arrow-back" size={24} color={colors.text} />
-        </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: colors.text }]}>
-          Notifications{unreadCount > 0 ? ` (${unreadCount})` : ''}
-        </Text>
+      <SafeAreaView edges={['top']} style={{ backgroundColor: colors.cardBackground, zIndex: 10 }}>
+        <View style={styles.header}>
+          <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
+            <Ionicons name="arrow-back" size={24} color={colors.text} />
+          </TouchableOpacity>
+          <Text style={[styles.headerTitle, { color: colors.text }]}>
+            Notifications{unreadCount > 0 ? ` (${unreadCount})` : ''}
+          </Text>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, minWidth: 60, justifyContent: 'flex-end' }}>
           {unreadCount > 0 && (
             <TouchableOpacity onPress={handleMarkAllRead} style={[styles.headerActionBtn, { backgroundColor: 'rgba(16, 185, 129, 0.1)' }]}>
@@ -353,6 +353,7 @@ export default function NotificationCenterScreen({ navigation }: any) {
           )}
         </View>
       </View>
+      </SafeAreaView>
 
       {loading ? (
         <View style={styles.centeredState}>
@@ -385,8 +386,8 @@ export default function NotificationCenterScreen({ navigation }: any) {
           }
           ListEmptyComponent={
             <View style={styles.centeredState}>
-              <View style={[styles.emptyIconWrap, { backgroundColor: 'rgba(59, 130, 246, 0.1)' }]}>
-                <Ionicons name="notifications-off" size={48} color="#3B82F6" />
+              <View style={[styles.emptyIconWrap, { backgroundColor: colors.primaryLight }]}>
+                <Ionicons name="notifications-off-outline" size={48} color={colors.primary} />
               </View>
               <Text style={[styles.emptyTitle, { color: colors.text }]}>No Notifications</Text>
               <Text style={[styles.emptySubtitle, { color: colors.textMuted }]}>
@@ -396,7 +397,7 @@ export default function NotificationCenterScreen({ navigation }: any) {
           }
         />
       )}
-    </AnimatedBackground>
+    </View>
   );
 }
 

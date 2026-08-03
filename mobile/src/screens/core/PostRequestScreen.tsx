@@ -32,7 +32,6 @@ import { createRequest } from '../../services/requestService';
 import { reverseGeocode, placesAutocomplete, getDirections, getPlaceDetails } from '../../services/locationService';
 import { useToast } from '../../styles/ToastContext';
 import StatusDialog from '../../components/StatusDialog';
-
 const FALLBACK_CATEGORIES = [
   { id: 'cat-1', name: 'Laundry', icon: 'shirt-outline', bg: '#FFF0E6', iconColor: '#FF6B35' },
   { id: 'cat-2', name: 'Cleaning', icon: 'sparkles-outline', bg: '#E8F8F0', iconColor: '#27AE60' },
@@ -140,14 +139,7 @@ export default function PostRequestScreen({ route, navigation }: any) {
     const catName = item.category?.name || '';
     
     const getCategoryStyles = (name: string) => {
-      const normalized = name.toLowerCase();
-      if (normalized.includes('laundry')) return { bg: '#FFF0E6', iconColor: '#FF6B35' };
-      if (normalized.includes('clean')) return { bg: '#E8F8F0', iconColor: '#27AE60' };
-      if (normalized.includes('tutor')) return { bg: '#EEF0FF', iconColor: '#5C6BC0' };
-      if (normalized.includes('errand')) return { bg: '#FFF9E6', iconColor: '#F39C12' };
-      if (normalized.includes('delivery')) return { bg: '#E0F7FA', iconColor: '#00838F' };
-      if (normalized.includes('event') || normalized.includes('setup')) return { bg: '#EDE7F6', iconColor: '#651FFF' };
-      return { bg: '#F8FAFC', iconColor: '#1565C0' };
+      return { bg: colors.primaryLight, iconColor: colors.primary };
     };
 
     const catStyle = getCategoryStyles(catName);
@@ -923,10 +915,10 @@ export default function PostRequestScreen({ route, navigation }: any) {
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      style={[styles.container, { backgroundColor: colors.background }]}
+      style={[styles.container, { backgroundColor: 'transparent' }]}
     >
       {/* ── Fixed Header ── */}
-      <View style={[styles.header, { backgroundColor: colors.cardBackground, borderBottomColor: colors.border }]}>
+      <View style={[styles.header, { backgroundColor: 'transparent', borderBottomWidth: 0, elevation: 0, shadowOpacity: 0 }]}>
         {navigation.canGoBack() && route?.name !== 'Search' ? (
           <TouchableOpacity onPress={() => navigation.goBack()} style={styles.closeBtn}>
             <Ionicons name="close" size={24} color={colors.text} />
@@ -940,26 +932,26 @@ export default function PostRequestScreen({ route, navigation }: any) {
 
       {/* Tab bar header */}
       <View style={[styles.tabBarContainer, { paddingBottom: 12 }]}>
-        <View style={[styles.tabSegmentedControl, { backgroundColor: isDark ? colors.cardBackground : '#F1F5F9' }]}>
+        <View style={[styles.tabSegmentedControl, { backgroundColor: isDark ? colors.cardBackground : colors.primaryLight }]}>
           <TouchableOpacity
             style={[
               styles.tabSegmentButton,
-              activeTab === 'create' && [styles.tabSegmentActive, { backgroundColor: colors.cardBackground }]
+              activeTab === 'create' && [styles.tabSegmentActive, { backgroundColor: colors.primary }]
             ]}
             onPress={() => setActiveTab('create')}
           >
-            <Text style={[styles.tabSegmentText, { color: activeTab === 'create' ? colors.text : colors.textMuted }]}>
+            <Text style={[styles.tabSegmentText, { color: activeTab === 'create' ? '#FFFFFF' : colors.textMuted }]}>
               Post Request
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={[
               styles.tabSegmentButton,
-              activeTab === 'active' && [styles.tabSegmentActive, { backgroundColor: colors.cardBackground }]
+              activeTab === 'active' && [styles.tabSegmentActive, { backgroundColor: colors.primary }]
             ]}
             onPress={() => setActiveTab('active')}
           >
-            <Text style={[styles.tabSegmentText, { color: activeTab === 'active' ? colors.text : colors.textMuted }]}>
+            <Text style={[styles.tabSegmentText, { color: activeTab === 'active' ? '#FFFFFF' : colors.textMuted }]}>
               Incoming Bids
             </Text>
           </TouchableOpacity>
@@ -1000,8 +992,8 @@ export default function PostRequestScreen({ route, navigation }: any) {
                   style={[
                     styles.catCard,
                     { 
-                      backgroundColor: isActive ? colors.primary : (isDark ? colors.inputBackground : '#F8FAFC'),
-                      borderColor: isActive ? colors.primary : (isDark ? colors.border : '#E2E8F0'),
+                      backgroundColor: isActive ? colors.primary : colors.cardBackground,
+                      borderColor: isActive ? colors.primary : colors.border,
                       opacity: isLocked ? 0.5 : 1,
                     }
                   ]}

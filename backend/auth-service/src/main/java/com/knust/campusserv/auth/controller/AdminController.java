@@ -416,6 +416,45 @@ public class AdminController {
         return ResponseEntity.ok(resp);
     }
 
+    @DeleteMapping("/users/{userId}")
+    public ResponseEntity<?> deleteUserAccount(
+            @PathVariable("userId") String userId,
+            @RequestHeader(value = "X-User-Id", required = false) String adminId) {
+        
+        Optional<User> userOpt = userRepository.findById(userId);
+        if (userOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User account not found.");
+        }
+
+        User user = userOpt.get();
+        if ("DELETED".equalsIgnoreCase(user.getAccountStatus())) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Account is already deleted.");
+        }
+
+        user.setAccountStatus("DELETED");
+        user.setUpdatedAt(java.time.LocalDateTime.now());
+        User saved = userRepository.save(user);
+        
+        try {
+            eventPublisher.publishUserStatusChanged(userId, "DELETED");
+        } catch (Exception e) {
+            System.err.println("Failed to publish user status update: " + e.getMessage());
+        }
+
+        try {
+            authService.revokeAllUserTokens(userId);
+            authService.revokeGatewayToken(userId);
+        } catch (Exception ignored) {}
+
+        logAudit(adminId != null ? adminId : "SYSTEM", "DELETE", "USER", userId, "Admin soft-deleted account");
+
+        Map<String, Object> resp = new HashMap<>();
+        resp.put("message", "User account deleted successfully.");
+        resp.put("userId", saved.getId());
+        resp.put("accountStatus", saved.getAccountStatus());
+        return ResponseEntity.ok(resp);
+    }
+
     @PostMapping("/users/{userId}/restore")
     public ResponseEntity<?> restoreDeletedAccount(
             @PathVariable("userId") String userId,

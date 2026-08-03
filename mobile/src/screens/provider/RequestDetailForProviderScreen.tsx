@@ -13,7 +13,7 @@ import type { OpenRequest, ProviderOffer } from '../../types/provider';
 import { useToast } from '../../styles/ToastContext';
 import StatusDialog from '../../components/StatusDialog';
 import ImageViewerModal from '../../components/ImageViewerModal';
-import AnimatedBackground from '../../components/AnimatedBackground';
+
 
 const ETA_OPTIONS = ['Within 30 min', '1 hour', '2 hours', 'Today', 'Tomorrow', 'This week'];
 
@@ -170,7 +170,7 @@ export default function RequestDetailForProviderScreen({ navigation, route }: an
   const canBid = isBidOpen && requestIsOpen;
 
   return (
-    <AnimatedBackground style={{ flex: 1 }}>
+    <View style={{ flex: 1 }}>
       {/* Header */}
       <SafeAreaView edges={['top']} style={{ backgroundColor: colors.background }}>
         <View style={[styles.header, { borderBottomColor: colors.border }]}>
@@ -458,7 +458,7 @@ export default function RequestDetailForProviderScreen({ navigation, route }: an
         imageUrl={selectedImage}
         onClose={() => setSelectedImage(null)}
       />
-    </AnimatedBackground>
+    </View>
   );
 }
 

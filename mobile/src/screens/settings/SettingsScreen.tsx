@@ -11,11 +11,11 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useBottomTabSpacing } from '../../hooks/useBottomTabSpacing';
 import AvatarUploader from '../../components/AvatarUploader';
 import { useToast } from '../../styles/ToastContext';
-import AnimatedBackground from '../../components/AnimatedBackground';
+
 
 export default function SettingsScreen({ navigation }: any) {
   const { user, roleMode, logout, setAuth } = useAuthStore();
-  const { colors, isDark } = useTheme();
+  const { colors, isDark, toggleTheme } = useTheme();
   const insets = useSafeAreaInsets();
   const bottomTabSpacing = useBottomTabSpacing();
 
@@ -83,14 +83,14 @@ export default function SettingsScreen({ navigation }: any) {
   }
 
   return (
-    <AnimatedBackground style={{ flex: 1 }}>
+    <View style={{ flex: 1, backgroundColor: colors.background }}>
       <ScrollView
         style={[styles.container, { backgroundColor: 'transparent' }]}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: bottomTabSpacing }}
       >
         {/* ── Profile Hero Section ── */}
-        <View style={[styles.profileHero, { backgroundColor: colors.primary, paddingTop: Math.max(insets.top + 16, 40) }]}>
+        <View style={[styles.profileHero, { paddingTop: Math.max(insets.top + 16, 40) }]}>
           <AvatarUploader
             currentAvatarUrl={profilePictureUrl}
             userId={user?.id || ''}
@@ -107,20 +107,20 @@ export default function SettingsScreen({ navigation }: any) {
             onToast={(t) => showToast({ status: t.type === 'error' ? 'error' : 'success', title: t.message })}
           />
 
-          <Text style={styles.heroName}>{fullName}</Text>
-          <Text style={styles.heroEmail}>{user?.email}</Text>
+          <Text style={[styles.heroName, { color: colors.text }]}>{fullName}</Text>
+          <Text style={[styles.heroEmail, { color: colors.textMuted }]}>{user?.email}</Text>
 
           {/* Verification badge */}
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 8 }}>
             {profile?.isVerified && (
-              <View style={[styles.verificationBadge, { backgroundColor: 'rgba(255,255,255,0.25)' }]}>
-                <Ionicons name="shield-checkmark" size={14} color="#FFF" />
-                <Text style={styles.verificationText}>Verified Student</Text>
+              <View style={[styles.verificationBadge, { backgroundColor: colors.primaryLight }]}>
+                <Ionicons name="shield-checkmark" size={14} color={colors.primary} />
+                <Text style={[styles.verificationText, { color: colors.primary }]}>Verified Student</Text>
               </View>
             )}
-            <View style={[styles.verificationBadge, { backgroundColor: 'rgba(255,255,255,0.2)' }]}>
-              <Ionicons name={user?.role === 'PROVIDER' ? "briefcase-outline" : "school-outline"} size={14} color="#FFF" />
-              <Text style={styles.verificationText}>Role: {user?.role === 'PROVIDER' ? "Provider" : "Student"}</Text>
+            <View style={[styles.verificationBadge, { backgroundColor: colors.primaryLight }]}>
+              <Ionicons name={user?.role === 'PROVIDER' ? "briefcase-outline" : "school-outline"} size={14} color={colors.primary} />
+              <Text style={[styles.verificationText, { color: colors.primary }]}>Role: {user?.role === 'PROVIDER' ? "Provider" : "Student"}</Text>
             </View>
           </View>
         </View>
@@ -148,6 +148,30 @@ export default function SettingsScreen({ navigation }: any) {
             )}
           </View>
 
+          {/* ── Appearance ── */}
+          <View style={[styles.card, { backgroundColor: colors.cardBackground, borderColor: colors.border, marginBottom: 16 }]}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 12, paddingHorizontal: 4 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1, gap: 12 }}>
+                <View style={[styles.menuIconWrap, { backgroundColor: colors.primaryLight }]}>
+                  <Ionicons name={isDark ? 'moon' : 'sunny'} size={18} color={colors.primary} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={{ fontSize: 15, fontWeight: '600', color: colors.text }}>Dark Mode</Text>
+                  <Text style={{ fontSize: 13, color: colors.textMuted, marginTop: 2 }}>
+                    {isDark ? 'Switch to light theme' : 'Switch to dark theme'}
+                  </Text>
+                </View>
+              </View>
+              <Switch
+                value={isDark}
+                onValueChange={toggleTheme}
+                trackColor={{ false: colors.primary, true: colors.primary }}
+                thumbColor="#FFFFFF"
+                ios_backgroundColor={colors.primary}
+              />
+            </View>
+          </View>
+
           {/* ── Settings Menu Items ── */}
           <View style={[styles.card, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
             {[
@@ -167,6 +191,18 @@ export default function SettingsScreen({ navigation }: any) {
                     "Email: allenhodoameda@gmail.com\nPhone: +233 20 535 2535"
                   );
                 }
+              },
+              {
+                icon: 'log-out-outline',
+                label: 'Log Out',
+                sub: 'Sign out of your account',
+                onPress: handleLogout,
+              },
+              {
+                icon: 'trash-outline',
+                label: 'Delete Account',
+                sub: 'Permanently remove your data',
+                onPress: () => navigation.navigate('DeleteAccount'),
               },
             ].map((item, idx, arr) => (
               <TouchableOpacity
@@ -219,34 +255,19 @@ export default function SettingsScreen({ navigation }: any) {
                       showToast({ status: 'error', title: 'Error', subtitle: 'Failed to update notification settings.' });
                     }
                   }}
-                  trackColor={{ false: '#767577', true: colors.primary }}
-                  thumbColor={Platform.OS === 'android' ? (notifyNewRequests ? colors.primary : '#f4f3f4') : undefined}
+                  trackColor={{ false: colors.primary, true: colors.primary }}
+                  thumbColor="#FFFFFF"
+                  ios_backgroundColor={colors.primary}
                 />
               </View>
             </View>
           )}
 
-          {/* ── Logout ── */}
-          <TouchableOpacity
-            style={[styles.logoutBtn, { backgroundColor: colors.errorLight, borderColor: colors.error }]}
-            onPress={handleLogout}
-          >
-            <Ionicons name="log-out-outline" size={18} color={colors.error} style={{ marginRight: 8 }} />
-            <Text style={[styles.logoutBtnText, { color: colors.error }]}>Log Out</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[styles.logoutBtn, { backgroundColor: 'transparent', borderColor: colors.error, marginTop: 12 }]}
-            onPress={() => navigation.navigate('DeleteAccount')}
-          >
-            <Ionicons name="trash-outline" size={18} color={colors.error} style={{ marginRight: 8 }} />
-            <Text style={[styles.logoutBtnText, { color: colors.error }]}>Delete Account</Text>
-          </TouchableOpacity>
 
           <View style={{ height: 40 }} />
         </View>
       </ScrollView>
-    </AnimatedBackground>
+    </View>
   );
 }
 

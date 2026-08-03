@@ -4,7 +4,7 @@ import {
   ActivityIndicator, Image, Dimensions, Modal, TextInput,
   Alert, Linking, FlatList, RefreshControl
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { CustomIonicons as Ionicons } from '../../components/CustomIcons';
 import { useTheme } from '../../styles/ThemeContext';
 import { useFocusEffect } from '@react-navigation/native';
@@ -18,7 +18,7 @@ import { stompClient } from '../../services/socket';
 import { useAuthStore } from '../../store/authStore';
 import { startChat } from '../../services/chatService';
 import { useToast } from '../../styles/ToastContext';
-import AnimatedBackground from '../../components/AnimatedBackground';
+
 
 const { width } = Dimensions.get('window');
 
@@ -33,6 +33,7 @@ export default function ListingDetailScreen({ route, navigation }: any) {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [activeTab, setActiveTab] = useState<'about' | 'services' | 'reviews'>('about');
+  const insets = useSafeAreaInsets();
 
   // Active selected listing state
   const [currentListing, setCurrentListing] = useState<any>(route.params?.selectedListing || null);
@@ -258,22 +259,22 @@ export default function ListingDetailScreen({ route, navigation }: any) {
   const memberSince = profile.createdAt ? new Date(profile.createdAt).getFullYear() : '2026';
 
   return (
-    <AnimatedBackground style={styles.container}>
+    <View style={styles.container}>
       {/* Top Header / Breadcrumb */}
-      <View style={[styles.topHeader, { backgroundColor: '#FFFFFF' }]}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.iconBtn}>
-          <Ionicons name="arrow-back" size={24} color="#0F172A" />
+      <View style={[styles.topHeader, { backgroundColor: colors.cardBackground, paddingTop: insets.top, height: 56 + insets.top }]}>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={[styles.iconBtn, { backgroundColor: colors.background }]}>
+          <Ionicons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
         <View style={styles.breadcrumbWrap}>
-          <Text style={styles.breadcrumbText} numberOfLines={1}>
+          <Text style={[styles.breadcrumbText, { color: colors.text }]} numberOfLines={1}>
             {(currentListing?.category?.name) || profile.serviceCategory || 'Service Listing'} • {profile.fullName}
           </Text>
         </View>
-        <TouchableOpacity onPress={handleToggleSave} style={styles.iconBtn}>
+        <TouchableOpacity onPress={handleToggleSave} style={[styles.iconBtn, { backgroundColor: colors.background }]}>
           <Ionicons 
             name={isSaved ? "bookmark" : "bookmark-outline"} 
             size={24} 
-            color={isSaved ? colors.primary : "#64748B"} 
+            color={isSaved ? colors.primary : colors.textMuted} 
           />
         </TouchableOpacity>
       </View>
@@ -306,8 +307,8 @@ export default function ListingDetailScreen({ route, navigation }: any) {
               )}
             />
           ) : (
-            <View style={styles.heroPlaceholder}>
-              <Ionicons name="storefront-outline" size={64} color="#94A3B8" />
+            <View style={[styles.heroPlaceholder, { backgroundColor: colors.background }]}>
+              <Ionicons name="storefront-outline" size={64} color={colors.textMuted} />
               <Text style={styles.heroPlaceholderText}>No photo preview available</Text>
             </View>
           )}
@@ -335,11 +336,11 @@ export default function ListingDetailScreen({ route, navigation }: any) {
         </View>
 
         {/* Listing Title & Price Treatment Card */}
-        <View style={styles.mainInfoCard}>
+        <View style={[styles.mainInfoCard, { backgroundColor: colors.cardBackground, borderBottomColor: colors.border }]}>
           <View style={styles.verifiedRow}>
             <View style={styles.verifiedBadge}>
-              <Ionicons name="checkmark-circle" size={16} color="#10B981" />
-              <Text style={styles.verifiedText}>Verified Pro</Text>
+              <Ionicons name="checkmark-circle" size={16} color={colors.success} />
+              <Text style={[styles.verifiedText, { color: colors.success }]}>Verified Pro</Text>
             </View>
             {!!profile.serviceCategory && (
               <View style={[styles.verifiedBadge, { backgroundColor: 'rgba(255, 120, 70, 0.08)', borderColor: 'rgba(255, 120, 70, 0.25)', borderWidth: 1.5, marginLeft: 8 }]}>
@@ -347,9 +348,6 @@ export default function ListingDetailScreen({ route, navigation }: any) {
                 <Text style={[styles.verifiedText, { color: colors.primary }]}>Category: {profile.serviceCategory}</Text>
               </View>
             )}
-            <View style={styles.priceTagWrap}>
-              <Text style={styles.priceTagText}>Contact for quote</Text>
-            </View>
           </View>
 
           <Text style={styles.listingTitle}>{profile.fullName}</Text>
@@ -362,62 +360,46 @@ export default function ListingDetailScreen({ route, navigation }: any) {
             <Text style={styles.metaText}>{profile.viewCount || 0} views</Text>
           </View>
 
-          {/* 3 Contact CTAs */}
-          <View style={styles.ctaContainer}>
-            <TouchableOpacity style={[styles.ctaBtn, styles.ctaBtnSecondary]} onPress={handleChat}>
-              <Ionicons name="chatbubbles-outline" size={18} color={colors.primary} />
-              <Text style={[styles.ctaBtnText, { color: colors.primary }]}>Chat</Text>
+          {/* Contact CTAs */}
+          <View style={[styles.ctaContainer, { backgroundColor: colors.primaryLight }]}>
+            <TouchableOpacity style={[styles.ctaBtn, { backgroundColor: colors.primary }]} onPress={handleChat}>
+              <Ionicons name="chatbubbles-outline" size={18} color="#FFFFFF" />
+              <Text style={[styles.ctaBtnText, { color: '#FFFFFF' }]}>Chat</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={[styles.ctaBtn, styles.ctaBtnSecondary]} onPress={handleCallNow}>
-              <Ionicons name="call-outline" size={18} color="#0F172A" />
-              <Text style={[styles.ctaBtnText, { color: '#0F172A' }]}>Call Now</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity 
-              style={[styles.ctaBtn, styles.ctaBtnPrimary]} 
-              onPress={() => {
-                if (profile) {
-                  navigation.navigate('PostRequest', {
-                    targetProviderId: profile.id || profile.providerId || providerId,
-                    targetProviderName: profile.fullName,
-                    targetProviderAvatarUrl: profile.profilePictureUrl,
-                    targetProviderRating: profile.rating,
-                    categoryId: currentListing?.category?.id || currentListing?.category?.name || profile.serviceCategory || (profile.services && profile.services.length > 0 ? (profile.services[0].category?.id || profile.services[0].category?.name) : undefined),
-                  });
-                }
-              }}
-            >
-              <Ionicons name="calendar-outline" size={18} color="#FFFFFF" />
-              <Text style={[styles.ctaBtnText, { color: '#FFFFFF' }]}>Request Quote</Text>
+            <TouchableOpacity style={styles.ctaBtn} onPress={handleCallNow}>
+              <Ionicons name="call-outline" size={18} color={colors.primaryDark} />
+              <Text style={[styles.ctaBtnText, { color: colors.primaryDark }]}>Call Now</Text>
             </TouchableOpacity>
           </View>
         </View>
 
         {/* Tabs Bar */}
-        <View style={styles.tabsBar}>
-          <TouchableOpacity 
-            style={[styles.tabItem, activeTab === 'about' && styles.tabItemActive]}
-            onPress={() => setActiveTab('about')}
-          >
-            <Text style={[styles.tabText, activeTab === 'about' && styles.tabTextActive]}>Description</Text>
-          </TouchableOpacity>
+        <View style={styles.tabsBarWrapper}>
+          <View style={[styles.tabsBar, { backgroundColor: colors.primaryLight }]}>
+            <TouchableOpacity 
+              style={[styles.tabItem, activeTab === 'about' && [styles.tabItemActive, { backgroundColor: colors.primary }]]}
+              onPress={() => setActiveTab('about')}
+            >
+              <Text style={[styles.tabText, activeTab === 'about' ? styles.tabTextActive : { color: colors.textMuted }]}>Description</Text>
+            </TouchableOpacity>
 
-          <TouchableOpacity 
-            style={[styles.tabItem, activeTab === 'services' && styles.tabItemActive]}
-            onPress={() => setActiveTab('services')}
-          >
-            <Text style={[styles.tabText, activeTab === 'services' && styles.tabTextActive]}>Key Services</Text>
-          </TouchableOpacity>
+            <TouchableOpacity 
+              style={[styles.tabItem, activeTab === 'services' && [styles.tabItemActive, { backgroundColor: colors.primary }]]}
+              onPress={() => setActiveTab('services')}
+            >
+              <Text style={[styles.tabText, activeTab === 'services' ? styles.tabTextActive : { color: colors.textMuted }]}>Key Services</Text>
+            </TouchableOpacity>
 
-          <TouchableOpacity 
-            style={[styles.tabItem, activeTab === 'reviews' && styles.tabItemActive]}
-            onPress={() => setActiveTab('reviews')}
-          >
-            <Text style={[styles.tabText, activeTab === 'reviews' && styles.tabTextActive]}>
-              Reviews ({reviews.length})
-            </Text>
-          </TouchableOpacity>
+            <TouchableOpacity 
+              style={[styles.tabItem, activeTab === 'reviews' && [styles.tabItemActive, { backgroundColor: colors.primary }]]}
+              onPress={() => setActiveTab('reviews')}
+            >
+              <Text style={[styles.tabText, activeTab === 'reviews' ? styles.tabTextActive : { color: colors.textMuted }]}>
+                Reviews ({reviews.length})
+              </Text>
+            </TouchableOpacity>
+          </View>
         </View>
 
         {/* Tab 1: About / Description */}
@@ -452,19 +434,19 @@ export default function ListingDetailScreen({ route, navigation }: any) {
               </>
             )}
 
-            <View style={styles.sellerInfoBox}>
-              <Text style={styles.sellerInfoTitle}>Seller Verification & Tenure</Text>
+            <View style={[styles.sellerInfoBox, { backgroundColor: colors.background, borderColor: colors.border }]}>
+              <Text style={[styles.sellerInfoTitle, { color: colors.text }]}>Seller Verification & Tenure</Text>
               <View style={styles.sellerInfoRow}>
-                <Ionicons name="shield-checkmark" size={18} color="#10B981" />
-                <Text style={styles.sellerInfoText}>Identity & Role Verified by CampusServ</Text>
+                <Ionicons name="shield-checkmark" size={18} color={colors.success} />
+                <Text style={[styles.sellerInfoText, { color: colors.textMuted }]}>Identity & Role Verified by CampusServ</Text>
               </View>
               <View style={styles.sellerInfoRow}>
-                <Ionicons name="time-outline" size={18} color="#64748B" />
-                <Text style={styles.sellerInfoText}>Member since {memberSince}</Text>
+                <Ionicons name="time-outline" size={18} color={colors.textMuted} />
+                <Text style={[styles.sellerInfoText, { color: colors.textMuted }]}>Member since {memberSince}</Text>
               </View>
               <View style={styles.sellerInfoRow}>
-                <Ionicons name="briefcase-outline" size={18} color="#64748B" />
-                <Text style={styles.sellerInfoText}>{profile.completedJobsCount || 0} completed campus orders</Text>
+                <Ionicons name="briefcase-outline" size={18} color={colors.textMuted} />
+                <Text style={[styles.sellerInfoText, { color: colors.textMuted }]}>{profile.completedJobsCount || 0} completed campus orders</Text>
               </View>
             </View>
           </View>
@@ -627,7 +609,7 @@ export default function ListingDetailScreen({ route, navigation }: any) {
           </View>
         </View>
       </Modal>
-    </AnimatedBackground>
+    </View>
   );
 }
 
@@ -775,22 +757,18 @@ const styles = StyleSheet.create({
   },
   ctaContainer: {
     flexDirection: 'row',
-    gap: 10,
+    borderRadius: 30,
+    padding: 4,
   },
   ctaBtn: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 14,
     paddingHorizontal: 14,
-    borderRadius: 16,
+    borderRadius: 26,
     gap: 6,
-  },
-  ctaBtnSecondary: {
-    flex: 1,
-    backgroundColor: '#F8FAFC',
-    borderWidth: 1.5,
-    borderColor: '#E2E8F0',
   },
   ctaBtnPrimary: {
     flex: 1.5,
@@ -806,32 +784,39 @@ const styles = StyleSheet.create({
     fontFamily: 'System',
     fontWeight: '700',
   },
-  tabsBar: {
-    flexDirection: 'row',
+  tabsBarWrapper: {
     backgroundColor: '#FFFFFF',
-    marginTop: 10,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
     borderBottomWidth: 1,
     borderBottomColor: '#F1F5F9',
   },
+  tabsBar: {
+    flexDirection: 'row',
+    borderRadius: 30,
+    padding: 4,
+  },
   tabItem: {
     flex: 1,
-    paddingVertical: 16,
+    paddingVertical: 12,
     alignItems: 'center',
-    borderBottomWidth: 3,
-    borderBottomColor: 'transparent',
+    borderRadius: 26,
   },
   tabItemActive: {
-    borderBottomColor: '#FF7846',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
   },
   tabText: {
     fontSize: 14,
     fontFamily: 'System',
     fontWeight: '600',
-    color: '#64748B',
   },
   tabTextActive: {
-    fontWeight: '800',
-    color: '#FF7846',
+    fontWeight: '700',
+    color: '#FFFFFF',
   },
   tabContentCard: {
     backgroundColor: '#FFFFFF',

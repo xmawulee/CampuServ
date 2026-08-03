@@ -28,7 +28,7 @@ import {
 } from '../../services/chatService';
 import { BASE_URL } from '../../services/api';
 import * as ImagePicker from 'expo-image-picker';
-import AnimatedBackground from '../../components/AnimatedBackground';
+
 
 function getFullImageUrl(url?: string | null) {
   if (!url) return null;
@@ -279,7 +279,7 @@ export default function ChatThreadScreen({ route, navigation }: any) {
   };
 
   return (
-    <AnimatedBackground style={{ flex: 1 }}>
+    <View style={{ flex: 1 }}>
       <KeyboardAvoidingView
         style={[styles.root, { backgroundColor: 'transparent' }]}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -390,7 +390,7 @@ export default function ChatThreadScreen({ route, navigation }: any) {
         </TouchableOpacity>
       </Modal>
     </KeyboardAvoidingView>
-  </AnimatedBackground>
+  </View>
   );
 }
 

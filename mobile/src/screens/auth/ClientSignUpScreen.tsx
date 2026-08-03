@@ -176,18 +176,14 @@ export default function ClientSignUpScreen({ navigation }: any) {
     ? (['#0B0F19', '#02040A'] as const)
     : (['#F3F6FA', '#E3E8F0'] as const);
 
-  const clientBtnGradient = isDark ? (['#312E81', '#1E3A8A'] as const) : (['#4F46E5', '#3B82F6'] as const);
+  const clientBtnGradient = [colors.primary, colors.primaryDark] as const;
 
   return (
-    <LinearGradient colors={backgroundColors} style={{ flex: 1 }}>
+    <View style={{ flex: 1, backgroundColor: 'transparent' }}>
       <SafeAreaView style={[styles.container, { paddingBottom: insets.bottom }]}>
         <StatusBar barStyle={isDark ? "light-content" : "dark-content"} translucent backgroundColor="transparent" />
 
-        {/* Decorative Concentric Rings in Background */}
-        <View style={styles.logoRingContainer}>
-          <View style={[styles.logoRing, { borderColor: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(99,102,241,0.04)', width: 180, height: 180, borderRadius: 90 }]} />
-          <View style={[styles.logoRing, { borderColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(99,102,241,0.06)', width: 140, height: 140, borderRadius: 70 }]} />
-        </View>
+
 
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -211,7 +207,7 @@ export default function ClientSignUpScreen({ navigation }: any) {
             {/* Logo */}
             <Image 
               source={logoImage} 
-              style={styles.logo} 
+              style={[styles.logo, { tintColor: colors.primary }]} 
               resizeMode="contain"
             />
 
@@ -368,7 +364,7 @@ export default function ClientSignUpScreen({ navigation }: any) {
           </ScrollView>
         </KeyboardAvoidingView>
       </SafeAreaView>
-    </LinearGradient>
+    </View>
   );
 }
 
@@ -412,27 +408,27 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 10,
   },
-  heading: { fontSize: 28, fontWeight: '900', letterSpacing: -0.5, marginBottom: 8 },
-  subheading: { fontSize: 14, lineHeight: 20, marginBottom: 24, fontWeight: '500' },
+  heading: { fontSize: 32, fontWeight: '900', letterSpacing: -1, marginBottom: 8 },
+  subheading: { fontSize: 14, fontFamily: 'Inter-Medium', lineHeight: 20, marginBottom: 24 },
   errorBanner: {
     flexDirection: 'row', alignItems: 'center', gap: 8,
     borderWidth: 1, borderRadius: 12, padding: 12, marginBottom: 20,
   },
   errorBannerText: { flex: 1, fontSize: 13, fontWeight: '600' },
   form: { gap: 4 },
-  label: { fontSize: 11, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 6 },
+  label: { fontSize: 13, fontFamily: 'Outfit-Bold', textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 6 },
   labelTop: { marginTop: 14 },
   input: {
     borderRadius: 18,
     paddingHorizontal: 16, paddingVertical: 14,
-    fontSize: 15, fontWeight: '600',
+    fontSize: 15, fontFamily: 'Inter-Medium',
   },
   passwordRow: {
     flexDirection: 'row', alignItems: 'center',
     borderRadius: 18,
     paddingHorizontal: 16,
   },
-  passwordInput: { flex: 1, paddingVertical: 14, fontSize: 15, fontWeight: '600' },
+  passwordInput: { flex: 1, paddingVertical: 14, fontSize: 15, fontFamily: 'Inter-Medium' },
   eyeBtn: { padding: 4 },
   fieldError: { fontSize: 12, fontWeight: '600', marginTop: 4 },
   submitBtnTouch: {
@@ -444,11 +440,11 @@ const styles = StyleSheet.create({
     elevation: 6,
   },
   submitBtn: {
-    height: 56, borderRadius: 18, alignItems: 'center', justifyContent: 'center',
+    height: 56, borderRadius: 30, alignItems: 'center', justifyContent: 'center',
   },
-  submitBtnDisabled: { opacity: 0.65 },
-  submitBtnText: { color: '#FFF', fontSize: 16, fontWeight: '800' },
+  submitBtnDisabled: { opacity: 0.85 },
+  submitBtnText: { color: '#FFF', fontSize: 16, fontFamily: 'Outfit-Bold' },
   footerRow: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginTop: 24 },
-  footerText: { fontSize: 14, fontWeight: '500' },
-  footerLink: { fontSize: 14, fontWeight: '700' },
+  footerText: { fontSize: 14, fontFamily: 'Inter-Medium' },
+  footerLink: { fontSize: 14, fontFamily: 'Outfit-Bold' },
 });

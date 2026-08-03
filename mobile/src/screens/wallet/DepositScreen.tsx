@@ -4,6 +4,7 @@ import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { api } from '../../services/api';
 import { useToast } from '../../styles/ToastContext';
+import { useTheme } from '../../styles/ThemeContext';
 
 export const DepositScreen = () => {
     const [amount, setAmount] = useState('');
@@ -17,6 +18,7 @@ export const DepositScreen = () => {
     
     const navigation = useNavigation();
     const { showToast } = useToast();
+    const { colors, isDark } = useTheme();
 
     useEffect(() => {
         const unsubscribe = navigation.addListener('beforeRemove', (e) => {
@@ -69,36 +71,40 @@ export const DepositScreen = () => {
 
     const renderMethod = ({ item }: { item: any }) => (
         <TouchableOpacity 
-            style={[styles.methodCard, selectedMethodId === item.id && styles.methodCardSelected]}
+            style={[
+                styles.methodCard, 
+                { backgroundColor: colors.cardBackground, borderColor: colors.border },
+                selectedMethodId === item.id && { borderColor: colors.primary, backgroundColor: colors.primaryLight }
+            ]}
             onPress={() => setSelectedMethodId(item.id)}
         >
             <View style={styles.methodInfo}>
                 <Ionicons 
                     name={item.type === 'MOMO' ? 'phone-portrait-outline' : 'card-outline'} 
                     size={24} 
-                    color={selectedMethodId === item.id ? '#4A90E2' : '#888'} 
+                    color={selectedMethodId === item.id ? colors.primary : colors.textMuted} 
                 />
                 <View style={styles.methodTextContainer}>
-                    <Text style={styles.methodProvider}>{item.provider}</Text>
-                    <Text style={styles.methodAccount}>{item.accountNumber}</Text>
+                    <Text style={[styles.methodProvider, { color: colors.text }]}>{item.provider}</Text>
+                    <Text style={[styles.methodAccount, { color: colors.textMuted }]}>{item.accountNumber}</Text>
                 </View>
             </View>
             {selectedMethodId === item.id && (
-                <Ionicons name="checkmark-circle" size={24} color="#4A90E2" />
+                <Ionicons name="checkmark-circle" size={24} color={colors.primary} />
             )}
         </TouchableOpacity>
     );
 
     return (
-        <View style={styles.container}>
-            <Text style={styles.title}>Deposit Funds</Text>
+        <View style={[styles.container, { backgroundColor: colors.background }]}>
+            <Text style={[styles.title, { color: colors.text }]}>Deposit Funds</Text>
 
             <View style={styles.amountContainer}>
-                <Text style={styles.currencySymbol}>GHS</Text>
+                <Text style={[styles.currencySymbol, { color: colors.textMuted }]}>GHS</Text>
                 <TextInput
-                    style={styles.amountInput}
+                    style={[styles.amountInput, { color: colors.text }]}
                     placeholder="0.00"
-                    placeholderTextColor="#555"
+                    placeholderTextColor={colors.placeholderText}
                     keyboardType="numeric"
                     value={amount}
                     onChangeText={setAmount}
@@ -106,7 +112,7 @@ export const DepositScreen = () => {
                 />
             </View>
 
-            <Text style={styles.sectionTitle}>Select Deposit Method</Text>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>Select Deposit Method</Text>
             
             <View style={{ backgroundColor: 'rgba(255, 165, 0, 0.15)', padding: 10, borderRadius: 8, marginBottom: 15, borderLeftWidth: 3, borderLeftColor: '#FFA500' }}>
                 <Text style={{ color: '#FFA500', fontSize: 12, fontWeight: '600' }}>💡 Simulated in Local Development Mode (Paystack Dev Sandbox)</Text>
@@ -119,11 +125,15 @@ export const DepositScreen = () => {
             />
 
             <TouchableOpacity 
-                style={[styles.depositButton, (isSubmitting || !selectedMethodId) && styles.depositButtonDisabled]} 
+                style={[
+                    styles.depositButton, 
+                    { backgroundColor: colors.primary },
+                    (isSubmitting || !selectedMethodId) && { backgroundColor: isDark ? colors.border : '#E2E8F0' }
+                ]} 
                 onPress={handleDeposit}
                 disabled={isSubmitting || !selectedMethodId}
             >
-                <Text style={styles.depositButtonText}>
+                <Text style={[styles.depositButtonText, (isSubmitting || !selectedMethodId) && { color: colors.textMuted }]}>
                     {isSubmitting ? 'Processing...' : 'Deposit'}
                 </Text>
             </TouchableOpacity>
@@ -132,19 +142,17 @@ export const DepositScreen = () => {
 };
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: '#121212', padding: 20 },
-    title: { color: '#fff', fontSize: 24, fontWeight: 'bold', marginBottom: 30 },
+    container: { flex: 1, padding: 20 },
+    title: { fontSize: 24, fontWeight: 'bold', marginBottom: 30 },
     amountContainer: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginBottom: 40 },
-    currencySymbol: { color: '#888', fontSize: 28, marginRight: 10, fontWeight: 'bold' },
-    amountInput: { color: '#fff', fontSize: 48, fontWeight: 'bold', minWidth: 150, textAlign: 'center' },
-    sectionTitle: { color: '#fff', fontSize: 16, fontWeight: '600', marginBottom: 15 },
-    methodCard: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#1E1E1E', padding: 15, borderRadius: 8, marginBottom: 10, borderWidth: 1, borderColor: '#1E1E1E' },
-    methodCardSelected: { borderColor: '#4A90E2', backgroundColor: 'rgba(74, 144, 226, 0.1)' },
+    currencySymbol: { fontSize: 28, marginRight: 10, fontWeight: 'bold' },
+    amountInput: { fontSize: 48, fontWeight: 'bold', minWidth: 150, textAlign: 'center' },
+    sectionTitle: { fontSize: 16, fontWeight: '600', marginBottom: 15 },
+    methodCard: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 15, borderRadius: 8, marginBottom: 10, borderWidth: 1 },
     methodInfo: { flexDirection: 'row', alignItems: 'center' },
     methodTextContainer: { marginLeft: 15 },
-    methodProvider: { color: '#fff', fontSize: 16, fontWeight: '500' },
-    methodAccount: { color: '#888', fontSize: 14, marginTop: 2 },
-    depositButton: { backgroundColor: '#4CD964', borderRadius: 8, paddingVertical: 15, alignItems: 'center', marginTop: 20, marginBottom: 40 },
-    depositButtonDisabled: { backgroundColor: '#333' },
+    methodProvider: { fontSize: 16, fontWeight: '500' },
+    methodAccount: { fontSize: 14, marginTop: 2 },
+    depositButton: { borderRadius: 8, paddingVertical: 15, alignItems: 'center', marginTop: 20, marginBottom: 40 },
     depositButtonText: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
 });

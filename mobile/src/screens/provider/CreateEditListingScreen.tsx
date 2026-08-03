@@ -14,7 +14,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { uploadPortfolioPhoto, updateProviderService, deleteProviderService } from '../../services/userService';
 import { BASE_URL } from '../../services/api';
 import { Image } from 'react-native';
-import AnimatedBackground from '../../components/AnimatedBackground';
+
 
 const CATEGORY_ICONS: Record<string, { icon: string; bg: string; iconColor: string }> = {
   'Laundry':  { icon: 'water',         bg: 'rgba(0, 150, 255, 0.1)',   iconColor: '#0096FF' },
@@ -258,7 +258,7 @@ export default function CreateEditListingScreen({ navigation, route }: any) {
 
 
   return (
-    <AnimatedBackground style={{ flex: 1 }}>
+    <View style={{ flex: 1 }}>
       {/* Header */}
       <View
         style={[
@@ -575,7 +575,7 @@ export default function CreateEditListingScreen({ navigation, route }: any) {
       </View>
 
       <Toast message={toastMessage} visible={toastVisible} type={toastType} />
-    </AnimatedBackground>
+    </View>
   );
 }
 

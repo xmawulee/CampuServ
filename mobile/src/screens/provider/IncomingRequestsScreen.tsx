@@ -12,7 +12,7 @@ import { api } from '../../services/api';
 import { stompClient } from '../../services/socket';
 import { useAuthStore } from '../../store/authStore';
 import type { OpenRequest } from '../../types/provider';
-import AnimatedBackground from '../../components/AnimatedBackground';
+
 
 const PAGE_SIZE = 20;
 
@@ -172,7 +172,7 @@ export default function IncomingRequestsScreen({ navigation }: any) {
   );
 
   return (
-    <AnimatedBackground style={styles.container}>
+    <View style={styles.container}>
       <View style={styles.headerBlock}>
         <Text style={[styles.headerTitle, { color: colors.text }]}>Opportunity Feed</Text>
         <Text style={[styles.headerSub, { color: colors.textMuted }]}>
@@ -209,7 +209,7 @@ export default function IncomingRequestsScreen({ navigation }: any) {
           ListFooterComponent={renderFooter}
         />
       )}
-    </AnimatedBackground>
+    </View>
   );
 }
 
