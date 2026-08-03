@@ -284,7 +284,7 @@ export default function ListingDetailScreen({ route, navigation }: any) {
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}
       >
         {/* Hero Image / Carousel */}
-        <View style={styles.heroSection}>
+        <View style={[styles.heroSection, { backgroundColor: colors.background }]}>
           {images.length > 0 ? (
             <FlatList
               ref={flatListRef}
@@ -315,7 +315,7 @@ export default function ListingDetailScreen({ route, navigation }: any) {
 
           {/* Carousel Thumbnails */}
           {images.length > 1 && (
-            <View style={styles.thumbnailsContainer}>
+            <View style={[styles.thumbnailsContainer, { backgroundColor: colors.cardBackground, borderBottomColor: colors.border }]}>
               {images.map((imgUrl, idx) => (
                 <TouchableOpacity
                   key={idx}
@@ -350,7 +350,7 @@ export default function ListingDetailScreen({ route, navigation }: any) {
             )}
           </View>
 
-          <Text style={styles.listingTitle}>{profile.fullName}</Text>
+          <Text style={[styles.listingTitle, { color: colors.text }]}>{profile.fullName}</Text>
 
           <View style={styles.metaRow}>
             <RatingBadge rating={profile.rating || 0} reviewCount={profile.completedJobsCount} size="medium" />
@@ -375,7 +375,7 @@ export default function ListingDetailScreen({ route, navigation }: any) {
         </View>
 
         {/* Tabs Bar */}
-        <View style={styles.tabsBarWrapper}>
+        <View style={[styles.tabsBarWrapper, { backgroundColor: colors.cardBackground, borderBottomColor: colors.border }]}>
           <View style={[styles.tabsBar, { backgroundColor: colors.primaryLight }]}>
             <TouchableOpacity 
               style={[styles.tabItem, activeTab === 'about' && [styles.tabItemActive, { backgroundColor: colors.primary }]]}
@@ -404,9 +404,9 @@ export default function ListingDetailScreen({ route, navigation }: any) {
 
         {/* Tab 1: About / Description */}
         {activeTab === 'about' && (
-          <View style={styles.tabContentCard}>
-            <Text style={styles.sectionHeading}>About this Service</Text>
-            <Text style={styles.bioText}>
+          <View style={[styles.tabContentCard, { backgroundColor: colors.cardBackground }]}>
+            <Text style={[styles.sectionHeading, { color: colors.text }]}>About this Service</Text>
+            <Text style={[styles.bioText, { color: colors.text }]}>
               {(currentListing?.description) ||
                (currentListing?.listingDescription) ||
                profile.bio ||
@@ -420,7 +420,7 @@ export default function ListingDetailScreen({ route, navigation }: any) {
               return tags;
             })().length > 0 && (
               <>
-                <Text style={[styles.sectionHeading, { marginTop: 20 }]}>Service Highlights</Text>
+                <Text style={[styles.sectionHeading, { color: colors.text, marginTop: 20 }]}>Service Highlights</Text>
                 <View style={styles.tagsContainer}>
                   {(currentListing?.keyServicesList ||
                     (currentListing?.listingKeyServices ? String(currentListing.listingKeyServices).split(',').map((s: string) => s.trim()).filter(Boolean) : null) ||
@@ -454,52 +454,52 @@ export default function ListingDetailScreen({ route, navigation }: any) {
 
         {/* Tab 2: Key Services & Pricing */}
         {activeTab === 'services' && (
-          <View style={styles.tabContentCard}>
-            <Text style={styles.sectionHeading}>Service Offerings & Base Prices</Text>
+          <View style={[styles.tabContentCard, { backgroundColor: colors.cardBackground }]}>
+            <Text style={[styles.sectionHeading, { color: colors.text }]}>Service Offerings & Base Prices</Text>
             {profile.services && profile.services.length > 0 ? (
               profile.services.map((svc: any, idx: number) => (
-                <View key={idx} style={styles.serviceItem}>
+                <View key={idx} style={[styles.serviceItem, { borderBottomColor: colors.border }]}>
                   <View style={{ flex: 1 }}>
-                    <Text style={styles.serviceTitle}>{svc.title || 'Standard Service'}</Text>
+                    <Text style={[styles.serviceTitle, { color: colors.text }]}>{svc.title || 'Standard Service'}</Text>
                     {!!svc.category?.name && (
                       <Text style={{ fontSize: 11, color: colors.primary, fontWeight: '700', marginBottom: 2 }}>
                         Category: {svc.category.name}
                       </Text>
                     )}
-                    {!!svc.description && <Text style={styles.serviceDesc}>{svc.description}</Text>}
+                    {!!svc.description && <Text style={[styles.serviceDesc, { color: colors.textMuted }]}>{svc.description}</Text>}
                   </View>
-                  <View style={styles.servicePriceTag}>
-                    <Text style={styles.servicePriceText}>Contact for quote</Text>
+                  <View style={[styles.servicePriceTag, { backgroundColor: colors.background, borderColor: colors.border }]}>
+                    <Text style={[styles.servicePriceText, { color: colors.text }]}>Contact for quote</Text>
                   </View>
                 </View>
               ))
             ) : (
-              <Text style={styles.emptyText}>Standard service rates apply. Request a quote for details.</Text>
+              <Text style={[styles.emptyText, { color: colors.textMuted }]}>Standard service rates apply. Request a quote for details.</Text>
             )}
 
             {/* Seller's other listings */}
             <View style={{ marginTop: 24 }}>
-              <Text style={styles.sectionHeading}>More Listings by this Seller</Text>
+              <Text style={[styles.sectionHeading, { color: colors.text }]}>More Listings by this Seller</Text>
               {loadingListings ? (
                 <ActivityIndicator size="small" color={colors.primary} />
               ) : sellerListings && sellerListings.length > 0 ? (
                 sellerListings.map((ad: any, idx: number) => (
                   <TouchableOpacity
                     key={idx}
-                    style={styles.sellerAdCard}
+                    style={[styles.sellerAdCard, { backgroundColor: colors.background, borderColor: colors.border }]}
                     onPress={() => navigation.push('ListingDetail', { providerId, selectedListing: ad })}
                     activeOpacity={0.8}
                   >
                     <Ionicons name="megaphone-outline" size={20} color={colors.primary} />
                     <View style={{ flex: 1, marginLeft: 12 }}>
-                      <Text style={styles.sellerAdTitle}>{ad.title || ad.category?.name || 'Campus Listing'}</Text>
+                      <Text style={[styles.sellerAdTitle, { color: colors.text }]}>{ad.title || ad.category?.name || 'Campus Listing'}</Text>
                       <Text style={styles.sellerAdPrice}>{ad.basePrice ? `From GHS ${ad.basePrice}` : 'Negotiable'}</Text>
                     </View>
                     <Ionicons name="chevron-forward" size={16} color="#94A3B8" />
                   </TouchableOpacity>
                 ))
               ) : (
-                <Text style={styles.emptyText}>No additional active listings.</Text>
+                <Text style={[styles.emptyText, { color: colors.textMuted }]}>No additional active listings.</Text>
               )}
             </View>
           </View>
@@ -507,21 +507,21 @@ export default function ListingDetailScreen({ route, navigation }: any) {
 
         {/* Tab 3: Reviews */}
         {activeTab === 'reviews' && (
-          <View style={styles.tabContentCard}>
-            <Text style={styles.sectionHeading}>Student Reviews ({reviews.length})</Text>
+          <View style={[styles.tabContentCard, { backgroundColor: colors.cardBackground }]}>
+            <Text style={[styles.sectionHeading, { color: colors.text }]}>Student Reviews ({reviews.length})</Text>
             {loadingReviews ? (
               <ActivityIndicator size="small" color={colors.primary} style={{ marginVertical: 20 }} />
             ) : reviews && reviews.length > 0 ? (
               reviews.map((rev: any, idx: number) => (
-                <View key={idx} style={styles.reviewItem}>
+                <View key={idx} style={[styles.reviewItem, { borderBottomColor: colors.border }]}>
                   <View style={styles.reviewHeader}>
-                    <View style={styles.reviewerAvatar}>
-                      <Text style={styles.reviewerAvatarText}>
+                    <View style={[styles.reviewerAvatar, { backgroundColor: colors.background }]}>
+                      <Text style={[styles.reviewerAvatarText, { color: colors.text }]}>
                         {(rev.reviewerName || 'Student').charAt(0).toUpperCase()}
                       </Text>
                     </View>
                     <View style={{ flex: 1, marginLeft: 10 }}>
-                      <Text style={styles.reviewerName}>{rev.reviewerName || 'Verified Student'}</Text>
+                      <Text style={[styles.reviewerName, { color: colors.text }]}>{rev.reviewerName || 'Verified Student'}</Text>
                       <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 2 }}>
                         {[...Array(5)].map((_, i) => (
                           <Ionicons 
@@ -534,13 +534,13 @@ export default function ListingDetailScreen({ route, navigation }: any) {
                       </View>
                     </View>
                   </View>
-                  <Text style={styles.reviewComment}>{rev.comment || 'Great service and timely delivery!'}</Text>
+                  <Text style={[styles.reviewComment, { color: colors.text }]}>{rev.comment || 'Great service and timely delivery!'}</Text>
                 </View>
               ))
             ) : (
               <View style={styles.emptyReviews}>
                 <Ionicons name="chatbox-ellipses-outline" size={40} color="#94A3B8" />
-                <Text style={styles.emptyText}>No reviews yet. Book this service to be the first!</Text>
+                <Text style={[styles.emptyText, { color: colors.textMuted }]}>No reviews yet. Book this service to be the first!</Text>
               </View>
             )}
           </View>
@@ -559,15 +559,15 @@ export default function ListingDetailScreen({ route, navigation }: any) {
       {/* Report Listing Modal */}
       <Modal visible={reportModalVisible} animationType="fade" transparent>
         <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
+          <View style={[styles.modalContent, { backgroundColor: colors.cardBackground }]}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Report Listing</Text>
+              <Text style={[styles.modalTitle, { color: colors.text }]}>Report Listing</Text>
               <TouchableOpacity onPress={() => setReportModalVisible(false)}>
                 <Ionicons name="close" size={24} color="#64748B" />
               </TouchableOpacity>
             </View>
 
-            <Text style={styles.modalSubtitle}>
+            <Text style={[styles.modalSubtitle, { color: colors.textMuted }]}>
               Why are you reporting this listing? False or spam reports may affect your account.
             </Text>
 
@@ -585,9 +585,9 @@ export default function ListingDetailScreen({ route, navigation }: any) {
               ))}
             </View>
 
-            <Text style={styles.inputLabel}>Additional Details (Optional)</Text>
+            <Text style={[styles.inputLabel, { color: colors.text }]}>Additional Details (Optional)</Text>
             <TextInput
-              style={[styles.textInput, styles.textArea]}
+              style={[styles.textInput, styles.textArea, { backgroundColor: colors.background, color: colors.text, borderColor: colors.border }]}
               placeholder="Provide context for moderation review..."
               multiline
               numberOfLines={3}
