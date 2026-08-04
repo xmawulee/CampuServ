@@ -9,7 +9,7 @@ import {
   Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
+import SystemGradient from '../../components/SystemGradient';
 import { CustomIonicons as Ionicons } from '../../components/CustomIcons';
 import { useTheme } from '../../styles/ThemeContext';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -55,7 +55,7 @@ export default function RoleSelectScreen({ navigation, route }: any) {
             style={styles.cardTouch}
             onPress={() => navigation.navigate('ClientSignUp')}
           >
-            <LinearGradient
+            <SystemGradient
               colors={[colors.primary, colors.primaryDark]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
@@ -71,7 +71,7 @@ export default function RoleSelectScreen({ navigation, route }: any) {
               <View style={[styles.cardArrow, { backgroundColor: 'rgba(255,255,255,0.2)' }]}>
                 <Ionicons name="arrow-forward" size={16} color="#FFF" />
               </View>
-            </LinearGradient>
+            </SystemGradient>
           </TouchableOpacity>
 
           {/* Provider Card */}
@@ -80,7 +80,7 @@ export default function RoleSelectScreen({ navigation, route }: any) {
             style={styles.cardTouch}
             onPress={() => navigation.navigate('ProviderSignUp')}
           >
-            <LinearGradient
+            <SystemGradient
               colors={[colors.primary, colors.primaryDark]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
@@ -97,7 +97,7 @@ export default function RoleSelectScreen({ navigation, route }: any) {
               <View style={[styles.cardArrow, { backgroundColor: 'rgba(255,255,255,0.15)' }]}>
                 <Ionicons name="arrow-forward" size={16} color="#FFF" />
               </View>
-            </LinearGradient>
+            </SystemGradient>
           </TouchableOpacity>
         </View>
 
@@ -188,7 +188,7 @@ const styles = StyleSheet.create({
     padding: 18,
     flexDirection: 'row',
     alignItems: 'center',
-    minHeight: 110,
+    minHeight: 160,
   },
   cardIconWrap: {
     width: 52,

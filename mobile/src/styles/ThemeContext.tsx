@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import { LightColors, DarkColors, ThemeColors } from '../styles/colors';
 import * as SecureStore from 'expo-secure-store';
+import { Platform } from 'react-native';
 
 type ThemeMode = 'light' | 'dark';
 
@@ -27,7 +28,7 @@ const REDUCE_MOTION_KEY = 'campusserv_reduce_motion';
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [mode, setMode] = useState<ThemeMode>('light');
-  const [reduceMotion, setReduceMotion] = useState<boolean>(false);
+  const [reduceMotion, setReduceMotion] = useState<boolean>(Platform.OS === 'android');
 
   // Load persisted preference on mount
   useEffect(() => {
@@ -43,6 +44,8 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       .then((saved) => {
         if (saved === 'true') {
           setReduceMotion(true);
+        } else if (saved === 'false') {
+          setReduceMotion(false);
         }
       })
       .catch(() => {});

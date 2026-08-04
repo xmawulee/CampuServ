@@ -12,7 +12,7 @@ import {
   Alert,
   Image,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
+import SystemGradient from '../../components/SystemGradient';
 import { CustomIonicons as Ionicons } from '../../components/CustomIcons';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { api } from '../../services/api';
@@ -197,7 +197,7 @@ export default function AuthScreen({ navigation }: any) {
   };
 
   return (
-    <LinearGradient colors={['#0A2E6E', '#1565C0']} style={styles.container}>
+    <SystemGradient colors={['#0A2E6E', '#1565C0']} style={styles.container}>
       <KeyboardAvoidingView 
         behavior={Platform.OS === 'ios' ? 'padding' : undefined} 
         style={styles.keyboardView}
@@ -444,7 +444,7 @@ export default function AuthScreen({ navigation }: any) {
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
-    </LinearGradient>
+    </SystemGradient>
   );
 }
 

@@ -178,13 +178,13 @@ function CustomTabBar({ state, descriptors, navigation, colors, isDark }: any) {
 
 // ── Provider Bottom Tabs ────────────────────────────────────────────────────
 function ProviderNavigator() {
-  const { colors, isDark } = useTheme();
+  const { colors, isDark, reduceMotion } = useTheme();
 
   return (
     <View style={{ flex: 1, backgroundColor: 'transparent' }}>
       <Tab.Navigator
         tabBar={(props) => <CustomTabBar {...props} colors={colors} isDark={isDark} />}
-        screenOptions={{ headerShown: false, animation: 'shift' }}
+        screenOptions={{ headerShown: false, animation: reduceMotion ? 'fade' : 'shift' }}
       >
         <Tab.Screen name="ProviderDashboardHome" component={ProviderDashboardHomeScreen} />
         <Tab.Screen name="IncomingRequests" component={IncomingRequestsScreen} />
@@ -198,13 +198,13 @@ function ProviderNavigator() {
 
 // ── Client Bottom Tabs ──────────────────────────────────────────────────────
 function AppTabs() {
-  const { colors, isDark } = useTheme();
+  const { colors, isDark, reduceMotion } = useTheme();
 
   return (
     <View style={{ flex: 1, backgroundColor: 'transparent' }}>
       <Tab.Navigator
         tabBar={(props) => <CustomTabBar {...props} colors={colors} isDark={isDark} />}
-        screenOptions={{ headerShown: false, animation: 'shift' }}
+        screenOptions={{ headerShown: false, animation: reduceMotion ? 'fade' : 'shift' }}
       >
         <Tab.Screen name="Home" component={HomeScreen} />
         <Tab.Screen name="Search" component={PostRequestScreen} />
@@ -335,7 +335,7 @@ function resolveRoute(
 
 function AppNavigatorInner() {
   const { isAuthenticated, user, sessionExpired, updateUser } = useAuthStore();
-  const { colors } = useTheme();
+  const { colors, reduceMotion } = useTheme();
   const { showToast } = useToast();
   const sessionExpiredShown = useRef(false);
 
@@ -451,7 +451,7 @@ function AppNavigatorInner() {
         headerTintColor: colors.text,
         headerTitleStyle: { fontWeight: '700', fontSize: 17 },
         contentStyle: { backgroundColor: route === 'auth' ? 'transparent' : colors.background },
-        animation: route === 'auth' ? 'default' : 'fade_from_bottom',
+        animation: reduceMotion ? 'default' : (route === 'auth' ? 'default' : 'fade_from_bottom'),
       }}
     >
       {/* ── Unauthenticated ── */}

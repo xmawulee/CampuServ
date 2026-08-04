@@ -14,7 +14,7 @@ import {
   Dimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
+import SystemGradient from '../../components/SystemGradient';
 import { CustomIonicons as Ionicons } from '../../components/CustomIcons';
 import { useTheme } from '../../styles/ThemeContext';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -341,7 +341,7 @@ export default function ClientSignUpScreen({ navigation }: any) {
               disabled={!isFormValid || isLoading}
               activeOpacity={0.88}
             >
-              <LinearGradient
+              <SystemGradient
                 colors={clientBtnGradient}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
@@ -352,7 +352,7 @@ export default function ClientSignUpScreen({ navigation }: any) {
                 ) : (
                   <Text style={styles.submitBtnText}>Create Account</Text>
                 )}
-              </LinearGradient>
+              </SystemGradient>
             </TouchableOpacity>
 
             <View style={styles.footerRow}>
