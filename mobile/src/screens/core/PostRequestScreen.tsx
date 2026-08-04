@@ -298,7 +298,8 @@ export default function PostRequestScreen({ route, navigation }: any) {
         else if (normalizedName.includes('tech') || normalizedName.includes('repair')) { mappedIcon = 'construct-outline'; bg = '#E6F4FF'; iconColor = '#1E88E5'; }
         else if (normalizedName.includes('design') || normalizedName.includes('print')) { mappedIcon = 'print-outline'; bg = '#FCE4EC'; iconColor = '#E91E63'; }
         else if (normalizedName.includes('style') || normalizedName.includes('groom')) { mappedIcon = 'cut-outline'; bg = '#F3E5F5'; iconColor = '#9C27B0'; }
-        else if (normalizedName.includes('photo') || normalizedName.includes('video')) { mappedIcon = 'camera-outline'; bg = '#FFF3E0'; iconColor = '#FF9800'; }
+        else if (normalizedName.includes('photo')) { mappedIcon = 'camera-outline'; bg = '#FFF3E0'; iconColor = '#FF9800'; }
+        else if (normalizedName.includes('video')) { mappedIcon = 'videocam-outline'; bg = '#FFF3E0'; iconColor = '#FF9800'; }
         else if (normalizedName.includes('food') || normalizedName.includes('cater')) { mappedIcon = 'restaurant-outline'; bg = '#EFEBE9'; iconColor = '#795548'; }
 
         return {
@@ -1002,12 +1003,12 @@ export default function PostRequestScreen({ route, navigation }: any) {
                 >
                   <View style={[
                     styles.catIconWrap,
-                    { backgroundColor: isActive ? 'rgba(255,255,255,0.2)' : (isDark ? colors.cardBackground : '#FFFFFF') }
+                    { backgroundColor: isActive ? 'rgba(255,255,255,0.2)' : colors.primaryLight }
                   ]}>
                     <Ionicons
                       name={cat.icon as any}
-                      size={20}
-                      color={isActive ? '#FFFFFF' : (isDark ? colors.primary : cat.iconColor)}
+                      size={28}
+                      color={isActive ? '#FFFFFF' : colors.primary}
                     />
                   </View>
                   <Text style={[
@@ -1276,7 +1277,7 @@ export default function PostRequestScreen({ route, navigation }: any) {
             <View style={[styles.inputWrapper, { backgroundColor: colors.inputBackground, borderColor: colors.border, marginTop: 12 }]}>
               <TextInput
                 style={[styles.input, { color: colors.text }]}
-                placeholder="Room number or specific details (Optional)"
+                  placeholder="Room number or specific details (Optional)"
                 placeholderTextColor={colors.placeholderText}
                 value={locationDetail}
                 onChangeText={setLocationDetail}
@@ -1289,11 +1290,11 @@ export default function PostRequestScreen({ route, navigation }: any) {
         {/* ── Audience / Visibility ── */}
         <View style={styles.section}>
           <Text style={[styles.sectionLabel, { color: colors.text, marginBottom: 12 }]}>Visibility</Text>
-          <View style={[styles.segmentedControl, { backgroundColor: colors.inputBackground, borderColor: colors.border, opacity: isTargetProviderLocked ? 0.75 : 1 }]}>
+          <View style={[styles.tabSegmentedControl, { backgroundColor: isDark ? colors.cardBackground : colors.primaryLight, opacity: isTargetProviderLocked ? 0.75 : 1 }]}>
             <TouchableOpacity
               style={[
-                styles.segmentBtn,
-                deliveryMode === 'broadcast' && [styles.segmentBtnActive, { backgroundColor: colors.cardBackground, shadowColor: isDark ? '#000' : '#000' }],
+                styles.tabSegmentButton,
+                deliveryMode === 'broadcast' && [styles.tabSegmentActive, { backgroundColor: colors.primary }],
                 isTargetProviderLocked && { opacity: 0.5 }
               ]}
               onPress={() => {
@@ -1304,25 +1305,25 @@ export default function PostRequestScreen({ route, navigation }: any) {
               disabled={isSubmitting || isTargetProviderLocked}
             >
               <Text style={[
-                styles.segmentText,
-                { color: deliveryMode === 'broadcast' ? colors.text : colors.textMuted }
+                styles.tabSegmentText,
+                { color: deliveryMode === 'broadcast' ? '#FFFFFF' : colors.textMuted }
               ]}>All Providers</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[
-                styles.segmentBtn,
-                deliveryMode === 'targeted' && [styles.segmentBtnActive, { backgroundColor: colors.cardBackground, shadowColor: isDark ? '#000' : '#000' }]
+                styles.tabSegmentButton,
+                deliveryMode === 'targeted' && [styles.tabSegmentActive, { backgroundColor: colors.primary }]
               ]}
               onPress={() => {
                 if (isTargetProviderLocked) return;
                 setDeliveryMode('targeted');
                 if (!targetProvider) handleOpenProviderPicker();
               }}
-              disabled={isSubmitting || isTargetProviderLocked}
+              disabled={isSubmitting}
             >
               <Text style={[
-                styles.segmentText,
-                { color: deliveryMode === 'targeted' ? colors.text : colors.textMuted }
+                styles.tabSegmentText,
+                { color: deliveryMode === 'targeted' ? '#FFFFFF' : colors.textMuted }
               ]}>Direct Hire</Text>
             </TouchableOpacity>
           </View>
@@ -1620,8 +1621,8 @@ const styles = StyleSheet.create({
   categoryScroll: { marginHorizontal: -20 },
   categoryScrollContent: { paddingHorizontal: 20, gap: 12, paddingBottom: 8 },
   catCard: {
-    width: 110,
-    height: 110,
+    width: 125,
+    height: 125,
     borderRadius: 20,
     padding: 14,
     alignItems: 'center',
@@ -1635,10 +1636,10 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   catIconWrap: {
-    width: 46, height: 46, borderRadius: 16,
+    width: 60, height: 60, borderRadius: 30,
     alignItems: 'center', justifyContent: 'center',
   },
-  catLabel: { fontSize: 12, fontWeight: '700', textAlign: 'center' },
+  catLabel: { fontSize: 14, fontWeight: '700', textAlign: 'center' },
 
   card: {
     borderRadius: 24,

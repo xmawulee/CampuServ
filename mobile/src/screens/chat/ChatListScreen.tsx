@@ -169,11 +169,11 @@ export default function ChatListScreen({ navigation }: any) {
   return (
     <View style={styles.container}>
       {/* Header */}
-      <View style={[styles.header, { paddingTop: insets.top + 8, borderBottomColor: colors.border }]}>
+      <View style={[styles.header, { paddingTop: insets.top + 8, borderBottomWidth: 0, backgroundColor: colors.primary }]}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-          <Ionicons name="arrow-back" size={24} color={colors.text} />
+          <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
         </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: colors.text }]}>Messages</Text>
+        <Text style={[styles.headerTitle, { color: '#FFFFFF' }]}>Messages</Text>
         <View style={{ width: 40 }} />
       </View>
 
@@ -186,12 +186,17 @@ export default function ChatListScreen({ navigation }: any) {
           data={threads ?? []}
           keyExtractor={item => item.id}
           renderItem={renderItem}
+          initialNumToRender={10}
+          maxToRenderPerBatch={5}
+          windowSize={5}
           refreshControl={
             <RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={colors.primary} />
           }
           ListEmptyComponent={
             <View style={styles.empty}>
-              <Ionicons name="chatbubbles-outline" size={64} color={colors.textMuted} />
+              <View style={{ width: 100, height: 100, borderRadius: 50, alignItems: 'center', justifyContent: 'center', marginBottom: 8, backgroundColor: colors.primaryLight }}>
+                <Ionicons name="chatbubbles-outline" size={48} color={colors.primary} />
+              </View>
               <Text style={[styles.emptyTitle, { color: colors.text }]}>No conversations yet</Text>
               <Text style={[styles.emptySubtitle, { color: colors.textMuted }]}>
                 Browse providers and tap "Chat" to start a conversation.

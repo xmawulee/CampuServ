@@ -201,31 +201,31 @@ export default function ListingDetailScreen({ route, navigation }: any) {
 
   if (loading) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
-        <View style={styles.topHeader}>
-          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.iconBtn}>
-            <Ionicons name="arrow-back" size={24} color={colors.text} />
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
+        <View style={[styles.topHeader, { backgroundColor: colors.primary, paddingTop: insets.top, height: 56 + insets.top }]}>
+          <TouchableOpacity onPress={() => navigation.goBack()} style={[styles.iconBtn, { backgroundColor: 'rgba(255,255,255,0.2)' }]}>
+            <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
           </TouchableOpacity>
         </View>
         <View style={styles.center}>
           <ActivityIndicator size="large" color={colors.primary} />
         </View>
-      </SafeAreaView>
+      </View>
     );
   }
 
   if (!profile) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
-        <View style={styles.topHeader}>
-          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.iconBtn}>
-            <Ionicons name="arrow-back" size={24} color={colors.text} />
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
+        <View style={[styles.topHeader, { backgroundColor: colors.primary, paddingTop: insets.top, height: 56 + insets.top }]}>
+          <TouchableOpacity onPress={() => navigation.goBack()} style={[styles.iconBtn, { backgroundColor: 'rgba(255,255,255,0.2)' }]}>
+            <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
           </TouchableOpacity>
         </View>
         <View style={styles.center}>
           <Text style={{ color: colors.text, fontSize: 16 }}>Listing not found.</Text>
         </View>
-      </SafeAreaView>
+      </View>
     );
   }
 
@@ -261,20 +261,20 @@ export default function ListingDetailScreen({ route, navigation }: any) {
   return (
     <View style={styles.container}>
       {/* Top Header / Breadcrumb */}
-      <View style={[styles.topHeader, { backgroundColor: colors.cardBackground, paddingTop: insets.top, height: 56 + insets.top }]}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={[styles.iconBtn, { backgroundColor: colors.background }]}>
-          <Ionicons name="arrow-back" size={24} color={colors.text} />
+      <View style={[styles.topHeader, { backgroundColor: colors.primary, paddingTop: insets.top, height: 56 + insets.top }]}>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={[styles.iconBtn, { backgroundColor: 'rgba(255,255,255,0.2)' }]}>
+          <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
         </TouchableOpacity>
         <View style={styles.breadcrumbWrap}>
-          <Text style={[styles.breadcrumbText, { color: colors.text }]} numberOfLines={1}>
+          <Text style={[styles.breadcrumbText, { color: '#FFFFFF' }]} numberOfLines={1}>
             {(currentListing?.category?.name) || profile.serviceCategory || 'Service Listing'} • {profile.fullName}
           </Text>
         </View>
-        <TouchableOpacity onPress={handleToggleSave} style={[styles.iconBtn, { backgroundColor: colors.background }]}>
+        <TouchableOpacity onPress={handleToggleSave} style={[styles.iconBtn, { backgroundColor: 'rgba(255,255,255,0.2)' }]}>
           <Ionicons 
             name={isSaved ? "bookmark" : "bookmark-outline"} 
             size={24} 
-            color={isSaved ? colors.primary : colors.textMuted} 
+            color="#FFFFFF" 
           />
         </TouchableOpacity>
       </View>
@@ -343,7 +343,7 @@ export default function ListingDetailScreen({ route, navigation }: any) {
               <Text style={[styles.verifiedText, { color: colors.success }]}>Verified Pro</Text>
             </View>
             {!!profile.serviceCategory && (
-              <View style={[styles.verifiedBadge, { backgroundColor: 'rgba(255, 120, 70, 0.08)', borderColor: 'rgba(255, 120, 70, 0.25)', borderWidth: 1.5, marginLeft: 8 }]}>
+              <View style={[styles.verifiedBadge, { backgroundColor: 'rgba(255, 120, 70, 0.08)', borderColor: 'rgba(255, 120, 70, 0.25)', borderWidth: 1.5 }]}>
                 <Ionicons name="pricetag-outline" size={12} color={colors.primary} style={{ marginRight: 4 }} />
                 <Text style={[styles.verifiedText, { color: colors.primary }]}>Category: {profile.serviceCategory}</Text>
               </View>
@@ -361,15 +361,15 @@ export default function ListingDetailScreen({ route, navigation }: any) {
           </View>
 
           {/* Contact CTAs */}
-          <View style={[styles.ctaContainer, { backgroundColor: colors.primaryLight }]}>
+          <View style={[styles.ctaContainer]}>
             <TouchableOpacity style={[styles.ctaBtn, { backgroundColor: colors.primary }]} onPress={handleChat}>
               <Ionicons name="chatbubbles-outline" size={18} color="#FFFFFF" />
               <Text style={[styles.ctaBtnText, { color: '#FFFFFF' }]}>Chat</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.ctaBtn} onPress={handleCallNow}>
-              <Ionicons name="call-outline" size={18} color={colors.primaryDark} />
-              <Text style={[styles.ctaBtnText, { color: colors.primaryDark }]}>Call Now</Text>
+            <TouchableOpacity style={[styles.ctaBtn, { backgroundColor: colors.primaryLight }]} onPress={handleCallNow}>
+              <Ionicons name="call-outline" size={18} color={colors.primary} />
+              <Text style={[styles.ctaBtnText, { color: colors.primary }]}>Call Now</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -622,8 +622,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 16,
     height: 56,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F1F5F9',
   },
   iconBtn: {
     width: 40,
@@ -700,7 +698,8 @@ const styles = StyleSheet.create({
   },
   verifiedRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-start',
+    gap: 8,
     alignItems: 'center',
     marginBottom: 10,
   },
@@ -757,8 +756,7 @@ const styles = StyleSheet.create({
   },
   ctaContainer: {
     flexDirection: 'row',
-    borderRadius: 30,
-    padding: 4,
+    gap: 12,
   },
   ctaBtn: {
     flex: 1,

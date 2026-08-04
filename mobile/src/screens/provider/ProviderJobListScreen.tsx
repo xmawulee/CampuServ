@@ -172,7 +172,7 @@ export default function ProviderJobListScreen({ navigation }: any) {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { paddingTop: insets.top, backgroundColor: colors.background }]}>
       <View style={[styles.header, { borderBottomColor: colors.border }]}>
         <TouchableOpacity
           onPress={() => navigation.goBack()}
@@ -214,7 +214,14 @@ export default function ProviderJobListScreen({ navigation }: any) {
           data={jobsByTab[activeTab]}
           keyExtractor={(item) => item.id}
           renderItem={renderItem}
-          contentContainerStyle={[styles.listContent, { paddingBottom: bottomTabSpacing }]}
+          initialNumToRender={8}
+          maxToRenderPerBatch={5}
+          windowSize={5}
+          contentContainerStyle={[
+            styles.listContent,
+            { paddingBottom: bottomTabSpacing },
+            jobsByTab[activeTab]?.length === 0 && styles.listContentEmpty
+          ]}
           onEndReached={onEndReached}
           onEndReachedThreshold={0.5}
           refreshControl={
@@ -271,6 +278,7 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
     gap: 16,
   },
+  listContentEmpty: { flexGrow: 1 },
   jobCard: {
     borderWidth: 0,
     borderRadius: 24,

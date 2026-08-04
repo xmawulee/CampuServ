@@ -182,14 +182,14 @@ export default function SignInScreen({ route, navigation }: any) {
   const submitBtnColors = activeRole === 'CLIENT' ? clientBtnGradient : providerBtnGradient;
 
   return (
-    <View style={{ flex: 1, backgroundColor: 'transparent' }}>
+    <View style={{ flex: 1, backgroundColor: colors.background + '99' }}>
       <SafeAreaView style={[styles.container, { paddingBottom: insets.bottom }]}>
         <StatusBar barStyle={isDark ? "light-content" : "dark-content"} translucent backgroundColor="transparent" />
 
 
 
         <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
           style={styles.flex}
         >
           <ScrollView
@@ -255,7 +255,7 @@ export default function SignInScreen({ route, navigation }: any) {
                   backgroundColor: isDark ? 'rgba(255,255,255,0.02)' : colors.inputBackground, 
                   borderColor: emailFocused 
                     ? colors.primary
-                    : (isDark ? 'rgba(255,255,255,0.08)' : 'transparent') 
+                    : (isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.12)') 
                 }
               ]}>
                 <Ionicons name="mail-outline" size={18} color={colors.textMuted} style={styles.inputIcon} />
@@ -287,7 +287,7 @@ export default function SignInScreen({ route, navigation }: any) {
                   backgroundColor: isDark ? 'rgba(255,255,255,0.02)' : colors.inputBackground, 
                   borderColor: passwordFocused 
                     ? colors.primary 
-                    : (isDark ? 'rgba(255,255,255,0.08)' : 'transparent') 
+                    : (isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.12)') 
                 }
               ]}>
                 <Ionicons name="lock-closed-outline" size={18} color={colors.textMuted} style={styles.inputIcon} />
@@ -347,7 +347,7 @@ export default function SignInScreen({ route, navigation }: any) {
             <View style={styles.footer}>
               <Text style={[styles.footerText, { color: colors.textMuted }]}>Don't have an account? </Text>
               <TouchableOpacity onPress={() => navigation.navigate('RoleSelect')} disabled={isLoading}>
-                <Text style={[styles.footerLink, { color: isDark ? '#818CF8' : colors.primary }]}>Sign Up</Text>
+                <Text style={[styles.footerLink, { color: isDark ? '#FF8A66' : '#FF5500' }]}>Sign up</Text>
               </TouchableOpacity>
             </View>
           </ScrollView>
@@ -462,6 +462,6 @@ const styles = StyleSheet.create({
   submitBtnDisabled: { opacity: 0.85 },
   submitBtnText: { color: '#FFF', fontSize: 16, fontFamily: 'Outfit-Bold' },
   footer: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginTop: 28 },
-  footerText: { fontSize: 14, fontFamily: 'Inter-Medium' },
-  footerLink: { fontSize: 14, fontFamily: 'Outfit-Bold' },
+  footerText: { fontSize: 16, fontFamily: 'Inter-Medium' },
+  footerLink: { fontSize: 18, fontFamily: 'Outfit-Bold', fontWeight: '800' },
 });

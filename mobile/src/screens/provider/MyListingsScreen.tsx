@@ -84,7 +84,7 @@ export default function MyListingsScreen({ navigation }: any) {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { paddingTop: insets.top, backgroundColor: colors.background }]}>
       <View style={styles.header}>
         <Text style={[styles.headerTitle, { color: colors.text }]}>My Listings</Text>
         <TouchableOpacity
@@ -106,6 +106,9 @@ export default function MyListingsScreen({ navigation }: any) {
           data={listings}
           keyExtractor={(item) => item.id}
           renderItem={renderItem}
+          initialNumToRender={8}
+          maxToRenderPerBatch={5}
+          windowSize={5}
           contentContainerStyle={[
             styles.listContent,
             { paddingBottom: 110 + insets.bottom },

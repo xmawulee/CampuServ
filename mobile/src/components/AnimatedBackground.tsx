@@ -12,14 +12,7 @@ import {
 import { useTheme } from '../styles/ThemeContext';
 
 const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get('window');
-
-// The pattern tiles exactly at 256x256 logical points, while remaining retina crisp 
-// because we generated @2x, @3x, and @4x assets for it!
 const TILE = 256;
-const MS_PER_TILE = 60000;
-
-// We make the animated view slightly larger than the screen so we can scroll it 
-// seamlessly by exactly one tile size.
 const TOTAL_W = SCREEN_W + TILE * 2;
 const TOTAL_H = SCREEN_H + TILE * 2;
 
@@ -29,60 +22,74 @@ interface Props {
 }
 
 export default function AnimatedBackground({ children, style }: Props) {
-  const { colors, isDark } = useTheme();
-  const offsetX = useRef(new Animated.Value(0)).current;
-  const offsetY = useRef(new Animated.Value(0)).current;
+  const { colors, isDark, reduceMotion } = useTheme();
+  const progress = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    Animated.loop(
-      Animated.timing(offsetX, {
-        toValue: -TILE,
-        duration: MS_PER_TILE,
-        easing: Easing.linear,
-        useNativeDriver: true,
-      })
-    ).start();
+    if (reduceMotion) {
+      progress.stopAnimation();
+      return;
+    }
 
-    Animated.loop(
-      Animated.timing(offsetY, {
-        toValue: -TILE,
-        duration: MS_PER_TILE * 2.5,
+    const loop = Animated.loop(
+      Animated.timing(progress, {
+        toValue: 1,
+        duration: 30000,
         easing: Easing.linear,
         useNativeDriver: true,
       })
-    ).start();
+    );
+    loop.start();
 
     return () => {
-      offsetX.stopAnimation();
-      offsetY.stopAnimation();
+      progress.stopAnimation();
     };
-  }, []);
+  }, [reduceMotion]);
+
+  const translateVal = progress.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, TILE],
+  });
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }, style]}>
-      <Animated.View
-        style={[
-          styles.strip,
-          {
-            width: TOTAL_W,
-            height: TOTAL_H,
-            opacity: isDark ? 0.22 : 0.55,
-            transform: [
-              { translateX: offsetX },
-              { translateY: offsetY },
-            ],
-          },
-        ]}
-      >
-        <ImageBackground
-          source={require('../../assets/images/bg_tile.png')}
-          style={{ width: '100%', height: '100%' }}
-          imageStyle={{
-            resizeMode: 'repeat',
-            ...(isDark ? { tintColor: '#8888AA' } : {}),
-          }}
-        />
-      </Animated.View>
+      {reduceMotion ? (
+        <View
+          pointerEvents="none"
+          style={[
+            StyleSheet.absoluteFillObject,
+            { opacity: isDark ? 0.12 : 0.55 },
+          ]}
+        >
+          <ImageBackground
+            source={isDark ? require('../../assets/images/animated_bg_dark.png') : require('../../assets/images/bg_tile.png')}
+            style={{ width: '100%', height: '100%' }}
+            imageStyle={{ resizeMode: 'repeat' }}
+          />
+        </View>
+      ) : (
+        <Animated.View
+          pointerEvents="none"
+          style={[
+            styles.strip,
+            {
+              width: TOTAL_W,
+              height: TOTAL_H,
+              opacity: isDark ? 0.12 : 0.55,
+              transform: [
+                { translateX: translateVal },
+                { translateY: translateVal },
+              ],
+            },
+          ]}
+        >
+          <ImageBackground
+            source={isDark ? require('../../assets/images/animated_bg_dark.png') : require('../../assets/images/bg_tile.png')}
+            style={{ width: '100%', height: '100%' }}
+            imageStyle={{ resizeMode: 'repeat' }}
+          />
+        </Animated.View>
+      )}
       {children}
     </View>
   );

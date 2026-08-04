@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { SafeAreaProvider, initialWindowMetrics } from 'react-native-safe-area-context';
 import { NavigationContainer, DefaultTheme, DarkTheme } from '@react-navigation/native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { StatusBar } from 'expo-status-bar';
@@ -60,6 +60,16 @@ function AppContent() {
     prepare();
   }, [loadStoredAuth]);
 
+  // Set the native root window background color to match the theme
+  // This prevents white flashes during native stack transitions or on device rounded corners
+  useEffect(() => {
+    import('expo-system-ui').then((SystemUI) => {
+      SystemUI.setBackgroundColorAsync(colors.background).catch(() => {});
+    }).catch(() => {
+      // Fallback if expo-system-ui is not installed
+    });
+  }, [colors.background]);
+
   // We no longer call SplashScreen.hideAsync() here. 
   // AnimatedSplashScreen component handles hiding the native splash screen.
 
@@ -110,7 +120,7 @@ function AppContent() {
 export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <SafeAreaProvider>
+      <SafeAreaProvider initialMetrics={initialWindowMetrics}>
         <ThemeProvider>
           <AppContent />
         </ThemeProvider>

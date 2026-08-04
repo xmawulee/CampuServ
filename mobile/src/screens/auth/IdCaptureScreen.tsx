@@ -183,6 +183,7 @@ export default function IdCaptureScreen({ route, navigation }: any) {
       setUploadProgress(100);
 
       setImageUri(null);
+      setCaptureState('instructions');
 
       const isUpgrade = route.params?.isUpgrade || false;
       await updateUser({ studentIdPhotoUrl: 'uploaded' });

@@ -184,7 +184,7 @@ function ProviderNavigator() {
     <View style={{ flex: 1, backgroundColor: 'transparent' }}>
       <Tab.Navigator
         tabBar={(props) => <CustomTabBar {...props} colors={colors} isDark={isDark} />}
-        screenOptions={{ headerShown: false }}
+        screenOptions={{ headerShown: false, animation: 'shift' }}
       >
         <Tab.Screen name="ProviderDashboardHome" component={ProviderDashboardHomeScreen} />
         <Tab.Screen name="IncomingRequests" component={IncomingRequestsScreen} />
@@ -204,7 +204,7 @@ function AppTabs() {
     <View style={{ flex: 1, backgroundColor: 'transparent' }}>
       <Tab.Navigator
         tabBar={(props) => <CustomTabBar {...props} colors={colors} isDark={isDark} />}
-        screenOptions={{ headerShown: false }}
+        screenOptions={{ headerShown: false, animation: 'shift' }}
       >
         <Tab.Screen name="Home" component={HomeScreen} />
         <Tab.Screen name="Search" component={PostRequestScreen} />
@@ -418,15 +418,15 @@ function AppNavigatorInner() {
   // Shared sub-screens
   const sharedScreens = (
     <>
-      <Stack.Screen name="ChatList" component={ChatListScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="ChatList" component={ChatListScreen} options={{ headerShown: false, animation: 'default' }} />
       <Stack.Screen name="ChatThread" component={ChatThreadScreen} options={{ headerShown: false }} />
       <Stack.Screen name="ActiveJob" component={ActiveJobScreen} options={{ headerShown: false }} />
       <Stack.Screen name="RiderLiveTracking" component={RiderLiveTrackingScreen} options={{ title: 'Track Provider', headerShown: false }} />
       <Stack.Screen name="ReviewSubmission" component={ReviewSubmissionScreen} options={{ title: 'Submit Review', presentation: 'modal' }} />
       <Stack.Screen name="Withdrawal" component={WithdrawalScreen} options={{ title: 'Withdraw Funds' }} />
-      <Stack.Screen name="Deposit" component={DepositScreen} options={{ title: 'Deposit Funds' }} />
+      <Stack.Screen name="Deposit" component={DepositScreen} options={{ title: 'Deposit Funds', animation: 'default' }} />
       <Stack.Screen name="WalletReceiptScreen" component={WalletReceiptScreen} options={{ presentation: 'modal', headerShown: false, animation: 'slide_from_bottom' }} />
-      <Stack.Screen name="NotificationCenter" component={NotificationCenterScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="NotificationCenter" component={NotificationCenterScreen} options={{ headerShown: false, animation: 'default' }} />
       <Stack.Screen name="DeleteAccount" component={DeleteAccountScreen} options={{ headerShown: false }} />
       <Stack.Screen name="RaiseDispute" component={RaiseDisputeScreen} options={{ headerShown: false }} />
       <Stack.Screen name="DisputeThread" component={DisputeThreadScreen} options={{ headerShown: false }} />
@@ -451,6 +451,7 @@ function AppNavigatorInner() {
         headerTintColor: colors.text,
         headerTitleStyle: { fontWeight: '700', fontSize: 17 },
         contentStyle: { backgroundColor: route === 'auth' ? 'transparent' : colors.background },
+        animation: route === 'auth' ? 'default' : 'fade_from_bottom',
       }}
     >
       {/* ── Unauthenticated ── */}
@@ -522,8 +523,8 @@ function AppNavigatorInner() {
           <Stack.Screen name="RequestDetails" component={RequestDetailsScreen} options={{ title: 'Request Details' }} />
           <Stack.Screen name="PostRequest" component={PostRequestScreen} options={{ headerShown: false, presentation: 'modal' }} />
           <Stack.Screen name="CategoryProviders" component={CategoryProvidersScreen} options={{ headerShown: false }} />
-          <Stack.Screen name="ProviderProfile" component={ListingDetailScreen} options={{ headerShown: false }} />
-          <Stack.Screen name="ListingDetail" component={ListingDetailScreen} options={{ headerShown: false }} />
+          <Stack.Screen name="ProviderProfile" component={ListingDetailScreen} options={{ headerShown: false, animation: 'default' }} />
+          <Stack.Screen name="ListingDetail" component={ListingDetailScreen} options={{ headerShown: false, animation: 'default' }} />
           <Stack.Screen name="SelectProvider" component={SelectProviderScreen} options={{ title: 'Select Provider', presentation: 'card' }} />
           <Stack.Screen name="RateProvider" component={RateProviderScreen} options={{ headerShown: false, presentation: 'modal' }} />
           <Stack.Screen name="TransactionReceipt" component={TransactionReceiptScreen} options={{ presentation: 'modal', headerShown: false }} />

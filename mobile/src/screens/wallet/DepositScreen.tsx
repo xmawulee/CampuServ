@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, Alert, FlatList } from 'react-native';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, Alert, FlatList, KeyboardAvoidingView, TouchableWithoutFeedback, Keyboard, Platform } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { api } from '../../services/api';
@@ -96,48 +96,58 @@ export const DepositScreen = () => {
     );
 
     return (
-        <View style={[styles.container, { backgroundColor: colors.background }]}>
-            <Text style={[styles.title, { color: colors.text }]}>Deposit Funds</Text>
+        <KeyboardAvoidingView 
+            style={{ flex: 1, backgroundColor: colors.background }} 
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        >
+            <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+                <View style={[styles.container, { backgroundColor: 'transparent' }]}>
+                    <Text style={[styles.title, { color: colors.text }]}>Deposit Funds</Text>
 
-            <View style={styles.amountContainer}>
-                <Text style={[styles.currencySymbol, { color: colors.textMuted }]}>GHS</Text>
-                <TextInput
-                    style={[styles.amountInput, { color: colors.text }]}
-                    placeholder="0.00"
-                    placeholderTextColor={colors.placeholderText}
-                    keyboardType="numeric"
-                    value={amount}
-                    onChangeText={setAmount}
-                    autoFocus={true}
-                />
-            </View>
+                    <View style={styles.amountContainer}>
+                        <Text style={[styles.currencySymbol, { color: colors.textMuted }]}>GHS</Text>
+                        <TextInput
+                            style={[styles.amountInput, { color: colors.text }]}
+                            placeholder="0.00"
+                            placeholderTextColor={colors.placeholderText}
+                            keyboardType="decimal-pad"
+                            returnKeyType="done"
+                            value={amount}
+                            onChangeText={setAmount}
+                            autoFocus={true}
+                        />
+                    </View>
 
-            <Text style={[styles.sectionTitle, { color: colors.text }]}>Select Deposit Method</Text>
-            
-            <View style={{ backgroundColor: 'rgba(255, 165, 0, 0.15)', padding: 10, borderRadius: 8, marginBottom: 15, borderLeftWidth: 3, borderLeftColor: '#FFA500' }}>
-                <Text style={{ color: '#FFA500', fontSize: 12, fontWeight: '600' }}>💡 Simulated in Local Development Mode (Paystack Dev Sandbox)</Text>
-            </View>
+                    <Text style={[styles.sectionTitle, { color: colors.text }]}>Select Deposit Method</Text>
+                    
+                    <View style={{ backgroundColor: 'rgba(255, 165, 0, 0.15)', padding: 10, borderRadius: 8, marginBottom: 15, borderLeftWidth: 3, borderLeftColor: '#FFA500' }}>
+                        <Text style={{ color: '#FFA500', fontSize: 12, fontWeight: '600' }}>💡 Simulated in Local Development Mode (Paystack Dev Sandbox)</Text>
+                    </View>
 
-            <FlatList
-                data={depositMethods}
-                keyExtractor={(item) => item.id}
-                renderItem={renderMethod}
-            />
+                    <FlatList
+                        data={depositMethods}
+                        keyExtractor={(item) => item.id}
+                        renderItem={renderMethod}
+                        keyboardShouldPersistTaps="handled"
+                        keyboardDismissMode="on-drag"
+                    />
 
-            <TouchableOpacity 
-                style={[
-                    styles.depositButton, 
-                    { backgroundColor: colors.primary },
-                    (isSubmitting || !selectedMethodId) && { backgroundColor: isDark ? colors.border : '#E2E8F0' }
-                ]} 
-                onPress={handleDeposit}
-                disabled={isSubmitting || !selectedMethodId}
-            >
-                <Text style={[styles.depositButtonText, (isSubmitting || !selectedMethodId) && { color: colors.textMuted }]}>
-                    {isSubmitting ? 'Processing...' : 'Deposit'}
-                </Text>
-            </TouchableOpacity>
-        </View>
+                    <TouchableOpacity 
+                        style={[
+                            styles.depositButton, 
+                            { backgroundColor: colors.primary },
+                            (isSubmitting || !selectedMethodId) && { backgroundColor: isDark ? colors.border : '#E2E8F0' }
+                        ]} 
+                        onPress={handleDeposit}
+                        disabled={isSubmitting || !selectedMethodId}
+                    >
+                        <Text style={[styles.depositButtonText, (isSubmitting || !selectedMethodId) && { color: colors.textMuted }]}>
+                            {isSubmitting ? 'Processing...' : 'Deposit'}
+                        </Text>
+                    </TouchableOpacity>
+                </View>
+            </TouchableWithoutFeedback>
+        </KeyboardAvoidingView>
     );
 };
 

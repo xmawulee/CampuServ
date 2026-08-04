@@ -15,7 +15,7 @@ import { useToast } from '../../styles/ToastContext';
 
 export default function SettingsScreen({ navigation }: any) {
   const { user, roleMode, logout, setAuth } = useAuthStore();
-  const { colors, isDark, toggleTheme } = useTheme();
+  const { colors, isDark, toggleTheme, reduceMotion, toggleReduceMotion } = useTheme();
   const insets = useSafeAreaInsets();
   const bottomTabSpacing = useBottomTabSpacing();
 
@@ -148,19 +148,56 @@ export default function SettingsScreen({ navigation }: any) {
             )}
           </View>
 
-          {/* ── Appearance ── */}
-          <View style={[styles.card, { backgroundColor: colors.cardBackground, borderColor: colors.border, marginBottom: 16 }]}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 12, paddingHorizontal: 4 }}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1, gap: 12 }}>
+          {/* ── Settings Menu Items, Preferences & Appearance ── */}
+          <View style={[styles.card, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
+            
+            {/* 1. Provider Preferences */}
+            {isViewingAsProvider && (
+              <View style={[styles.menuRow, { borderBottomWidth: 1, borderBottomColor: colors.border }]}>
                 <View style={[styles.menuIconWrap, { backgroundColor: colors.primaryLight }]}>
-                  <Ionicons name={isDark ? 'moon' : 'sunny'} size={18} color={colors.primary} />
+                  <Ionicons name="notifications-outline" size={18} color={colors.primary} />
                 </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={{ fontSize: 15, fontWeight: '600', color: colors.text }}>Dark Mode</Text>
-                  <Text style={{ fontSize: 13, color: colors.textMuted, marginTop: 2 }}>
-                    {isDark ? 'Switch to light theme' : 'Switch to dark theme'}
+                <View style={{ flex: 1, paddingRight: 16 }}>
+                  <Text style={[styles.menuLabel, { color: colors.text }]}>
+                    New Request Notifications
+                  </Text>
+                  <Text style={[styles.menuSub, { color: colors.textMuted }]}>
+                    Get notified for new matching requests
                   </Text>
                 </View>
+                <Switch
+                  value={notifyNewRequests}
+                  onValueChange={async (val) => {
+                    setNotifyNewRequests(val);
+                    try {
+                      await api.put(`/users/${user?.id}/profile`, {
+                        fullName: fullName.trim(),
+                        bio: bio.trim(),
+                        serviceCategory: serviceCategory,
+                        notifyNewRequests: val,
+                      });
+                      showToast({ status: 'success', title: 'Success', subtitle: 'Notification settings updated.' });
+                    } catch (e) {
+                      showToast({ status: 'error', title: 'Error', subtitle: 'Failed to update notification settings.' });
+                    }
+                  }}
+                  trackColor={{ false: colors.primary, true: colors.primary }}
+                  thumbColor="#FFFFFF"
+                  ios_backgroundColor={colors.primary}
+                />
+              </View>
+            )}
+
+            {/* 2. Dark Mode Toggle */}
+            <View style={[styles.menuRow, { borderBottomWidth: 1, borderBottomColor: colors.border }]}>
+              <View style={[styles.menuIconWrap, { backgroundColor: colors.primaryLight }]}>
+                <Ionicons name={isDark ? 'moon' : 'sunny'} size={18} color={colors.primary} />
+              </View>
+              <View style={{ flex: 1, paddingRight: 16 }}>
+                <Text style={[styles.menuLabel, { color: colors.text }]}>Dark Mode</Text>
+                <Text style={[styles.menuSub, { color: colors.textMuted }]}>
+                  {isDark ? 'Switch to light theme' : 'Switch to dark theme'}
+                </Text>
               </View>
               <Switch
                 value={isDark}
@@ -170,10 +207,28 @@ export default function SettingsScreen({ navigation }: any) {
                 ios_backgroundColor={colors.primary}
               />
             </View>
-          </View>
 
-          {/* ── Settings Menu Items ── */}
-          <View style={[styles.card, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
+            {/* 2b. Reduce Motion Toggle */}
+            <View style={[styles.menuRow, { borderBottomWidth: 1, borderBottomColor: colors.border }]}>
+              <View style={[styles.menuIconWrap, { backgroundColor: colors.primaryLight }]}>
+                <Ionicons name="battery-charging-outline" size={18} color={colors.primary} />
+              </View>
+              <View style={{ flex: 1, paddingRight: 16 }}>
+                <Text style={[styles.menuLabel, { color: colors.text }]}>Reduce Animations</Text>
+                <Text style={[styles.menuSub, { color: colors.textMuted }]}>
+                  Disable heavy backgrounds (Low Power)
+                </Text>
+              </View>
+              <Switch
+                value={reduceMotion}
+                onValueChange={toggleReduceMotion}
+                trackColor={{ false: colors.primary, true: colors.primary }}
+                thumbColor="#FFFFFF"
+                ios_backgroundColor={colors.primary}
+              />
+            </View>
+
+            {/* 3. Standard Navigation Links */}
             {[
               {
                 icon: 'chatbubbles-outline',
@@ -225,44 +280,6 @@ export default function SettingsScreen({ navigation }: any) {
             ))}
           </View>
 
-          {isViewingAsProvider && (
-            <View style={[styles.card, { backgroundColor: colors.cardBackground, borderColor: colors.border, marginTop: 16 }]}>
-              <Text style={{ fontSize: 16, fontWeight: '700', color: colors.text, marginBottom: 12, paddingHorizontal: 4 }}>
-                Preferences
-              </Text>
-              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 12, paddingHorizontal: 4 }}>
-                <View style={{ flex: 1, paddingRight: 16 }}>
-                  <Text style={{ fontSize: 15, fontWeight: '600', color: colors.text }}>
-                    New Request Notifications
-                  </Text>
-                  <Text style={{ fontSize: 13, color: colors.textMuted, marginTop: 2 }}>
-                    Get notified when a new request matches your categories.
-                  </Text>
-                </View>
-                <Switch
-                  value={notifyNewRequests}
-                  onValueChange={async (val) => {
-                    setNotifyNewRequests(val);
-                    try {
-                      await api.put(`/users/${user?.id}/profile`, {
-                        fullName: fullName.trim(),
-                        bio: bio.trim(),
-                        serviceCategory: serviceCategory,
-                        notifyNewRequests: val,
-                      });
-                      showToast({ status: 'success', title: 'Success', subtitle: 'Notification settings updated.' });
-                    } catch (e) {
-                      showToast({ status: 'error', title: 'Error', subtitle: 'Failed to update notification settings.' });
-                    }
-                  }}
-                  trackColor={{ false: colors.primary, true: colors.primary }}
-                  thumbColor="#FFFFFF"
-                  ios_backgroundColor={colors.primary}
-                />
-              </View>
-            </View>
-          )}
-
 
           <View style={{ height: 40 }} />
         </View>
@@ -307,7 +324,7 @@ const styles = StyleSheet.create({
   statDivider: { width: 1, marginVertical: 12 },
 
   card: {
-    borderRadius: 20, borderWidth: 1, padding: 18, marginBottom: 14,
+    borderRadius: 20, borderWidth: 1, padding: 14, marginBottom: 14,
     shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.05, shadowRadius: 10, elevation: 2,
   },
   cardTitle: { fontSize: 15, fontWeight: '800', marginBottom: 14 },
@@ -326,8 +343,8 @@ const styles = StyleSheet.create({
   saveBtn: { borderRadius: 14, height: 50, alignItems: 'center', justifyContent: 'center', marginTop: 4, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 8, elevation: 3 },
   saveBtnText: { color: '#FFF', fontWeight: '700', fontSize: 14 },
 
-  menuRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 14, gap: 12 },
-  menuIconWrap: { width: 40, height: 40, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
+  menuRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 10, gap: 12 },
+  menuIconWrap: { width: 38, height: 38, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
   menuLabel: { fontSize: 14, fontWeight: '600' },
   menuSub: { fontSize: 11, marginTop: 2 },
 

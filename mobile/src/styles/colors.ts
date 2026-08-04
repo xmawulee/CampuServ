@@ -34,8 +34,8 @@ export const LightColors: ThemeColors = {
   inputBackground: '#FFFFFF',
   border: '#D1D1D1',         
   text: '#1C1C1E',           // Almost black
-  textMuted: '#3C3C3E',      // Darker muted for readability on patterns
-  placeholderText: '#8E8E93',// Darker placeholder for readability
+  textMuted: '#2C2C2E',      // Darker muted for readability on patterns
+  placeholderText: '#7A7A80',// Darker placeholder for readability
   navIcon: '#636366',
   success: '#34C759',        // Apple-style green
   successLight: '#E8F8ED',
@@ -58,8 +58,8 @@ export const DarkColors: ThemeColors = {
   inputBackground: '#2A2A48',// Subtle contrast for inputs
   border: '#3A3A55',         // Visible but subtle borders
   text: '#F0F0F5',           // Soft white (easier on the eyes than pure white)
-  textMuted: '#B0B0C0',      // Readable muted text
-  placeholderText: '#6E6E85',// Subtle placeholder
+  textMuted: '#D0D0E0',      // More opaque muted text for readability
+  placeholderText: '#8A8A9E',// Brighter placeholder for readability
   navIcon: '#B0B0C0',
   success: '#34D399',
   successLight: 'rgba(52, 211, 153, 0.14)',

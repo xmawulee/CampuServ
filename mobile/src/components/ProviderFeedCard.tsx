@@ -111,7 +111,7 @@ const ProviderFeedCard = React.memo(function ProviderFeedCard({ provider, onPres
               if (!trimmedCat) return null;
               return (
                 <View key={index} style={styles.categoryBadge}>
-                  <Ionicons name="pricetag-outline" size={10} color={colors.primaryDark} style={{ marginRight: 4 }} />
+                  <Ionicons name="pricetag-outline" size={10} color={colors.primary} style={{ marginRight: 4 }} />
                   <Text style={styles.categoryBadgeText} numberOfLines={1}>Category: {trimmedCat}</Text>
                 </View>
 
@@ -145,12 +145,12 @@ const ProviderFeedCard = React.memo(function ProviderFeedCard({ provider, onPres
       {/* Footer Metrics */}
       <View style={[styles.footerRow, { backgroundColor: colors.primaryLight }]}>
         <View style={styles.metricItem}>
-          <Ionicons name="eye-outline" size={14} color={colors.primaryDark} />
-          <Text style={[styles.metricText, { color: colors.primaryDark }]}>{provider.viewCount || 0} views</Text>
+          <Ionicons name="eye-outline" size={14} color={colors.primary} />
+          <Text style={[styles.metricText, { color: colors.primary }]}>{provider.viewCount || 0} views</Text>
         </View>
         <View style={styles.metricItem}>
-          <Ionicons name="location-outline" size={14} color={colors.primaryDark} />
-          <Text style={[styles.metricText, { color: colors.primaryDark }]}>{provider.location || 'Campus Area'}</Text>
+          <Ionicons name="location-outline" size={14} color={colors.primary} />
+          <Text style={[styles.metricText, { color: colors.primary }]}>{provider.location || 'Campus Area'}</Text>
         </View>
       </View>
     </TouchableOpacity>
@@ -252,7 +252,7 @@ const getStyles = (colors: any) => StyleSheet.create({
   priceText: {
     fontSize: 14,
     fontFamily: 'Inter-SemiBold',
-    color: colors.primaryDark,
+    color: colors.primary,
   },
   ratingRow: {
     flexDirection: 'row',
@@ -302,7 +302,7 @@ const getStyles = (colors: any) => StyleSheet.create({
   categoryBadgeText: {
     fontSize: 11,
     fontFamily: 'Inter-SemiBold',
-    color: colors.primaryDark,
+    color: colors.primary,
     textTransform: 'capitalize',
   },
   tagPill: {

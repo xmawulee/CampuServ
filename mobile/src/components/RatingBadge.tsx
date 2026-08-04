@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { CustomIonicons as Ionicons } from './CustomIcons';
+import { useTheme } from '../styles/ThemeContext';
 
 interface RatingBadgeProps {
   rating: number;
@@ -17,13 +18,15 @@ export default function RatingBadge({
   color = '#FFB800',
   textColor,
 }: RatingBadgeProps) {
+  const { colors } = useTheme();
   const iconSize = size === 'small' ? 12 : size === 'medium' ? 16 : 20;
   const fontSize = size === 'small' ? 12 : size === 'medium' ? 14 : 18;
+  const finalTextColor = textColor || colors.text;
 
   if (rating === 0) {
     return (
       <View style={styles.container}>
-        <Text style={[styles.noRatingText, { fontSize: fontSize - 1, color: textColor }]}>
+        <Text style={[styles.noRatingText, { fontSize: fontSize - 1, color: finalTextColor }]}>
           New
         </Text>
       </View>
@@ -33,11 +36,11 @@ export default function RatingBadge({
   return (
     <View style={styles.container}>
       <Ionicons name="star" size={iconSize} color={color} />
-      <Text style={[styles.ratingText, { fontSize, color: textColor }]}>
+      <Text style={[styles.ratingText, { fontSize, color: finalTextColor }]}>
         {rating.toFixed(1)}
       </Text>
       {reviewCount !== undefined && reviewCount > 0 && (
-        <Text style={[styles.reviewCountText, { fontSize: fontSize - 2, color: textColor }]}>
+        <Text style={[styles.reviewCountText, { fontSize: fontSize - 2, color: finalTextColor }]}>
           ({reviewCount})
         </Text>
       )}

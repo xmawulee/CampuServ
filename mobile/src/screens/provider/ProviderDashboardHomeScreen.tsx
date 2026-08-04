@@ -108,7 +108,7 @@ export default function ProviderDashboardHomeScreen({ navigation }: any) {
   }
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { paddingTop: insets.top, backgroundColor: colors.background }]}>
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={[styles.scrollContent, { paddingBottom: bottomTabSpacing }]}
@@ -132,7 +132,7 @@ export default function ProviderDashboardHomeScreen({ navigation }: any) {
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flexShrink: 0 }}>
             <RoleSwitcher />
             <TouchableOpacity
-              style={[styles.notificationBtn, { backgroundColor: colors.inputBackground, position: 'relative' }]}
+              style={[styles.notificationBtn, { backgroundColor: colors.cardBackground, position: 'relative' }]}
               onPress={() => navigation.navigate('ChatList')}
               accessibilityLabel="Open Messages"
               activeOpacity={0.8}
@@ -147,7 +147,7 @@ export default function ProviderDashboardHomeScreen({ navigation }: any) {
               )}
             </TouchableOpacity>
             <TouchableOpacity
-              style={[styles.notificationBtn, { backgroundColor: colors.inputBackground }]}
+              style={[styles.notificationBtn, { backgroundColor: colors.cardBackground }]}
               onPress={() => navigation.navigate('NotificationCenter')}
               accessibilityLabel="Open Notifications"
               activeOpacity={0.8}
@@ -206,9 +206,9 @@ export default function ProviderDashboardHomeScreen({ navigation }: any) {
         </View>
 
         {/* ── Marketplace Listings & Services Quick Action Card ── */}
-        <View style={[styles.promoCard, { backgroundColor: 'rgba(0, 150, 255, 0.08)', borderColor: 'rgba(0, 150, 255, 0.3)' }]}>
+        <View style={[styles.promoCard, { backgroundColor: colors.primaryLight, borderColor: colors.primary + '30' }]}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 8 }}>
-            <View style={[styles.promoIconWrap, { backgroundColor: '#0096FF' }]}>
+            <View style={[styles.promoIconWrap, { backgroundColor: colors.primary }]}>
               <Ionicons name="sparkles" size={18} color="#FFF" />
             </View>
             <Text style={[styles.promoTitle, { color: colors.text }]}>Marketplace Listings & Services</Text>
@@ -218,7 +218,7 @@ export default function ProviderDashboardHomeScreen({ navigation }: any) {
           </Text>
           <View style={styles.promoActions}>
             <TouchableOpacity
-              style={[styles.promoBtnPrimary, { backgroundColor: '#0096FF' }]}
+              style={[styles.promoBtnPrimary, { backgroundColor: colors.primary }]}
               onPress={() => navigation.navigate('CreateEditListing')}
               activeOpacity={0.85}
             >
@@ -226,11 +226,11 @@ export default function ProviderDashboardHomeScreen({ navigation }: any) {
               <Text style={styles.promoBtnPrimaryText}>+ Post New Service</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={[styles.promoBtnSecondary, { borderColor: '#0096FF' }]}
+              style={[styles.promoBtnSecondary, { borderColor: colors.primary }]}
               onPress={() => navigation.navigate('Listings')}
               activeOpacity={0.8}
             >
-              <Text style={[styles.promoBtnSecondaryText, { color: '#0096FF' }]}>Manage All Services →</Text>
+              <Text style={[styles.promoBtnSecondaryText, { color: colors.primary }]}>Manage All Services →</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -318,7 +318,18 @@ const styles = StyleSheet.create({
   },
   greetingSub: { fontSize: 12, fontWeight: '600', marginBottom: 2, textTransform: 'uppercase', letterSpacing: 0.5 },
   greetingName: { fontSize: 24, fontWeight: '800' },
-  notificationBtn: { width: 44, height: 44, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
+  notificationBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+    elevation: 2,
+  },
 
   // Balance card
   balanceCard: {

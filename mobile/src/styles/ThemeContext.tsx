@@ -9,6 +9,8 @@ type ThemeContextType = {
   colors: ThemeColors;
   isDark: boolean;
   toggleTheme: () => void;
+  reduceMotion: boolean;
+  toggleReduceMotion: () => void;
 };
 
 const ThemeContext = createContext<ThemeContextType>({
@@ -16,12 +18,16 @@ const ThemeContext = createContext<ThemeContextType>({
   colors: LightColors,
   isDark: false,
   toggleTheme: () => {},
+  reduceMotion: false,
+  toggleReduceMotion: () => {},
 });
 
 const THEME_STORAGE_KEY = 'campusserv_theme_mode';
+const REDUCE_MOTION_KEY = 'campusserv_reduce_motion';
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [mode, setMode] = useState<ThemeMode>('light');
+  const [reduceMotion, setReduceMotion] = useState<boolean>(false);
 
   // Load persisted preference on mount
   useEffect(() => {
@@ -32,6 +38,14 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
         }
       })
       .catch(() => {}); // silently ignore if SecureStore unavailable
+      
+    SecureStore.getItemAsync(REDUCE_MOTION_KEY)
+      .then((saved) => {
+        if (saved === 'true') {
+          setReduceMotion(true);
+        }
+      })
+      .catch(() => {});
   }, []);
 
   const toggleTheme = useCallback(() => {
@@ -43,11 +57,19 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     });
   }, []);
 
+  const toggleReduceMotion = useCallback(() => {
+    setReduceMotion((prev) => {
+      const next = !prev;
+      SecureStore.setItemAsync(REDUCE_MOTION_KEY, next ? 'true' : 'false').catch(() => {});
+      return next;
+    });
+  }, []);
+
   const isDark = mode === 'dark';
   const colors = isDark ? DarkColors : LightColors;
 
   return (
-    <ThemeContext.Provider value={{ mode, colors, isDark, toggleTheme }}>
+    <ThemeContext.Provider value={{ mode, colors, isDark, toggleTheme, reduceMotion, toggleReduceMotion }}>
       {children}
     </ThemeContext.Provider>
   );

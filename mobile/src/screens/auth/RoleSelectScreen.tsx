@@ -107,7 +107,7 @@ export default function RoleSelectScreen({ navigation, route }: any) {
             Already have an account?{' '}
           </Text>
           <TouchableOpacity onPress={() => navigation.navigate('SignIn')}>
-            <Text style={[styles.footerLink, { color: isDark ? '#818CF8' : colors.primary }]}>Sign in</Text>
+            <Text style={[styles.footerLink, { color: isDark ? '#FF8A66' : '#FF5500' }]}>Sign in</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
@@ -158,9 +158,10 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   tagline: {
-    fontSize: 15,
+    fontSize: 13,
     fontFamily: 'Inter-Medium',
     letterSpacing: 0.2,
+    opacity: 0.75,
   },
   cardsBlock: {
     gap: 12,
@@ -244,7 +245,8 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter-Medium',
   },
   footerLink: { 
-    fontSize: 17, 
+    fontSize: 18, 
     fontFamily: 'Outfit-Bold',
+    fontWeight: '800',
   },
 });

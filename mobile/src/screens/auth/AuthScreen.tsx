@@ -199,7 +199,7 @@ export default function AuthScreen({ navigation }: any) {
   return (
     <LinearGradient colors={['#0A2E6E', '#1565C0']} style={styles.container}>
       <KeyboardAvoidingView 
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'} 
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined} 
         style={styles.keyboardView}
       >
         <ScrollView 

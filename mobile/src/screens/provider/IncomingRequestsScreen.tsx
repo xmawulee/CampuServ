@@ -172,7 +172,7 @@ export default function IncomingRequestsScreen({ navigation }: any) {
   );
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { paddingTop: insets.top, backgroundColor: colors.background }]}>
       <View style={styles.headerBlock}>
         <Text style={[styles.headerTitle, { color: colors.text }]}>Opportunity Feed</Text>
         <Text style={[styles.headerSub, { color: colors.textMuted }]}>
@@ -189,6 +189,9 @@ export default function IncomingRequestsScreen({ navigation }: any) {
           data={requests}
           keyExtractor={(item) => item.id}
           renderItem={renderItem}
+          initialNumToRender={8}
+          maxToRenderPerBatch={5}
+          windowSize={5}
           contentContainerStyle={[
             styles.listContent,
             { paddingBottom: 110 + insets.bottom },

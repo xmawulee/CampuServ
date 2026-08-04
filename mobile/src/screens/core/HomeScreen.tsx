@@ -883,6 +883,9 @@ export default function HomeScreen({ route, navigation }: any) {
         data={listData}
         keyExtractor={(item) => item.id || item.providerId}
         renderItem={renderItem}
+        initialNumToRender={8}
+        maxToRenderPerBatch={5}
+        windowSize={5}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}
         contentContainerStyle={[styles.listContent, { paddingBottom: bottomTabSpacing }]}
         ItemSeparatorComponent={isProvider ? () => <View style={{ height: 12 }} /> : null}

@@ -332,23 +332,23 @@ export default function NotificationCenterScreen({ navigation }: any) {
   return (
     <View style={styles.container}>
       {/* Header */}
-      <SafeAreaView edges={['top']} style={{ backgroundColor: colors.cardBackground, zIndex: 10 }}>
-        <View style={styles.header}>
+      <SafeAreaView edges={['top']} style={{ backgroundColor: colors.primary, zIndex: 10 }}>
+        <View style={[styles.header, { backgroundColor: colors.primary }]}>
           <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
-            <Ionicons name="arrow-back" size={24} color={colors.text} />
+            <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
           </TouchableOpacity>
-          <Text style={[styles.headerTitle, { color: colors.text }]}>
+          <Text style={[styles.headerTitle, { color: '#FFFFFF' }]}>
             Notifications{unreadCount > 0 ? ` (${unreadCount})` : ''}
           </Text>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, minWidth: 60, justifyContent: 'flex-end' }}>
           {unreadCount > 0 && (
-            <TouchableOpacity onPress={handleMarkAllRead} style={[styles.headerActionBtn, { backgroundColor: 'rgba(16, 185, 129, 0.1)' }]}>
-              <Ionicons name="mail-open" size={20} color="#10B981" />
+            <TouchableOpacity onPress={handleMarkAllRead} style={[styles.headerActionBtn, { backgroundColor: 'rgba(255, 255, 255, 0.2)' }]}>
+              <Ionicons name="mail-open" size={20} color="#FFFFFF" />
             </TouchableOpacity>
           )}
           {filteredNotifications.length > 0 && (
-            <TouchableOpacity onPress={handleClearAll} style={[styles.headerActionBtn, { backgroundColor: 'rgba(239, 68, 68, 0.1)' }]}>
-              <Ionicons name="trash" size={20} color="#EF4444" />
+            <TouchableOpacity onPress={handleClearAll} style={[styles.headerActionBtn, { backgroundColor: 'rgba(255, 255, 255, 0.2)' }]}>
+              <Ionicons name="trash" size={20} color="#FFFFFF" />
             </TouchableOpacity>
           )}
         </View>
@@ -374,6 +374,7 @@ export default function NotificationCenterScreen({ navigation }: any) {
           contentContainerStyle={[
             styles.listContent,
             { paddingBottom: Math.max(insets.bottom, 40) },
+            (!filteredNotifications || filteredNotifications.length === 0) && { flexGrow: 1 }
           ]}
           showsVerticalScrollIndicator={false}
           ItemSeparatorComponent={() => <View style={{ height: 16 }} />}
@@ -483,7 +484,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: 40,
     gap: 16,
-    paddingBottom: 80,
   },
   emptyIconWrap: {
     width: 100,
