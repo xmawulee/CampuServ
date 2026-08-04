@@ -7,244 +7,307 @@ import {
   StatusBar,
   Dimensions,
   Image,
+  ScrollView,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { CustomIonicons as Ionicons } from '../../components/CustomIcons';
 import { useTheme } from '../../styles/ThemeContext';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+import AnimatedBackground from '../../components/AnimatedBackground';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 const logoImage = require('../../../assets/logo.png');
 
-export default function RoleSelectScreen({ navigation, route }: any) {
+export default function RoleSelectScreen({ navigation }: any) {
   const { colors, isDark } = useTheme();
   const insets = useSafeAreaInsets();
 
-  const backgroundColors = isDark 
-    ? (['#0B0F19', '#02040A'] as const)  // Deep professional dark space
-    : (['#F3F6FA', '#E3E8F0'] as const); // Fresh slate-lavender light
-
   return (
-    <View style={{ flex: 1, backgroundColor: 'transparent' }}>
-      <SafeAreaView style={[styles.container, { paddingBottom: insets.bottom }]}>
-        <StatusBar barStyle={isDark ? "light-content" : "dark-content"} translucent backgroundColor="transparent" />
+    <AnimatedBackground style={{ flex: 1 }}>
+      <StatusBar barStyle={isDark ? "light-content" : "dark-content"} translucent backgroundColor="transparent" />
+      <SafeAreaView style={styles.container}>
 
+      <ScrollView
+        contentContainerStyle={[
+          styles.scrollContent,
+          { paddingBottom: insets.bottom + 20 }
+        ]}
+        showsVerticalScrollIndicator={false}
+        bounces={false}
+      >
+        {/* Logo & Header Section */}
+        <View style={styles.headerBlock}>
+          <View style={[styles.logoIconWrap, { backgroundColor: colors.primaryLight, shadowColor: colors.primary }]}>
+            <Image
+              source={logoImage}
+              style={[styles.logoImage, { tintColor: colors.primary }]}
+              resizeMode="contain"
+            />
+          </View>
 
+          <Text style={[styles.appName, { color: colors.text }]}>
+            Campu<Text style={{ color: colors.primary }}>Serv</Text>
+          </Text>
 
-        {/* Logo Block */}
-        <View style={styles.logoBlock}>
-          <Image 
-            source={logoImage} 
-            style={[styles.logo, { tintColor: colors.primary }]} 
-            resizeMode="contain"
-          />
-          <Text style={[styles.appName, { color: colors.text }]}>Campu<Text style={{ color: colors.primary }}>Serv</Text></Text>
           <Text style={[styles.tagline, { color: colors.textMuted }]}>
             Campus services, reimagined.
           </Text>
         </View>
 
-        {/* Role Cards */}
+        {/* Role Cards Block */}
         <View style={styles.cardsBlock}>
-          <Text style={[styles.chooseLabel, { color: colors.textMuted }]}>CHOOSE HOW TO GET STARTED</Text>
+          <Text style={[styles.chooseLabel, { color: colors.textMuted }]}>
+            CHOOSE HOW TO GET STARTED
+          </Text>
 
-          {/* Client Card */}
+          {/* Option 1: Student / Client Card */}
           <TouchableOpacity
-            activeOpacity={0.9}
-            style={styles.cardTouch}
+            activeOpacity={0.88}
+            style={[styles.cardTouch, { shadowColor: colors.primary }]}
             onPress={() => navigation.navigate('ClientSignUp')}
           >
-            <LinearGradient
-              colors={[colors.primary, colors.primaryDark]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-              style={[styles.roleCard, isDark && { borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)' }]}
-            >
-              <View style={[styles.cardIconWrap, { backgroundColor: '#FFF', borderRadius: 26 }]}>
-                <Ionicons name="search" size={28} color={colors.primary} />
+            <View style={[styles.roleCard, { backgroundColor: colors.primary }]}>
+              <View style={styles.cardIconWrap}>
+                <Ionicons name="search" size={24} color={colors.primary} />
               </View>
+
               <View style={styles.cardTextBlock}>
-                <Text style={[styles.cardTitle, { color: '#FFF' }]}>I need help</Text>
-                <Text style={[styles.cardSubtitle, { color: '#FFFFFF' }]}>Browse services, book providers, and get help with tasks around campus.</Text>
+                <Text style={styles.clientTitle}>I need help</Text>
+                <Text style={styles.clientSubtitle}>
+                  Browse services, book providers, and get help with tasks around campus.
+                </Text>
               </View>
-              <View style={[styles.cardArrow, { backgroundColor: 'rgba(255,255,255,0.2)' }]}>
-                <Ionicons name="arrow-forward" size={16} color="#FFF" />
+
+              <View style={styles.cardArrowWrap}>
+                <Ionicons name="arrow-forward" size={18} color="#FFFFFF" />
               </View>
-            </LinearGradient>
+            </View>
           </TouchableOpacity>
 
-          {/* Provider Card */}
+          {/* Option 2: Provider Card */}
           <TouchableOpacity
-            activeOpacity={0.9}
-            style={styles.cardTouch}
+            activeOpacity={0.88}
+            style={[styles.cardTouch, styles.providerCardShadow]}
             onPress={() => navigation.navigate('ProviderSignUp')}
           >
-            <LinearGradient
-              colors={[colors.primary, colors.primaryDark]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-              style={[styles.roleCard, isDark && { borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)' }]}
+            <View
+              style={[
+                styles.roleCard,
+                {
+                  backgroundColor: isDark ? colors.cardBackground : '#2D3748',
+                  borderColor: isDark ? colors.border : 'transparent',
+                  borderWidth: isDark ? 1 : 0,
+                }
+              ]}
             >
-              <View style={[styles.cardIconWrap, { backgroundColor: '#FFF', borderRadius: 26 }]}>
-                <Ionicons name="briefcase" size={28} color={colors.primary} />
+              <View style={[styles.cardIconWrap, { backgroundColor: '#FFFFFF' }]}>
+                <Ionicons name="briefcase" size={24} color="#2D3748" />
               </View>
+
               <View style={styles.cardTextBlock}>
-                <Text style={[styles.cardTitle, { color: '#FFF' }]}>I provide services</Text>
-                <Text style={[styles.cardSubtitle, { color: '#FFFFFF' }]}>Offer your skills, accept jobs, earn money, and help fellow students.</Text>
-                <Text style={[styles.cardScopeNote, { color: 'rgba(255,255,255,0.9)', marginTop: 6 }]}>Provider-only account — no student access. Need both? Use a separate email.</Text>
+                <Text style={styles.providerTitle}>I provide services</Text>
+                <Text style={styles.providerSubtitle}>
+                  Offer your skills, accept jobs, earn money, and help fellow students.
+                </Text>
+
+                <View style={styles.scopeNoteRow}>
+                  <Ionicons name="information-circle-outline" size={13} color="rgba(255, 255, 255, 0.75)" style={{ marginTop: 2 }} />
+                  <Text style={styles.scopeNoteText}>
+                    Provider-only account — no student access. Need both? Use a separate email.
+                  </Text>
+                </View>
               </View>
-              <View style={[styles.cardArrow, { backgroundColor: 'rgba(255,255,255,0.15)' }]}>
-                <Ionicons name="arrow-forward" size={16} color="#FFF" />
+
+              <View style={[styles.cardArrowWrap, { backgroundColor: 'rgba(255, 255, 255, 0.15)' }]}>
+                <Ionicons name="arrow-forward" size={18} color="#FFFFFF" />
               </View>
-            </LinearGradient>
+            </View>
           </TouchableOpacity>
+
         </View>
 
-        {/* Sign In Footer */}
+        {/* Footer Link */}
         <View style={styles.footer}>
           <Text style={[styles.footerText, { color: colors.textMuted }]}>
             Already have an account?{' '}
           </Text>
-          <TouchableOpacity onPress={() => navigation.navigate('SignIn')}>
-            <Text style={[styles.footerLink, { color: isDark ? '#818CF8' : colors.primary }]}>Sign in</Text>
+          <TouchableOpacity 
+            onPress={() => navigation.navigate('SignIn')} 
+            hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+          >
+            <Text style={[styles.footerLink, { color: colors.primary }]}>Sign in</Text>
           </TouchableOpacity>
         </View>
-      </SafeAreaView>
-    </View>
+
+      </ScrollView>
+    </SafeAreaView>
+    </AnimatedBackground>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { 
-    flex: 1, 
-    paddingHorizontal: 24,
-  },
-  logoRingContainer: {
-    position: 'absolute',
-    top: SCREEN_HEIGHT * 0.04,
-    left: 0,
-    right: 0,
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 0,
-  },
-  logoRing: {
-    position: 'absolute',
-    borderWidth: 1.5,
-    borderStyle: 'solid',
-  },
-  logoBlock: {
+  container: {
     flex: 1,
-    alignItems: 'center',
-    justifyContent: 'flex-start',
-    paddingTop: SCREEN_HEIGHT * 0.02,
-    paddingBottom: 12,
-    zIndex: 1,
   },
-  logo: {
+  scrollContent: {
+    paddingHorizontal: 22,
+    paddingTop: 16,
+    flexGrow: 1,
+    justifyContent: 'space-between',
+  },
+  headerBlock: {
+    alignItems: 'center',
+    marginTop: SCREEN_HEIGHT * 0.02,
+    marginBottom: 28,
+  },
+  logoIconWrap: {
     width: 64,
     height: 64,
-    marginBottom: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.15,
-    shadowRadius: 12,
+    borderRadius: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 12,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.12,
+    shadowRadius: 10,
+    elevation: 3,
+  },
+  logoImage: {
+    width: 36,
+    height: 36,
   },
   appName: {
-    fontSize: 38,
+    fontSize: 32,
+    fontFamily: 'System',
     fontWeight: '900',
-    letterSpacing: -1.5,
-    marginBottom: 6,
+    letterSpacing: -1,
+    marginBottom: 4,
   },
   tagline: {
-    fontSize: 15,
-    fontFamily: 'Inter-Medium',
-    letterSpacing: 0.2,
+    fontSize: 14,
+    fontFamily: 'System',
+    fontWeight: '500',
   },
   cardsBlock: {
-    gap: 12,
-    zIndex: 1,
-    marginTop: 6,
+    gap: 16,
   },
   chooseLabel: {
-    fontSize: 13,
-    fontFamily: 'Outfit-Bold',
+    fontSize: 12,
+    fontFamily: 'System',
+    fontWeight: '800',
     letterSpacing: 1.5,
     marginBottom: 4,
     textAlign: 'center',
   },
   cardTouch: {
     width: '100%',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.20,
+    shadowRadius: 14,
+    elevation: 5,
+  },
+  providerCardShadow: {
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 12 },
+    shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.15,
-    shadowRadius: 20,
-    elevation: 8,
+    shadowRadius: 14,
+    elevation: 5,
   },
   roleCard: {
-    borderRadius: 28,
-    padding: 18,
+    borderRadius: 24,
+    padding: 20,
     flexDirection: 'row',
-    alignItems: 'center',
-    minHeight: 110,
+    alignItems: 'flex-start',
+    minHeight: 120,
   },
   cardIconWrap: {
-    width: 52,
-    height: 52,
-    borderRadius: 18,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 16,
-    flexShrink: 0,
+    marginRight: 14,
+    marginTop: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 2,
   },
-  cardTextBlock: { 
+  cardTextBlock: {
     flex: 1,
     paddingRight: 8,
   },
-  cardTitle: {
-    fontSize: 22,
-    fontFamily: 'Outfit-Bold',
-    color: '#FFF',
-    marginBottom: 6,
-    letterSpacing: -0.3,
-  },
-  cardSubtitle: {
-    fontSize: 15,
+  clientTitle: {
+    fontSize: 21,
+    fontFamily: 'System',
+    fontWeight: '800',
     color: '#FFFFFF',
-    lineHeight: 22,
-    fontFamily: 'Inter-Medium',
+    marginBottom: 6,
+    letterSpacing: -0.4,
   },
-  cardScopeNote: {
-    fontSize: 13,
-    color: 'rgba(255,255,255,0.9)',
-    lineHeight: 18,
-    fontFamily: 'Inter-Medium',
-    marginTop: 4,
+  clientSubtitle: {
+    fontSize: 14,
+    fontFamily: 'System',
+    fontWeight: '400',
+    color: '#FFFFFF',
+    lineHeight: 20,
+  },
+  providerTitle: {
+    fontSize: 21,
+    fontFamily: 'System',
+    fontWeight: '800',
+    color: '#FFFFFF',
+    marginBottom: 6,
+    letterSpacing: -0.4,
+  },
+  providerSubtitle: {
+    fontSize: 14,
+    fontFamily: 'System',
+    fontWeight: '400',
+    color: 'rgba(255, 255, 255, 0.92)',
+    lineHeight: 20,
+  },
+  scopeNoteRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 5,
+    marginTop: 8,
+  },
+  scopeNoteText: {
+    flex: 1,
+    fontSize: 12,
+    fontFamily: 'System',
+    fontWeight: '400',
+    color: 'rgba(255, 255, 255, 0.75)',
+    lineHeight: 16,
     fontStyle: 'italic',
   },
-  cardArrow: {
+  cardArrowWrap: {
     width: 32,
     height: 32,
     borderRadius: 16,
+    backgroundColor: 'rgba(255, 255, 255, 0.25)',
     alignItems: 'center',
     justifyContent: 'center',
-    flexShrink: 0,
+    marginTop: 8,
   },
   footer: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    paddingBottom: 24,
-    paddingTop: 20,
-    zIndex: 1,
+    paddingVertical: 20,
+    marginTop: 20,
   },
-  footerText: { 
+  footerText: {
+    fontSize: 15,
+    fontFamily: 'System',
+    fontWeight: '500',
+  },
+  footerLink: {
     fontSize: 16,
-    fontFamily: 'Inter-Medium',
-  },
-  footerLink: { 
-    fontSize: 17, 
-    fontFamily: 'Outfit-Bold',
+    fontFamily: 'System',
+    fontWeight: '800',
   },
 });

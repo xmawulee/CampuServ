@@ -103,9 +103,7 @@ public class PasswordResetService {
         Optional<User> userOpt = userRepository.findByEmail(normalizedEmail);
         if (userOpt.isEmpty()) {
             log.warn("Forgot password requested for non-existent email [{}]", normalizedEmail);
-            // Simulate work to prevent timing analysis / enumeration
-            try { Thread.sleep(200); } catch (InterruptedException ignored) {}
-            return;
+            throw new java.util.NoSuchElementException("No account found with this email address.");
         }
 
         User user = userOpt.get();

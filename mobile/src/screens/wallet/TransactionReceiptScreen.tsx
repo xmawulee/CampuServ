@@ -16,6 +16,7 @@ import { useToast } from '../../styles/ToastContext';
 import StatusDialog from '../../components/StatusDialog';
 import { useTheme } from '../../styles/ThemeContext';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import AnimatedBackground from '../../components/AnimatedBackground';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '../../services/api';
 import {
@@ -130,10 +131,11 @@ export default function TransactionReceiptScreen({ route, navigation }: any) {
   }
 
   return (
-    <View style={styles.mainContainer}>
+    <AnimatedBackground style={{ flex: 1 }}>
+      <View style={styles.mainContainer}>
       {/* Custom Header Bar */}
       <View style={styles.headerBar}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+        <TouchableOpacity onPress={() => (navigation.canGoBack() ? navigation.goBack() : (navigation as any).navigate('Main'))} style={styles.backButton}>
           <Ionicons name="close" size={24} color="#111827" />
         </TouchableOpacity>
         <Text style={styles.headerBarTitle}>Job Payment Receipt</Text>
@@ -155,7 +157,6 @@ export default function TransactionReceiptScreen({ route, navigation }: any) {
             </View>
             <Text style={styles.statusTitleText}>{statusTitleText}</Text>
             <Text style={styles.largeAmountText}>{formatGHS(receipt.agreedBidAmount)}</Text>
-            <Text style={styles.narrationSubtitle}>Service: {receipt.serviceTitle}</Text>
           </View>
 
           <View style={styles.divider} />
@@ -186,7 +187,7 @@ export default function TransactionReceiptScreen({ route, navigation }: any) {
               <Text style={styles.fieldLabel}>Initiated At</Text>
               <Text style={styles.fieldValue}>{formatReceiptDateTime(receipt.initiatedAt)}</Text>
             </View>
-            {receipt.confirmedAt && (
+            {!!receipt.confirmedAt && (
               <View style={styles.fieldRow}>
                 <Text style={styles.fieldLabel}>Confirmed At</Text>
                 <Text style={styles.fieldValue}>{formatReceiptDateTime(receipt.confirmedAt)}</Text>
@@ -407,6 +408,7 @@ export default function TransactionReceiptScreen({ route, navigation }: any) {
         onClose={() => setReportDialogVisible(false)}
       />
     </View>
+    </AnimatedBackground>
   );
 }
 

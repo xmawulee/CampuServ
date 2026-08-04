@@ -15,6 +15,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { CustomIonicons as Ionicons } from '../../components/CustomIcons';
 import { useTheme } from '../../styles/ThemeContext';
 import { api } from '../../services/api';
+import AnimatedBackground from '../../components/AnimatedBackground';
 
 const KNUST_EMAIL_REGEX = /^[^\s@]+@st\.knust\.edu\.gh$/i;
 
@@ -51,7 +52,8 @@ export default function ForgotPasswordScreen({ navigation }: any) {
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top', 'left', 'right']}>
+    <AnimatedBackground style={{ flex: 1 }}>
+      <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
       <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} />
       <KeyboardAvoidingView
         style={{ flex: 1 }}
@@ -125,6 +127,7 @@ export default function ForgotPasswordScreen({ navigation }: any) {
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
+    </AnimatedBackground>
   );
 }
 

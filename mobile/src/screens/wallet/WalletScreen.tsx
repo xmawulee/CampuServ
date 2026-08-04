@@ -11,6 +11,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { CustomIonicons as Ionicons } from '../../components/CustomIcons';
 import WalletTxnCard from '../../components/wallet/WalletTxnCard';
 import WalletEmptyState from '../../components/wallet/WalletEmptyState';
+import AnimatedBackground from '../../components/AnimatedBackground';
 
 
 export default function WalletScreen() {
@@ -66,7 +67,7 @@ export default function WalletScreen() {
   const txnList = Array.isArray(transactions) ? transactions : [];
 
   return (
-    <View style={{ flex: 1 }}>
+    <AnimatedBackground style={{ flex: 1 }}>
       <ScrollView
         style={[styles.container, { backgroundColor: 'transparent' }]}
       contentContainerStyle={{ paddingTop: insets.top + 16, paddingBottom: 40 + insets.bottom }}
@@ -84,9 +85,6 @@ export default function WalletScreen() {
 
         <Text style={[styles.balanceCardAmount, { color: '#FFFFFF' }]}>
           GHS {wallet ? Number(wallet.balance).toFixed(2) : '0.00'}
-        </Text>
-        <Text style={[styles.balanceCardSub, { color: 'rgba(255,255,255,0.9)' }]}>
-          {isViewingAsProvider ? 'Available for bank withdrawal & payout' : 'Available for booking campus service providers'}
         </Text>
 
         {/* Quick actions row */}
@@ -114,7 +112,7 @@ export default function WalletScreen() {
       {/* ── Escrow Card ── */}
       {!isViewingAsProvider && (
         <View style={[styles.escrowCard, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 8 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
             <View style={[styles.escrowIcon, { backgroundColor: colors.warningLight }]}>
               <Ionicons name="lock-closed-outline" size={20} color={colors.warning} />
             </View>
@@ -127,9 +125,6 @@ export default function WalletScreen() {
               </Text>
             </View>
           </View>
-          <Text style={[styles.escrowSub, { color: colors.textMuted }]}>
-            These funds are locked securely in active service contracts and will be released upon job completion.
-          </Text>
         </View>
       )}
 
@@ -149,7 +144,7 @@ export default function WalletScreen() {
       )}
 
       </ScrollView>
-    </View>
+    </AnimatedBackground>
   );
 }
 

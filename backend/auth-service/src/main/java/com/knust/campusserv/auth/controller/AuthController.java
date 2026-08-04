@@ -658,6 +658,9 @@ public class AuthController {
         try {
             passwordResetService.processForgotPassword(request.getEmail(), clientIp);
             return ResponseEntity.ok(Map.of("message", "If that email exists, a verification code has been sent."));
+        } catch (java.util.NoSuchElementException nse) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("message", nse.getMessage()));
         } catch (IllegalStateException ise) {
             return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
                     .body(Map.of("message", ise.getMessage()));

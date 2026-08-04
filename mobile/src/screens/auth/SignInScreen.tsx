@@ -20,6 +20,7 @@ import { useTheme } from '../../styles/ThemeContext';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuthStore } from '../../store/authStore';
 import { api } from '../../services/api';
+import AnimatedBackground from '../../components/AnimatedBackground';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 const KNUST_EMAIL_REGEX = /^[^\s@]+@st\.knust\.edu\.gh$/i;
@@ -182,7 +183,7 @@ export default function SignInScreen({ route, navigation }: any) {
   const submitBtnColors = activeRole === 'CLIENT' ? clientBtnGradient : providerBtnGradient;
 
   return (
-    <View style={{ flex: 1, backgroundColor: 'transparent' }}>
+    <AnimatedBackground style={{ flex: 1 }}>
       <SafeAreaView style={[styles.container, { paddingBottom: insets.bottom }]}>
         <StatusBar barStyle={isDark ? "light-content" : "dark-content"} translucent backgroundColor="transparent" />
 
@@ -275,7 +276,7 @@ export default function SignInScreen({ route, navigation }: any) {
                   editable={!isLoading}
                 />
               </View>
-              {errors.email && <Text style={[styles.fieldError, { color: colors.error }]}>{errors.email}</Text>}
+              {!!errors.email && <Text style={[styles.fieldError, { color: colors.error }]}>{errors.email}</Text>}
             </View>
 
             {/* Password Input */}
@@ -309,7 +310,7 @@ export default function SignInScreen({ route, navigation }: any) {
                   <Ionicons name={showPassword ? 'eye-off-outline' : 'eye-outline'} size={20} color={colors.textMuted} />
                 </TouchableOpacity>
               </View>
-              {errors.password && <Text style={[styles.fieldError, { color: colors.error }]}>{errors.password}</Text>}
+              {!!errors.password && <Text style={[styles.fieldError, { color: colors.error }]}>{errors.password}</Text>}
             </View>
 
             {/* Forgot Password Link */}
@@ -353,7 +354,7 @@ export default function SignInScreen({ route, navigation }: any) {
           </ScrollView>
         </KeyboardAvoidingView>
       </SafeAreaView>
-    </View>
+    </AnimatedBackground>
   );
 }
 

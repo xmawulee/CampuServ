@@ -12,6 +12,7 @@ import {
   Image,
   Alert,
   Modal,
+  Keyboard,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
@@ -19,6 +20,7 @@ import { CustomIonicons as Ionicons } from '../../components/CustomIcons';
 import { useTheme } from '../../styles/ThemeContext';
 import { useAuthStore } from '../../store/authStore';
 import { stompClient } from '../../services/socket';
+import AnimatedBackground from '../../components/AnimatedBackground';
 import {
   getChatMessages,
   markAsRead,
@@ -139,6 +141,22 @@ export default function ChatThreadScreen({ route, navigation }: any) {
   const [sending, setSending] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [imageModalUrl, setImageModalUrl] = useState<string | null>(null);
+  const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
+
+  useEffect(() => {
+    const showSub = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
+      () => setIsKeyboardVisible(true)
+    );
+    const hideSub = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
+      () => setIsKeyboardVisible(false)
+    );
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+    };
+  }, []);
 
   // Load initial messages
   const loadMessages = useCallback(async (p = 0) => {
@@ -279,15 +297,19 @@ export default function ChatThreadScreen({ route, navigation }: any) {
   };
 
   return (
-    <View style={{ flex: 1 }}>
+    <AnimatedBackground style={{ flex: 1 }}>
       <KeyboardAvoidingView
         style={[styles.root, { backgroundColor: 'transparent' }]}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
       >
       {/* Header */}
       <View style={[styles.header, { paddingTop: insets.top + 8, borderBottomColor: colors.border }]}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
+        <TouchableOpacity
+          onPress={() => (navigation.canGoBack() ? navigation.goBack() : navigation.navigate('Main'))}
+          style={styles.backBtn}
+          hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+        >
           <Ionicons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
         <View style={styles.headerCenter}>
@@ -329,7 +351,16 @@ export default function ChatThreadScreen({ route, navigation }: any) {
       )}
 
       {/* Input bar */}
-      <View style={[styles.inputBar, { paddingBottom: insets.bottom + 6, borderTopColor: colors.border, backgroundColor: colors.cardBackground }]}>
+      <View
+        style={[
+          styles.inputBar,
+          {
+            paddingBottom: isKeyboardVisible ? 10 : Math.max(insets.bottom + 6, 12),
+            borderTopColor: colors.border,
+            backgroundColor: colors.cardBackground,
+          }
+        ]}
+      >
         <TouchableOpacity onPress={handlePickImage} style={styles.attachBtn} disabled={uploadingImage}>
           {uploadingImage
             ? <ActivityIndicator size="small" color={colors.primary} />
@@ -390,7 +421,7 @@ export default function ChatThreadScreen({ route, navigation }: any) {
         </TouchableOpacity>
       </Modal>
     </KeyboardAvoidingView>
-  </View>
+    </AnimatedBackground>
   );
 }
 

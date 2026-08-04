@@ -20,6 +20,7 @@ import { useTheme } from '../../styles/ThemeContext';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuthStore } from '../../store/authStore';
 import { api } from '../../services/api';
+import AnimatedBackground from '../../components/AnimatedBackground';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 const KNUST_EMAIL_REGEX = /^[^\s@]+@(st\.)?knust\.edu\.gh$/i;
@@ -180,7 +181,7 @@ export default function ProviderSignUpScreen({ navigation }: any) {
   const providerBtnGradient = isDark ? (['#FF8A66', '#FF9470'] as const) : ([colors.primary, colors.primaryDark] as const);
 
   return (
-    <View style={{ flex: 1, backgroundColor: 'transparent' }}>
+    <AnimatedBackground style={{ flex: 1 }}>
       <SafeAreaView style={[styles.container, { paddingBottom: insets.bottom }]}>
         <StatusBar barStyle={isDark ? "light-content" : "dark-content"} translucent backgroundColor="transparent" />
 
@@ -238,7 +239,7 @@ export default function ProviderSignUpScreen({ navigation }: any) {
                 blurOnSubmit={false}
                 editable={!isLoading}
               />
-              {errors.name && <Text style={[styles.fieldError, { color: colors.error }]}>{errors.name}</Text>}
+              {!!errors.name && <Text style={[styles.fieldError, { color: colors.error }]}>{errors.name}</Text>}
 
               <Text style={[styles.label, styles.labelTop, { color: colors.textMuted }]}>KNUST Email</Text>
               <TextInput
@@ -265,7 +266,7 @@ export default function ProviderSignUpScreen({ navigation }: any) {
                   </Text>
                 </View>
               )}
-              {errors.email && <Text style={[styles.fieldError, { color: colors.error }]}>{errors.email}</Text>}
+              {!!errors.email && <Text style={[styles.fieldError, { color: colors.error }]}>{errors.email}</Text>}
 
               <Text style={[styles.label, styles.labelTop, { color: colors.textMuted }]}>Password</Text>
               <View style={[styles.passwordRow, { backgroundColor: isDark ? 'rgba(255,255,255,0.02)' : colors.inputBackground, borderColor: errors.password ? colors.error : (isDark ? 'rgba(255,255,255,0.08)' : 'transparent'), borderWidth: 1.5 }]}>
@@ -302,7 +303,7 @@ export default function ProviderSignUpScreen({ navigation }: any) {
                   </View>
                 </View>
               )}
-              {errors.password && <Text style={[styles.fieldError, { color: colors.error }]}>{errors.password}</Text>}
+              {!!errors.password && <Text style={[styles.fieldError, { color: colors.error }]}>{errors.password}</Text>}
 
               <Text style={[styles.label, styles.labelTop, { color: colors.textMuted }]}>Confirm Password</Text>
               <View style={[styles.passwordRow, { backgroundColor: isDark ? 'rgba(255,255,255,0.02)' : colors.inputBackground, borderColor: errors.confirmPassword ? colors.error : (isDark ? 'rgba(255,255,255,0.08)' : 'transparent'), borderWidth: 1.5 }]}>
@@ -330,7 +331,7 @@ export default function ProviderSignUpScreen({ navigation }: any) {
                   </Text>
                 </View>
               )}
-              {errors.confirmPassword && <Text style={[styles.fieldError, { color: colors.error }]}>{errors.confirmPassword}</Text>}
+              {!!errors.confirmPassword && <Text style={[styles.fieldError, { color: colors.error }]}>{errors.confirmPassword}</Text>}
             </View>
 
             {/* Info callout */}
@@ -382,7 +383,7 @@ export default function ProviderSignUpScreen({ navigation }: any) {
           </ScrollView>
         </KeyboardAvoidingView>
       </SafeAreaView>
-    </View>
+    </AnimatedBackground>
   );
 }
 

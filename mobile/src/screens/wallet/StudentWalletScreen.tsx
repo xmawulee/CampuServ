@@ -13,6 +13,7 @@ import { CustomIonicons as Ionicons } from '../../components/CustomIcons';
 import WalletTxnCard from '../../components/wallet/WalletTxnCard';
 import WalletEmptyState from '../../components/wallet/WalletEmptyState';
 import { useToast } from '../../styles/ToastContext';
+import AnimatedBackground from '../../components/AnimatedBackground';
 
 
 export default function StudentWalletScreen() {
@@ -70,7 +71,8 @@ export default function StudentWalletScreen() {
   const txnList = Array.isArray(transactions) ? transactions : [];
 
   return (
-    <View style={styles.container}>
+    <AnimatedBackground style={{ flex: 1 }}>
+      <View style={styles.container}>
       <ScrollView
         style={{ flex: 1 }}
         contentContainerStyle={{ paddingTop: insets.top + 16, paddingBottom: bottomTabSpacing }}
@@ -88,9 +90,6 @@ export default function StudentWalletScreen() {
         <Text style={styles.balanceCardAmount}>
           GHS {wallet ? Number(wallet.balance).toFixed(2) : '0.00'}
         </Text>
-        <Text style={styles.balanceCardSub}>
-          Available for booking campus service providers
-        </Text>
 
         {/* Quick actions row */}
         <View style={styles.quickActionsRow}>
@@ -107,7 +106,7 @@ export default function StudentWalletScreen() {
 
       {/* ── Escrow Card ── */}
       <View style={[styles.escrowCard, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14, marginBottom: 12 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
           <View style={[styles.escrowIcon, { backgroundColor: 'rgba(245, 158, 11, 0.12)' }]}>
             <Ionicons name="lock-closed" size={20} color="#F59E0B" />
           </View>
@@ -120,9 +119,6 @@ export default function StudentWalletScreen() {
             </Text>
           </View>
         </View>
-        <Text style={[styles.escrowSub, { color: colors.textMuted }]}>
-          These funds are locked securely in active service contracts and will be released upon job completion.
-        </Text>
       </View>
 
       {/* ── Transaction History ── */}
@@ -145,6 +141,7 @@ export default function StudentWalletScreen() {
       <View style={{ height: 40 }} />
       </ScrollView>
     </View>
+    </AnimatedBackground>
   );
 }
 

@@ -181,7 +181,7 @@ function ProviderNavigator() {
   const { colors, isDark } = useTheme();
 
   return (
-    <View style={{ flex: 1, backgroundColor: 'transparent' }}>
+    <View style={{ flex: 1, backgroundColor: colors.background }}>
       <Tab.Navigator
         tabBar={(props) => <CustomTabBar {...props} colors={colors} isDark={isDark} />}
         screenOptions={{ headerShown: false }}
@@ -201,7 +201,7 @@ function AppTabs() {
   const { colors, isDark } = useTheme();
 
   return (
-    <View style={{ flex: 1, backgroundColor: 'transparent' }}>
+    <View style={{ flex: 1, backgroundColor: colors.background }}>
       <Tab.Navigator
         tabBar={(props) => <CustomTabBar {...props} colors={colors} isDark={isDark} />}
         screenOptions={{ headerShown: false }}
@@ -423,8 +423,8 @@ function AppNavigatorInner() {
       <Stack.Screen name="ActiveJob" component={ActiveJobScreen} options={{ headerShown: false }} />
       <Stack.Screen name="RiderLiveTracking" component={RiderLiveTrackingScreen} options={{ title: 'Track Provider', headerShown: false }} />
       <Stack.Screen name="ReviewSubmission" component={ReviewSubmissionScreen} options={{ title: 'Submit Review', presentation: 'modal' }} />
-      <Stack.Screen name="Withdrawal" component={WithdrawalScreen} options={{ title: 'Withdraw Funds' }} />
-      <Stack.Screen name="Deposit" component={DepositScreen} options={{ title: 'Deposit Funds' }} />
+      <Stack.Screen name="Withdrawal" component={WithdrawalScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="Deposit" component={DepositScreen} options={{ headerShown: false }} />
       <Stack.Screen name="WalletReceiptScreen" component={WalletReceiptScreen} options={{ presentation: 'modal', headerShown: false, animation: 'slide_from_bottom' }} />
       <Stack.Screen name="NotificationCenter" component={NotificationCenterScreen} options={{ headerShown: false }} />
       <Stack.Screen name="DeleteAccount" component={DeleteAccountScreen} options={{ headerShown: false }} />
@@ -450,7 +450,7 @@ function AppNavigatorInner() {
         headerShadowVisible: false,
         headerTintColor: colors.text,
         headerTitleStyle: { fontWeight: '700', fontSize: 17 },
-        contentStyle: { backgroundColor: route === 'auth' ? 'transparent' : colors.background },
+        contentStyle: { backgroundColor: colors.background },
       }}
     >
       {/* ── Unauthenticated ── */}
@@ -533,11 +533,7 @@ function AppNavigatorInner() {
     </Stack.Navigator>
   );
 
-  if (route === 'auth') {
-    return <AnimatedBackground style={{ flex: 1 }}>{navigator}</AnimatedBackground>;
-  }
-
-  return navigator;
+  return <AnimatedBackground style={{ flex: 1 }}>{navigator}</AnimatedBackground>;
 }
 
 export default function AppNavigator() {

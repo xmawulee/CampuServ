@@ -28,15 +28,14 @@ export default function DashboardLayout({
 
   if (!mounted || !accessToken) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#E6E6E6]">
-        <div className="w-8 h-8 border-4 border-[#FF7846] border-t-transparent rounded-full animate-spin"></div>
+      <div className="min-h-screen flex items-center justify-center bg-[#FAFAFA]">
+        <div className="w-8 h-8 border-4 border-[#FF6B35] border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#E6E6E6] flex relative overflow-hidden">
-
+    <div className="min-h-screen bg-[#FAFAFA] flex relative overflow-hidden text-[#18181B]">
       <div className="relative z-10 flex w-full">
         <Sidebar />
         <div className="flex-1 md:ml-[260px] flex flex-col min-h-screen">
@@ -49,4 +48,3 @@ export default function DashboardLayout({
     </div>
   );
 }
-

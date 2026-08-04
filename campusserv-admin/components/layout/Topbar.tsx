@@ -32,27 +32,27 @@ export default function Topbar() {
 
   return (
     <>
-      <header className="h-16 bg-white/80 backdrop-blur-md border-b border-gray-100 flex items-center justify-between px-6 sticky top-0 z-20">
+      <header className="h-16 bg-white/90 backdrop-blur-md border-b border-[#E4E4E7] flex items-center justify-between px-6 sticky top-0 z-20">
         <div className="flex items-center gap-4">
           <button className="md:hidden text-slate-400 hover:text-slate-900">
             <Menu className="w-6 h-6" />
           </button>
-          <h1 className="text-xl font-bold text-slate-900 tracking-tight">{getPageTitle()}</h1>
+          <h1 className="text-xl font-bold text-[#18181B] tracking-tight">{getPageTitle()}</h1>
         </div>
 
         <div className="flex items-center gap-6">
-          <div className="flex items-center gap-2 text-sm font-semibold text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-full">
+          <div className="flex items-center gap-2 text-sm font-semibold text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-full border border-emerald-200/50">
             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
             <span className="hidden md:inline">Platform Online</span>
           </div>
 
           <button 
-            className="relative p-2 text-slate-400 hover:bg-slate-50 hover:text-slate-900 rounded-full transition-colors"
+            className="relative p-2 text-slate-400 hover:bg-slate-50 hover:text-slate-900 rounded-full transition-colors border border-slate-100"
             onClick={() => setIsNotificationOpen(true)}
           >
             <Bell className="w-5 h-5" />
             {unreadCount > 0 && (
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full ring-2 ring-white"></span>
+              <span className="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-[#FF6B35] rounded-full ring-2 ring-white"></span>
             )}
           </button>
         </div>

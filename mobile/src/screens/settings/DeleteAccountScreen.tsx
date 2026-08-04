@@ -9,6 +9,7 @@ import { api } from '../../services/api';
 import { useTheme } from '../../styles/ThemeContext';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useToast } from '../../styles/ToastContext';
+import AnimatedBackground from '../../components/AnimatedBackground';
 
 
 export default function DeleteAccountScreen({ navigation }: any) {
@@ -100,7 +101,7 @@ export default function DeleteAccountScreen({ navigation }: any) {
   }
 
   return (
-    <View style={{ flex: 1 }}>
+    <AnimatedBackground style={{ flex: 1 }}>
       <View style={[styles.header, { paddingTop: Math.max(insets.top + 8, 20) }]}>
         <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
           <Ionicons name="arrow-back" size={24} color={colors.text} />
@@ -199,7 +200,7 @@ export default function DeleteAccountScreen({ navigation }: any) {
           </View>
         )}
       </ScrollView>
-    </View>
+    </AnimatedBackground>
   );
 }
 

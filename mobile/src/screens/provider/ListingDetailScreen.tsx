@@ -18,6 +18,7 @@ import { stompClient } from '../../services/socket';
 import { useAuthStore } from '../../store/authStore';
 import { startChat } from '../../services/chatService';
 import { useToast } from '../../styles/ToastContext';
+import AnimatedBackground from '../../components/AnimatedBackground';
 
 
 const { width } = Dimensions.get('window');
@@ -183,6 +184,27 @@ export default function ListingDetailScreen({ route, navigation }: any) {
     }
   };
 
+  const handleRequestQuote = () => {
+    if (!profile) return;
+    const pId = profile.id || profile.providerId || providerId;
+    const catId = currentListing?.category?.id || currentListing?.categoryId || profile.serviceCategory;
+
+    navigation.navigate('PostRequest', {
+      selectedTargetProvider: {
+        id: pId,
+        fullName: profile.fullName,
+        profilePictureUrl: profile.profilePictureUrl || null,
+        rating: profile.rating || 5.0,
+        services: profile.services || [],
+      },
+      targetProviderId: pId,
+      targetProviderName: profile.fullName,
+      targetProviderAvatarUrl: profile.profilePictureUrl || null,
+      targetProviderRating: profile.rating || 5.0,
+      categoryId: catId,
+    });
+  };
+
 
   const handleReportSubmit = async () => {
     if (submittingReport) return;
@@ -259,7 +281,8 @@ export default function ListingDetailScreen({ route, navigation }: any) {
   const memberSince = profile.createdAt ? new Date(profile.createdAt).getFullYear() : '2026';
 
   return (
-    <View style={styles.container}>
+    <AnimatedBackground style={{ flex: 1 }}>
+      <View style={styles.container}>
       {/* Top Header / Breadcrumb */}
       <View style={[styles.topHeader, { backgroundColor: colors.cardBackground, paddingTop: insets.top, height: 56 + insets.top }]}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={[styles.iconBtn, { backgroundColor: colors.background }]}>
@@ -360,16 +383,25 @@ export default function ListingDetailScreen({ route, navigation }: any) {
             <Text style={styles.metaText}>{profile.viewCount || 0} views</Text>
           </View>
 
-          {/* Contact CTAs */}
+          {/* Contact & Request CTAs */}
           <View style={[styles.ctaContainer, { backgroundColor: colors.primaryLight }]}>
-            <TouchableOpacity style={[styles.ctaBtn, { backgroundColor: colors.primary }]} onPress={handleChat}>
-              <Ionicons name="chatbubbles-outline" size={18} color="#FFFFFF" />
-              <Text style={[styles.ctaBtnText, { color: '#FFFFFF' }]}>Chat</Text>
+            <TouchableOpacity 
+              style={[styles.ctaBtn, styles.ctaBtnPrimary, { backgroundColor: colors.primary }]} 
+              onPress={handleRequestQuote}
+              activeOpacity={0.85}
+            >
+              <Ionicons name="document-text-outline" size={16} color="#FFFFFF" />
+              <Text style={[styles.ctaBtnText, { color: '#FFFFFF' }]}>Request Quote</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.ctaBtn} onPress={handleCallNow}>
-              <Ionicons name="call-outline" size={18} color={colors.primaryDark} />
-              <Text style={[styles.ctaBtnText, { color: colors.primaryDark }]}>Call Now</Text>
+            <TouchableOpacity style={styles.ctaBtn} onPress={handleChat} activeOpacity={0.8}>
+              <Ionicons name="chatbubbles-outline" size={16} color={colors.primaryDark} />
+              <Text style={[styles.ctaBtnText, { color: colors.primaryDark }]}>Chat</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.ctaBtn} onPress={handleCallNow} activeOpacity={0.8}>
+              <Ionicons name="call-outline" size={16} color={colors.primaryDark} />
+              <Text style={[styles.ctaBtnText, { color: colors.primaryDark }]}>Call</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -610,6 +642,7 @@ export default function ListingDetailScreen({ route, navigation }: any) {
         </View>
       </Modal>
     </View>
+    </AnimatedBackground>
   );
 }
 

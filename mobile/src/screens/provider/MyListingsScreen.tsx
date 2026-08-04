@@ -7,6 +7,7 @@ import { useAuthStore } from '../../store/authStore';
 import { useFocusEffect } from '@react-navigation/native';
 import { api } from '../../services/api';
 import type { ServiceListing } from '../../types/provider';
+import AnimatedBackground from '../../components/AnimatedBackground';
 
 
 const CATEGORY_ICONS: Record<string, { icon: string; color: string }> = {
@@ -84,7 +85,8 @@ export default function MyListingsScreen({ navigation }: any) {
   };
 
   return (
-    <View style={styles.container}>
+    <AnimatedBackground style={{ flex: 1 }}>
+      <View style={styles.container}>
       <View style={styles.header}>
         <Text style={[styles.headerTitle, { color: colors.text }]}>My Listings</Text>
         <TouchableOpacity
@@ -136,6 +138,7 @@ export default function MyListingsScreen({ navigation }: any) {
         />
       )}
     </View>
+    </AnimatedBackground>
   );
 }
 

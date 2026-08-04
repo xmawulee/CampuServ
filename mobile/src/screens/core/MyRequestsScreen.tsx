@@ -411,7 +411,7 @@ export default function MyRequestsScreen({ navigation }: any) {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       {/* Tab bar header */}
       <View style={[styles.tabBarContainer, { paddingTop: Math.max(insets.top, 16) }]}>
         <View style={[styles.segmentedControl, { backgroundColor: isDark ? colors.cardBackground : colors.primaryLight }]}>

@@ -12,6 +12,7 @@ import { useBottomTabSpacing } from '../../hooks/useBottomTabSpacing';
 import { getProviderJobs } from '../../services/jobService';
 import { useAuthStore } from '../../store/authStore';
 import { stompClient } from '../../services/socket';
+import AnimatedBackground from '../../components/AnimatedBackground';
 
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -172,7 +173,8 @@ export default function ProviderJobListScreen({ navigation }: any) {
   };
 
   return (
-    <View style={styles.container}>
+    <AnimatedBackground style={{ flex: 1 }}>
+      <View style={styles.container}>
       <View style={[styles.header, { borderBottomColor: colors.border }]}>
         <TouchableOpacity
           onPress={() => navigation.goBack()}
@@ -230,6 +232,7 @@ export default function ProviderJobListScreen({ navigation }: any) {
         />
       )}
     </View>
+    </AnimatedBackground>
   );
 }
 

@@ -32,6 +32,7 @@ import { createRequest } from '../../services/requestService';
 import { reverseGeocode, placesAutocomplete, getDirections, getPlaceDetails } from '../../services/locationService';
 import { useToast } from '../../styles/ToastContext';
 import StatusDialog from '../../components/StatusDialog';
+import AnimatedBackground from '../../components/AnimatedBackground';
 const FALLBACK_CATEGORIES = [
   { id: 'cat-1', name: 'Laundry', icon: 'shirt-outline', bg: '#FFF0E6', iconColor: '#FF6B35' },
   { id: 'cat-2', name: 'Cleaning', icon: 'sparkles-outline', bg: '#E8F8F0', iconColor: '#27AE60' },
@@ -913,10 +914,11 @@ export default function PostRequestScreen({ route, navigation }: any) {
   };
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      style={[styles.container, { backgroundColor: 'transparent' }]}
-    >
+    <AnimatedBackground style={{ flex: 1 }}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={[styles.container, { backgroundColor: 'transparent' }]}
+      >
       {/* ── Fixed Header ── */}
       <View style={[styles.header, { backgroundColor: 'transparent', borderBottomWidth: 0, elevation: 0, shadowOpacity: 0 }]}>
         {navigation.canGoBack() && route?.name !== 'Search' ? (
@@ -1020,7 +1022,7 @@ export default function PostRequestScreen({ route, navigation }: any) {
               );
             })}
           </ScrollView>
-          {errors.category && <Text style={styles.fieldError}>{errors.category}</Text>}
+          {!!errors.category && <Text style={styles.fieldError}>{errors.category}</Text>}
         </View>
 
         {/* ── Request Details Card ── */}
@@ -1029,7 +1031,7 @@ export default function PostRequestScreen({ route, navigation }: any) {
           
           <View style={styles.inputGroup}>
             <Text style={[styles.inputLabel, { color: colors.textMuted }]}>Title</Text>
-            <View style={[styles.inputWrapper, { backgroundColor: colors.inputBackground, borderColor: colors.border }]}>
+            <View style={[styles.inputWrapper, { backgroundColor: isDark ? colors.inputBackground : '#FAF7F4', borderColor: colors.border }]}>
               <TextInput
                 style={[styles.input, { color: colors.text }]}
                 placeholder="e.g. Need help with Calculus II assignment"
@@ -1041,7 +1043,7 @@ export default function PostRequestScreen({ route, navigation }: any) {
               />
             </View>
             <View style={styles.counterRow}>
-              {errors.title ? <Text style={styles.fieldError}>{errors.title}</Text> : <View />}
+              {!!errors.title ? <Text style={styles.fieldError}>{errors.title}</Text> : <View />}
               {title.length >= 60 && (
                 <Text style={[styles.counterText, { color: title.length === 80 ? colors.error : colors.textMuted }]}>
                   {title.length}/80
@@ -1052,7 +1054,7 @@ export default function PostRequestScreen({ route, navigation }: any) {
 
           <View style={styles.inputGroup}>
             <Text style={[styles.inputLabel, { color: colors.textMuted }]}>Description</Text>
-            <View style={[styles.textAreaWrapper, { backgroundColor: colors.inputBackground, borderColor: colors.border }]}>
+            <View style={[styles.textAreaWrapper, { backgroundColor: isDark ? colors.inputBackground : '#FAF7F4', borderColor: colors.border }]}>
               <TextInput
                 style={[styles.textArea, { color: colors.text }]}
                 placeholder="Include deadlines, requirements, materials needed..."
@@ -1066,7 +1068,7 @@ export default function PostRequestScreen({ route, navigation }: any) {
               />
             </View>
             <View style={styles.counterRow}>
-              {errors.description ? <Text style={styles.fieldError}>{errors.description}</Text> : <View />}
+              {!!errors.description ? <Text style={styles.fieldError}>{errors.description}</Text> : <View />}
             </View>
           </View>
 
@@ -1080,12 +1082,19 @@ export default function PostRequestScreen({ route, navigation }: any) {
             <View style={styles.photoContainer}>
               {photos.length === 0 ? (
                 <TouchableOpacity 
-                  style={[styles.photoUploadArea, { backgroundColor: colors.inputBackground, borderColor: colors.border }]} 
+                  style={[
+                    styles.photoUploadArea,
+                    {
+                      backgroundColor: isDark ? 'rgba(255, 107, 53, 0.08)' : '#FFF9F5',
+                      borderColor: isDark ? 'rgba(255, 107, 53, 0.3)' : '#FCE2D6',
+                    }
+                  ]} 
                   onPress={handlePickPhoto}
                   disabled={isSubmitting}
+                  activeOpacity={0.8}
                 >
-                  <View style={[styles.photoUploadIconWrap, { backgroundColor: colors.primary + '20' }]}>
-                    <Ionicons name="camera" size={24} color={colors.primary} />
+                  <View style={[styles.photoUploadIconWrap, { backgroundColor: colors.primaryLight }]}>
+                    <Ionicons name="camera" size={22} color={colors.primary} />
                   </View>
                   <Text style={[styles.photoUploadText, { color: colors.text }]}>Tap to add photos</Text>
                   <Text style={[styles.photoUploadSub, { color: colors.textMuted }]}>JPG, PNG up to 5MB</Text>
@@ -1111,7 +1120,7 @@ export default function PostRequestScreen({ route, navigation }: any) {
                   ))}
                   {photos.length < 3 && (
                     <TouchableOpacity
-                      style={[styles.photoSlot, styles.photoPlaceholder, { borderColor: colors.border, backgroundColor: colors.inputBackground }]}
+                      style={[styles.photoSlot, styles.photoPlaceholder, { borderColor: colors.border, backgroundColor: isDark ? colors.inputBackground : '#FAF7F4' }]}
                       onPress={handlePickPhoto}
                       disabled={isSubmitting}
                     >
@@ -1129,8 +1138,8 @@ export default function PostRequestScreen({ route, navigation }: any) {
           
           <View style={styles.inputGroup}>
             <Text style={[styles.inputLabel, { color: colors.textMuted }]}>Base Price (₵)</Text>
-            <View style={[styles.budgetInputWrapper, { backgroundColor: colors.inputBackground, borderColor: colors.border }]}>
-              <Text style={[styles.currencySymbol, { color: colors.textMuted }]}>₵</Text>
+            <View style={[styles.budgetInputWrapper, { backgroundColor: isDark ? colors.inputBackground : '#FAF7F4', borderColor: colors.border }]}>
+              <Text style={[styles.currencySymbol, { color: colors.primary }]}>₵</Text>
               <TextInput
                 style={[styles.budgetInput, { color: colors.text }]}
                 placeholder="0.00"
@@ -1147,17 +1156,18 @@ export default function PostRequestScreen({ route, navigation }: any) {
                 Providers can bid between ₵{(parseFloat(basePrice) * 0.5).toFixed(0)} and ₵{(parseFloat(basePrice) * 2).toFixed(0)}
               </Text>
             )}
-            {errors.budget && <Text style={styles.fieldError}>{errors.budget}</Text>}
+            {!!errors.budget && <Text style={styles.fieldError}>{errors.budget}</Text>}
             
             <View style={styles.suggestionsContainer}>
               {BUDGET_SUGGESTIONS.map((item) => (
                 <TouchableOpacity
                   key={item.label}
-                  style={[styles.suggestionChip, { backgroundColor: colors.inputBackground, borderColor: colors.border }]}
+                  style={[styles.suggestionChip, { backgroundColor: isDark ? colors.inputBackground : '#FAF7F4', borderColor: colors.border }]}
                   onPress={() => handleSuggestBudget(item.value)}
                   disabled={isSubmitting}
+                  activeOpacity={0.7}
                 >
-                  <Text style={[styles.suggestionText, { color: colors.text }]}>{item.label}</Text>
+                  <Text style={[styles.suggestionText, { color: colors.primary }]}>{item.label}</Text>
                 </TouchableOpacity>
               ))}
             </View>
@@ -1170,7 +1180,7 @@ export default function PostRequestScreen({ route, navigation }: any) {
               <View style={{ gap: 16 }}>
                 <View>
                   <Text style={[styles.inputLabel, { color: colors.textMuted }]}>Pickup Location</Text>
-                  {errors.pickupLocation && <Text style={styles.fieldError}>{errors.pickupLocation}</Text>}
+                  {!!errors.pickupLocation && <Text style={styles.fieldError}>{errors.pickupLocation}</Text>}
                   {pickupAddress ? (
                     <View style={[styles.locationSelectedCard, { backgroundColor: colors.inputBackground, borderColor: colors.border }]}>
                       <View style={styles.locationIconWrap}>
@@ -1204,7 +1214,7 @@ export default function PostRequestScreen({ route, navigation }: any) {
 
                 <View>
                   <Text style={[styles.inputLabel, { color: colors.textMuted }]}>Drop-off Location</Text>
-                  {errors.dropoffLocation && <Text style={styles.fieldError}>{errors.dropoffLocation}</Text>}
+                  {!!errors.dropoffLocation && <Text style={styles.fieldError}>{errors.dropoffLocation}</Text>}
                   {dropoffAddress ? (
                     <View style={[styles.locationSelectedCard, { backgroundColor: colors.inputBackground, borderColor: colors.border }]}>
                       <View style={styles.locationIconWrap}>
@@ -1226,9 +1236,16 @@ export default function PostRequestScreen({ route, navigation }: any) {
                     </View>
                   ) : (
                     <TouchableOpacity
-                      style={[styles.locationEmptyCard, { backgroundColor: colors.inputBackground, borderColor: colors.border }]}
+                      style={[
+                        styles.locationEmptyCard,
+                        {
+                          backgroundColor: isDark ? 'rgba(255, 107, 53, 0.08)' : '#FFF9F5',
+                          borderColor: isDark ? 'rgba(255, 107, 53, 0.3)' : '#FCE2D6',
+                        }
+                      ]}
                       onPress={() => setActiveLocationPicker('dropoff')}
                       disabled={isSubmitting}
+                      activeOpacity={0.8}
                     >
                       <Ionicons name="map-outline" size={22} color={colors.primary} />
                       <Text style={[styles.locationEmptyText, { color: colors.primary }]}>Set drop-off location</Text>
@@ -1239,10 +1256,10 @@ export default function PostRequestScreen({ route, navigation }: any) {
             ) : (
               <View>
                 <Text style={[styles.inputLabel, { color: colors.textMuted }]}>Location</Text>
-                {errors.location && <Text style={styles.fieldError}>{errors.location}</Text>}
+                {!!errors.location && <Text style={styles.fieldError}>{errors.location}</Text>}
 
                 {locationAddress ? (
-                  <View style={[styles.locationSelectedCard, { backgroundColor: colors.inputBackground, borderColor: colors.border }]}>
+                  <View style={[styles.locationSelectedCard, { backgroundColor: isDark ? colors.inputBackground : '#FAF7F4', borderColor: colors.border }]}>
                     <View style={styles.locationIconWrap}>
                       <Ionicons name="location" size={20} color={colors.primary} />
                     </View>
@@ -1262,9 +1279,16 @@ export default function PostRequestScreen({ route, navigation }: any) {
                   </View>
                 ) : (
                   <TouchableOpacity
-                    style={[styles.locationEmptyCard, { backgroundColor: colors.inputBackground, borderColor: colors.border }]}
+                    style={[
+                      styles.locationEmptyCard,
+                      {
+                        backgroundColor: isDark ? 'rgba(255, 107, 53, 0.08)' : '#FFF9F5',
+                        borderColor: isDark ? 'rgba(255, 107, 53, 0.3)' : '#FCE2D6',
+                      }
+                    ]}
                     onPress={() => setShowLocationPicker(true)}
                     disabled={isSubmitting}
+                    activeOpacity={0.8}
                   >
                     <Ionicons name="map-outline" size={22} color={colors.primary} />
                     <Text style={[styles.locationEmptyText, { color: colors.primary }]}>Set meeting location</Text>
@@ -1273,7 +1297,7 @@ export default function PostRequestScreen({ route, navigation }: any) {
               </View>
             )}
 
-            <View style={[styles.inputWrapper, { backgroundColor: colors.inputBackground, borderColor: colors.border, marginTop: 12 }]}>
+            <View style={[styles.inputWrapper, { backgroundColor: isDark ? colors.inputBackground : '#FAF7F4', borderColor: colors.border, marginTop: 12 }]}>
               <TextInput
                 style={[styles.input, { color: colors.text }]}
                 placeholder="Room number or specific details (Optional)"
@@ -1518,8 +1542,26 @@ export default function PostRequestScreen({ route, navigation }: any) {
 
             {/* GPS Warning Banner */}
             {gpsWarning && (
-              <View style={[styles.gpsWarningBanner, { backgroundColor: colors.warningLight }]}>
-                <Ionicons name="warning" size={18} color={colors.warning} style={{ marginRight: 8 }} />
+              <View style={[
+                styles.gpsWarningBanner,
+                {
+                  backgroundColor: isDark ? 'rgba(245, 158, 11, 0.15)' : '#FFFBEB',
+                  borderColor: isDark ? 'rgba(245, 158, 11, 0.3)' : '#FCD34D',
+                  borderWidth: 1,
+                  borderRadius: 16,
+                  paddingHorizontal: 14,
+                  paddingVertical: 10,
+                  marginTop: 10,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  shadowColor: '#000',
+                  shadowOffset: { width: 0, height: 2 },
+                  shadowOpacity: 0.05,
+                  shadowRadius: 4,
+                  elevation: 2,
+                }
+              ]}>
+                <Ionicons name="warning-outline" size={18} color={colors.warning} style={{ marginRight: 8 }} />
                 <Text style={[styles.gpsWarningText, { color: colors.warning }]}>{gpsWarning}</Text>
               </View>
             )}
@@ -1528,31 +1570,58 @@ export default function PostRequestScreen({ route, navigation }: any) {
           {/* Bottom Sheet Card */}
           <KeyboardAvoidingView
             behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-            style={[styles.pickerBottomSheet, { backgroundColor: colors.cardBackground }]}
+            style={[styles.pickerBottomSheet, { backgroundColor: colors.cardBackground, borderTopColor: colors.border }]}
           >
             <Text style={[styles.bottomSheetTitle, { color: colors.text }]}>
               {activeLocationPicker === 'pickup' ? 'Select Pickup Location' : activeLocationPicker === 'dropoff' ? 'Select Drop-off Location' : 'Address Location'}
             </Text>
-            <View style={[styles.addressTextContainer, { backgroundColor: 'rgba(59, 130, 246, 0.08)' }]}>
-              <View style={styles.addressLeftAccent} />
-              <Ionicons name="location" size={20} color={colors.primary} style={{ marginRight: 12 }} />
+            <View
+              style={[
+                styles.addressTextContainer,
+                {
+                  backgroundColor: isDark ? 'rgba(255, 107, 53, 0.08)' : '#FFF9F5',
+                  borderColor: isDark ? 'rgba(255, 107, 53, 0.25)' : '#FCE2D6',
+                  borderWidth: 1,
+                  borderRadius: 16,
+                  padding: 14,
+                }
+              ]}
+            >
+              <View style={[styles.addressLeftAccent, { backgroundColor: colors.primary }]} />
+              <View style={[styles.locationIconWrap, { backgroundColor: colors.primaryLight, width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', marginRight: 10 }]}>
+                <Ionicons name="location" size={18} color={colors.primary} />
+              </View>
               {isGeocoding ? (
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flex: 1 }}>
                   <ActivityIndicator size="small" color={colors.primary} />
                   <Text style={[styles.addressText, { color: colors.textMuted }]}>Resolving address...</Text>
                 </View>
               ) : (
-                <Text style={[styles.addressText, { color: colors.text }]} numberOfLines={2}>
+                <Text style={[styles.addressText, { color: colors.text, fontWeight: '700' }]} numberOfLines={2}>
                   {pickerAddress || 'Select a point on the map'}
                 </Text>
               )}
             </View>
 
-            <Text style={[styles.bottomSheetSubtitle, { color: colors.text }]}>
+            <Text style={[styles.bottomSheetSubtitle, { color: colors.text, marginTop: 14 }]}>
               Add Landmark / Room Details
             </Text>
             <TextInput
-              style={[styles.pickerLandmarkInput, { backgroundColor: colors.inputBackground, color: colors.text, borderColor: colors.border }]}
+              style={[
+                styles.pickerLandmarkInput,
+                {
+                  backgroundColor: isDark ? colors.inputBackground : '#FAF7F4',
+                  color: colors.text,
+                  borderColor: colors.border,
+                  borderWidth: 1,
+                  borderRadius: 16,
+                  height: 52,
+                  paddingHorizontal: 16,
+                  fontSize: 14,
+                  fontWeight: '500',
+                  marginBottom: 20,
+                }
+              ]}
               placeholder="e.g. Unity Hall Room 304B, or opposite the canteen"
               placeholderTextColor={colors.placeholderText}
               value={landmarkInput}
@@ -1560,9 +1629,22 @@ export default function PostRequestScreen({ route, navigation }: any) {
             />
 
             <TouchableOpacity
-              style={[styles.pickerConfirmBtn, { backgroundColor: colors.primary }]}
+              style={[
+                styles.pickerConfirmBtn,
+                {
+                  backgroundColor: colors.primary,
+                  height: 54,
+                  borderRadius: 27,
+                  shadowColor: colors.primary,
+                  shadowOffset: { width: 0, height: 4 },
+                  shadowOpacity: 0.3,
+                  shadowRadius: 8,
+                  elevation: 4,
+                }
+              ]}
               onPress={handleConfirmLocation}
               disabled={isGeocoding}
+              activeOpacity={0.85}
             >
               <Text style={styles.pickerConfirmBtnText}>Confirm This Location</Text>
             </TouchableOpacity>
@@ -1583,6 +1665,7 @@ export default function PostRequestScreen({ route, navigation }: any) {
         onClose={() => setSessionExpiredDialogVisible(false)}
       />
     </KeyboardAvoidingView>
+    </AnimatedBackground>
   );
 }
 

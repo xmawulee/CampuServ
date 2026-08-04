@@ -136,6 +136,8 @@ export default function RequestCard({
         styles.card, 
         { 
           backgroundColor: colors.cardBackground, 
+          borderColor: colors.border,
+          borderWidth: 1,
           opacity: cardOpacity 
         }
       ]}
@@ -286,9 +288,7 @@ export default function RequestCard({
               </Text>
             </View>
             <View style={styles.timeWrap}>
-          {variant === 'completed' && request.status === 'COMPLETED' && !request.isReviewed && request.jobCompletedAt && (
-            new Date().getTime() - new Date(request.jobCompletedAt).getTime() < 7 * 24 * 60 * 60 * 1000
-          ) && (
+          {!!(variant === 'completed' && request.status === 'COMPLETED' && !request.isReviewed && request.jobCompletedAt && (new Date().getTime() - new Date(request.jobCompletedAt).getTime() < 7 * 24 * 60 * 60 * 1000)) && (
             <View style={[styles.statusBadge, { backgroundColor: '#FEE2E2', marginRight: 8 }]}>
               <Text style={[styles.statusText, { color: '#EF4444' }]}>Awaiting Review</Text>
             </View>

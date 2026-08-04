@@ -20,6 +20,7 @@ import { useAuthStore } from '../../store/authStore';
 import { useTheme } from '../../styles/ThemeContext';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useToast } from '../../styles/ToastContext';
+import AnimatedBackground from '../../components/AnimatedBackground';
 
 
 // Note: Ensure logo.png is placed in the assets folder later or use a generic require if it exists.
@@ -197,7 +198,7 @@ export default function AuthScreen({ navigation }: any) {
   };
 
   return (
-    <LinearGradient colors={['#0A2E6E', '#1565C0']} style={styles.container}>
+    <AnimatedBackground style={{ flex: 1 }}>
       <KeyboardAvoidingView 
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'} 
         style={styles.keyboardView}
@@ -268,7 +269,7 @@ export default function AuthScreen({ navigation }: any) {
                   editable={!isLoading}
                   accessibilityLabel="Email address input"
                 />
-                {inErrors.email && <Text style={styles.errorText}>{inErrors.email}</Text>}
+                {!!inErrors.email && <Text style={styles.errorText}>{inErrors.email}</Text>}
 
                 <Text style={[styles.label, { marginTop: 16 }]}>Password</Text>
                 <View style={styles.passwordContainer}>
@@ -293,7 +294,7 @@ export default function AuthScreen({ navigation }: any) {
                     <Ionicons name={inShowPassword ? 'eye-off-outline' : 'eye-outline'} size={22} color="#94A3B8" />
                   </TouchableOpacity>
                 </View>
-                {inErrors.password && <Text style={styles.errorText}>{inErrors.password}</Text>}
+                {!!inErrors.password && <Text style={styles.errorText}>{inErrors.password}</Text>}
 
                 <TouchableOpacity 
                   style={styles.forgotBtn}
@@ -330,7 +331,7 @@ export default function AuthScreen({ navigation }: any) {
                   editable={!isLoading}
                   accessibilityLabel="Full Name input"
                 />
-                {upErrors.name && <Text style={styles.errorText}>{upErrors.name}</Text>}
+                {!!upErrors.name && <Text style={styles.errorText}>{upErrors.name}</Text>}
 
                 <Text style={[styles.label, { marginTop: 16 }]}>Email Address</Text>
                 <TextInput
@@ -349,7 +350,7 @@ export default function AuthScreen({ navigation }: any) {
                   editable={!isLoading}
                   accessibilityLabel="Email address input"
                 />
-                {upErrors.email && <Text style={styles.errorText}>{upErrors.email}</Text>}
+                {!!upErrors.email && <Text style={styles.errorText}>{upErrors.email}</Text>}
 
                 <Text style={[styles.label, { marginTop: 16 }]}>Password</Text>
                 <View style={styles.passwordContainer}>
@@ -375,7 +376,7 @@ export default function AuthScreen({ navigation }: any) {
                     <Ionicons name={upShowPassword ? 'eye-off-outline' : 'eye-outline'} size={22} color="#94A3B8" />
                   </TouchableOpacity>
                 </View>
-                {upErrors.password && <Text style={styles.errorText}>{upErrors.password}</Text>}
+                {!!upErrors.password && <Text style={styles.errorText}>{upErrors.password}</Text>}
 
                 <Text style={[styles.label, { marginTop: 16 }]}>Confirm Password</Text>
                 <View style={styles.passwordContainer}>
@@ -399,7 +400,7 @@ export default function AuthScreen({ navigation }: any) {
                     <Ionicons name={upShowConfirmPassword ? 'eye-off-outline' : 'eye-outline'} size={22} color="#94A3B8" />
                   </TouchableOpacity>
                 </View>
-                {upErrors.confirmPassword && <Text style={styles.errorText}>{upErrors.confirmPassword}</Text>}
+                {!!upErrors.confirmPassword && <Text style={styles.errorText}>{upErrors.confirmPassword}</Text>}
 
                 <Text style={[styles.label, { marginTop: 16 }]}>Account Type</Text>
                 <View style={styles.roleContainer}>
@@ -444,7 +445,7 @@ export default function AuthScreen({ navigation }: any) {
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
-    </LinearGradient>
+    </AnimatedBackground>
   );
 }
 

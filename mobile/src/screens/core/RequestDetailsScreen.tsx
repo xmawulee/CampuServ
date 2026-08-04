@@ -23,6 +23,7 @@ import { useToast } from '../../styles/ToastContext';
 import StatusDialog from '../../components/StatusDialog';
 import ImageViewerModal from '../../components/ImageViewerModal';
 import * as Location from 'expo-location';
+import AnimatedBackground from '../../components/AnimatedBackground';
 import { getRequestLocation, getDistanceEstimate, getStaticMapUrl, getStaticMapRouteUrl } from '../../services/locationService';
 
 
@@ -274,7 +275,7 @@ export default function RequestDetailsScreen({ route, navigation }: any) {
   const providerReceives = parseFloat((offerPrice - providerFee).toFixed(2));
 
   return (
-    <View style={{ flex: 1 }}>
+    <AnimatedBackground style={{ flex: 1 }}>
       {/* ── Fixed Header ── */}
       <View style={[styles.header, { backgroundColor: colors.cardBackground }]}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.closeBtn}>
@@ -813,7 +814,7 @@ export default function RequestDetailsScreen({ route, navigation }: any) {
         onCancel={() => setCancelDialog(false)}
         onClose={() => setCancelDialog(false)}
       />
-    </View>
+    </AnimatedBackground>
   );
 }
 

@@ -38,6 +38,7 @@ import { getChats } from '../../services/chatService';
 import { getProviders } from '../../services/userService';
 import ProviderFeedCard from '../../components/ProviderFeedCard';
 import { getGreeting, formatGreeting } from '../../utils/greeting';
+import AnimatedBackground from '../../components/AnimatedBackground';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -150,7 +151,7 @@ const getCategoryImageUrl = (name: string) => {
   if (n.includes('photo') || n.includes('video') || n.includes('camera')) return LOCAL_IMAGES.photo_video;
   if (n.includes('design') || n.includes('print')) return LOCAL_IMAGES.design_print;
   if (n.includes('cater') || n.includes('event')) return LOCAL_IMAGES.catering;
-  
+
   // Generic fallback
   return LOCAL_IMAGES.fallback;
 };
@@ -297,7 +298,7 @@ export default function HomeScreen({ route, navigation }: any) {
     setVerifiedOnly(false);
     setMinPrice('');
     setMaxPrice('');
-    
+
     // Clear temp states too
     setTempMinRating(0.0);
     setTempSortOrder('discover');
@@ -518,7 +519,7 @@ export default function HomeScreen({ route, navigation }: any) {
       return (
         <ProviderFeedCard
           provider={item}
-          onPress={() => navigation.navigate('ListingDetail', { 
+          onPress={() => navigation.navigate('ListingDetail', {
             providerId: (item as any).id || item.providerId,
             selectedListing: item.services?.[0]
           })}
@@ -545,30 +546,79 @@ export default function HomeScreen({ route, navigation }: any) {
       });
     }
 
+    if (tempSortOrder && tempSortOrder !== 'discover') {
+      const sortLabels: Record<string, string> = {
+        rating: 'Highest Rated',
+        jobs: 'Most Reviewed',
+        newest: 'Newest',
+        'price-low': 'Price: Low to High',
+        'price-high': 'Price: High to Low',
+      };
+      chips.push({
+        id: 'sort',
+        label: sortLabels[tempSortOrder] || tempSortOrder,
+        onRemove: () => setTempSortOrder('discover'),
+      });
+    }
+
+    if (tempMinRating > 0) {
+      chips.push({
+        id: 'rating',
+        label: `${tempMinRating}★ & up`,
+        onRemove: () => setTempMinRating(0.0),
+      });
+    }
+
+    if (tempVerifiedOnly) {
+      chips.push({
+        id: 'verified',
+        label: 'Verified Only',
+        onRemove: () => setTempVerifiedOnly(false),
+      });
+    }
+
     if (chips.length === 0) return null;
 
     return (
-      <View style={styles.filterChipsContainer}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterChipsScroll}>
+      <View style={{ paddingHorizontal: 20, paddingTop: 4, paddingBottom: 8 }}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, alignItems: 'center' }}>
           {chips.map((chip) => (
             <TouchableOpacity
               key={chip.id}
-              style={[styles.filterChip, { backgroundColor: colors.inputBackground, borderColor: colors.border }]}
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                backgroundColor: colors.cardBackground,
+                borderColor: colors.border,
+                borderWidth: 1,
+                paddingHorizontal: 12,
+                paddingVertical: 6,
+                borderRadius: 20,
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: isDark ? 0.2 : 0.05,
+                shadowRadius: 4,
+                elevation: 2,
+              }}
               onPress={chip.onRemove}
               accessibilityRole="button"
               accessibilityLabel={`Remove ${chip.label} filter`}
+              activeOpacity={0.8}
             >
-              <Text style={[styles.filterChipText, { color: colors.text }]}>{chip.label} ✕</Text>
+              <Text style={{ fontSize: 13, fontWeight: '700', color: colors.text, marginRight: 6 }}>
+                {chip.label}
+              </Text>
+              <CustomIonicons name="close" size={14} color={colors.textMuted} />
             </TouchableOpacity>
           ))}
           {chips.length >= 2 && (
             <TouchableOpacity
-              style={styles.clearAllBtn}
+              style={{ paddingHorizontal: 8, paddingVertical: 6 }}
               onPress={handleClearAll}
               accessibilityRole="button"
               accessibilityLabel="Clear all filters"
             >
-              <Text style={[styles.clearAllText, { color: colors.primary }]}>Clear all</Text>
+              <Text style={{ fontSize: 13, fontWeight: '700', color: colors.primary }}>Clear all</Text>
             </TouchableOpacity>
           )}
         </ScrollView>
@@ -578,7 +628,7 @@ export default function HomeScreen({ route, navigation }: any) {
 
   const renderActiveRequestsSection = () => {
     if (isProvider) return null;
-    
+
     // Filter active requests
     const activeReqs = myRequests.filter(r => r.status !== 'COMPLETED' && r.status !== 'CANCELLED');
 
@@ -592,7 +642,7 @@ export default function HomeScreen({ route, navigation }: any) {
             </TouchableOpacity>
           )}
         </View>
-        
+
         {activeReqs.length === 0 ? (
           <View style={[styles.emptyBox, { backgroundColor: colors.inputBackground, marginHorizontal: 16 }]}>
             <CustomIonicons name="cube-outline" size={40} color={colors.border} />
@@ -676,12 +726,13 @@ export default function HomeScreen({ route, navigation }: any) {
   }
 
   const browseRequests = isProvider ? availableRequests : myRequests;
-  const listData = isProvider 
+  const listData = isProvider
     ? (isSearchMode ? filteredRequests : browseRequests.slice(0, 5))
     : providers;
 
   return (
-    <View style={[styles.root, { backgroundColor: 'transparent', paddingTop: insets.top, overflow: 'hidden' }]}>
+    <AnimatedBackground style={{ flex: 1 }}>
+      <View style={[styles.root, { backgroundColor: 'transparent', paddingTop: insets.top, overflow: 'hidden' }]}>
 
       {/* Slide-up Filter Modal */}
       <Modal
@@ -835,24 +886,25 @@ export default function HomeScreen({ route, navigation }: any) {
       </Modal>
 
       {/* ── Fixed Header Bar ── */}
-      <View style={[styles.headerBar, { paddingTop: 8, paddingHorizontal: 16, alignItems: 'center', justifyContent: 'space-between' }]}>
-        {/* Left: Spacer for center alignment balance */}
-        <View style={{ width: 40 }} />
-
-        {/* Center: App Logo */}
-        <View style={{ flex: 1, alignItems: 'center' }}>
-          <Text style={{ fontSize: 32, fontWeight: '900', color: colors.text, letterSpacing: -1 }}>
-            Campu<Text style={{ color: colors.primary }}>Serv</Text>
+      <View style={[styles.headerBar, { paddingTop: 10, paddingHorizontal: 20, paddingBottom: 6, alignItems: 'center', justifyContent: 'space-between' }]}>
+        {/* Left: Personalized Greeting */}
+        <View style={{ flex: 1, marginRight: 8 }}>
+          <Text style={{ fontSize: 22, fontWeight: '900', color: colors.text, letterSpacing: -0.5 }} numberOfLines={1}>
+            Hello, {user?.fullName?.trim().split(' ')[0] || user?.email?.split('@')[0] || 'there'} 👋
+          </Text>
+          <Text style={{ fontSize: 12, fontWeight: '500', color: colors.textMuted, marginTop: 1 }}>
+            What service do you need today?
           </Text>
         </View>
 
-        {/* Right actions */}
-        <View style={[styles.headerRight, { gap: 12 }]}>
+        {/* Right: Actions */}
+        <View style={[styles.headerRight, { gap: 10 }]}>
           <RoleSwitcher />
           <TouchableOpacity
-            style={[styles.iconBtn, { backgroundColor: colors.cardBackground, position: 'relative' }]}
+            style={[styles.iconBtn, { backgroundColor: colors.cardBackground, borderColor: colors.border, borderWidth: 1, position: 'relative' }]}
             onPress={() => navigation.navigate('ChatList')}
             accessibilityLabel="Open Messages"
+            activeOpacity={0.8}
           >
             <CustomIonicons name="chatbubbles-outline" size={18} color={colors.text} />
             {unreadChatCount > 0 && (
@@ -864,14 +916,18 @@ export default function HomeScreen({ route, navigation }: any) {
             )}
           </TouchableOpacity>
           <TouchableOpacity
-            style={[styles.iconBtn, { backgroundColor: colors.cardBackground }]}
+            style={[styles.iconBtn, { backgroundColor: colors.cardBackground, borderColor: colors.border, borderWidth: 1 }]}
             onPress={() => navigation.navigate('NotificationCenter')}
             accessibilityLabel="Open Notifications"
+            activeOpacity={0.8}
           >
             <CustomIonicons name="notifications-outline" size={18} color={colors.text} />
           </TouchableOpacity>
         </View>
       </View>
+
+      {/* ── Active Search & Category Filter Badges (Rendered at Top) ── */}
+      {renderActiveFilterChips()}
 
       {/* Status Banner for Pending/Rejected Secondary Role Applications */}
       <SecondaryRoleStatusBanner navigation={navigation} />
@@ -908,23 +964,18 @@ export default function HomeScreen({ route, navigation }: any) {
                 <CustomIonicons name="arrow-forward" size={20} color="#FFF" />
               </TouchableOpacity>
             )}
-            {/* Active Filter Chips */}
-            {renderActiveFilterChips()}
-
 
             {/* Service Feed Search & Filters */}
             {!isProvider && (
               <View style={{ paddingHorizontal: 16, marginBottom: 16, marginTop: 8 }}>
-
-                
                 {/* Feed Search Input and Filter Button */}
                 <View style={{ flexDirection: 'row', gap: 10, alignItems: 'center' }}>
-                  <View style={[styles.feedSearchInputWrap, { backgroundColor: colors.inputBackground, borderColor: colors.border, flex: 1, paddingHorizontal: 12, flexDirection: 'row', alignItems: 'center', borderRadius: 14, borderWidth: 1 }]}>
-                    <CustomIonicons name="search-outline" size={20} color={colors.textMuted} style={{ opacity: 0.7, marginRight: 8 }} />
+                  <View style={[styles.feedSearchInputWrap, { backgroundColor: colors.cardBackground, borderColor: colors.border, flex: 1, paddingHorizontal: 14, flexDirection: 'row', alignItems: 'center', borderRadius: 16, borderWidth: 1, height: 48 }]}>
+                    <CustomIonicons name="search-outline" size={20} color={colors.primary} style={{ marginRight: 10 }} />
                     <TextInput
                       ref={searchInputRef}
-                      style={[styles.feedSearchInput, { color: colors.text, flex: 1, paddingVertical: 8 }]}
-                      placeholder="Search services..."
+                      style={[styles.feedSearchInput, { color: colors.text, flex: 1, height: 48, fontSize: 14, fontWeight: '500' }]}
+                      placeholder="Search services or providers..."
                       placeholderTextColor={colors.placeholderText}
                       value={searchQuery}
                       onChangeText={setSearchQuery}
@@ -942,8 +993,14 @@ export default function HomeScreen({ route, navigation }: any) {
                     style={[
                       styles.filterButton,
                       {
-                        backgroundColor: isAnyFilterActive ? colors.primary : colors.inputBackground,
-                        borderColor: isAnyFilterActive ? colors.primary : colors.border
+                        width: 48,
+                        height: 48,
+                        borderRadius: 16,
+                        backgroundColor: isAnyFilterActive ? colors.primary : colors.cardBackground,
+                        borderColor: isAnyFilterActive ? colors.primary : colors.border,
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        borderWidth: 1,
                       }
                     ]}
                     onPress={handleOpenFilterModal}
@@ -965,17 +1022,24 @@ export default function HomeScreen({ route, navigation }: any) {
                   horizontal
                   showsHorizontalScrollIndicator={false}
                   contentContainerStyle={{ gap: 8, paddingVertical: 4 }}
-                  style={{ marginTop: 10 }}
+                  style={{ marginTop: 12 }}
                 >
                   <TouchableOpacity
                     style={[
                       styles.categoryFilterPill,
                       activeCategory === null
                         ? { backgroundColor: colors.primary, borderColor: colors.primary }
-                        : { backgroundColor: colors.inputBackground, borderColor: colors.border }
+                        : { backgroundColor: colors.cardBackground, borderColor: colors.border, borderWidth: 1 }
                     ]}
                     onPress={() => setActiveCategory(null)}
+                    activeOpacity={0.8}
                   >
+                    <CustomIonicons
+                      name="grid-outline"
+                      size={14}
+                      color={activeCategory === null ? '#FFF' : colors.textMuted}
+                      style={{ marginRight: 6 }}
+                    />
                     <Text
                       style={[
                         styles.categoryFilterPillText,
@@ -997,10 +1061,17 @@ export default function HomeScreen({ route, navigation }: any) {
                           styles.categoryFilterPill,
                           isActive
                             ? { backgroundColor: colors.primary, borderColor: colors.primary }
-                            : { backgroundColor: colors.inputBackground, borderColor: colors.border }
+                            : { backgroundColor: colors.cardBackground, borderColor: colors.border, borderWidth: 1 }
                         ]}
                         onPress={() => handleCategoryToggle(cat.id, cat.name)}
+                        activeOpacity={0.8}
                       >
+                        <CustomIonicons
+                          name="pricetag-outline"
+                          size={13}
+                          color={isActive ? '#FFF' : colors.textMuted}
+                          style={{ marginRight: 5 }}
+                        />
                         <Text
                           style={[
                             styles.categoryFilterPillText,
@@ -1086,6 +1157,7 @@ export default function HomeScreen({ route, navigation }: any) {
         />
       )}
     </View>
+    </AnimatedBackground>
   );
 }
 
@@ -1102,6 +1174,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 20,
     height: 68,
+  },
+  logoDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
   },
   headerLeft: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   greetSub: { fontSize: 13, fontWeight: '500' },

@@ -93,10 +93,16 @@ class StompClient {
       if (response.ok) {
         const data = await response.json();
         const newAccessToken = data.accessToken;
-        if (newAccessToken) {
-          await authStore.updateAccessToken(newAccessToken);
+        const newRefreshToken = data.refreshToken;
+        if (newAccessToken && newRefreshToken) {
+          await authStore.updateTokens(newAccessToken, newRefreshToken);
           this.token = newAccessToken;
           console.log('STOMP: Proactive token refresh successful.');
+          return true;
+        } else if (newAccessToken) {
+          await authStore.updateAccessToken(newAccessToken);
+          this.token = newAccessToken;
+          console.log('STOMP: Proactive token refresh successful (without refresh token rotation).');
           return true;
         }
       } else {

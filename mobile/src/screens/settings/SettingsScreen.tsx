@@ -1,7 +1,13 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
-  StyleSheet, Text, View, TextInput, TouchableOpacity,
-  ActivityIndicator, Alert, ScrollView, Switch, Platform
+  StyleSheet,
+  Text,
+  View,
+  TouchableOpacity,
+  ActivityIndicator,
+  Alert,
+  ScrollView,
+  Switch,
 } from 'react-native';
 import { CustomIonicons as Ionicons } from '../../components/CustomIcons';
 import { useAuthStore } from '../../store/authStore';
@@ -11,7 +17,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useBottomTabSpacing } from '../../hooks/useBottomTabSpacing';
 import AvatarUploader from '../../components/AvatarUploader';
 import { useToast } from '../../styles/ToastContext';
-
+import AnimatedBackground from '../../components/AnimatedBackground';
 
 export default function SettingsScreen({ navigation }: any) {
   const { user, roleMode, logout, setAuth } = useAuthStore();
@@ -23,19 +29,18 @@ export default function SettingsScreen({ navigation }: any) {
   const isViewingAsProvider = activeRoleView === 'PROVIDER';
 
   const [profile, setProfile] = useState<any>(null);
-  const isNameAlreadySet = !!(profile?.fullName || user?.fullName);
   const [fullName, setFullName] = useState(user?.fullName || '');
   const [profilePictureUrl, setProfilePictureUrl] = useState<string | null>(user?.profilePictureUrl || null);
-  const [bio, setBio] = useState('');
-  const [serviceCategory, setServiceCategory] = useState<string | null>(null);
   const [notifyNewRequests, setNotifyNewRequests] = useState(true);
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
 
   const { showToast } = useToast();
 
   const handleLogout = async () => {
-    await logout();
+    Alert.alert('Sign Out', 'Are you sure you want to sign out of CampusServ?', [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Sign Out', style: 'destructive', onPress: async () => await logout() },
+    ]);
   };
 
   useEffect(() => {
@@ -44,35 +49,17 @@ export default function SettingsScreen({ navigation }: any) {
       try {
         const response = await api.get(`/users/${user.id}`);
         setProfile(response.data);
-        setFullName(response.data.fullName || '');
-        setProfilePictureUrl(response.data.profilePictureUrl || null);
-        setBio(response.data.bio || '');
-        setServiceCategory(response.data.serviceCategory || null);
+        setFullName(response.data.fullName || user.fullName || '');
+        setProfilePictureUrl(response.data.profilePictureUrl || user.profilePictureUrl || null);
         setNotifyNewRequests(response.data.notifyNewRequests !== false);
-      } catch (e) { /* silent */ } finally { setLoading(false); }
+      } catch (e) {
+        /* silent fallback */
+      } finally {
+        setLoading(false);
+      }
     };
     fetchData();
   }, [user]);
-
-  const handleSave = async () => {
-    if (!fullName.trim()) { showToast({ status: 'error', title: 'Error', subtitle: 'Full Name is required.' }); return; }
-    setSaving(true);
-    try {
-      await api.put(`/users/${user?.id}/profile`, {
-        fullName: fullName.trim(),
-        bio: bio.trim(),
-        serviceCategory: serviceCategory,
-        notifyNewRequests: notifyNewRequests,
-      });
-      if (user) {
-        const updatedUser = { ...user, fullName: fullName.trim() };
-        const { accessToken, refreshToken } = useAuthStore.getState();
-        if (accessToken && refreshToken) await setAuth(accessToken, refreshToken, updatedUser);
-      }
-      showToast({ status: 'success', title: 'Success', subtitle: 'Profile updated successfully.' });
-    } catch { showToast({ status: 'error', title: 'Error', subtitle: 'Failed to update profile.' }); } finally { setSaving(false); }
-  };
-
 
   if (loading) {
     return (
@@ -82,162 +69,118 @@ export default function SettingsScreen({ navigation }: any) {
     );
   }
 
+  const roleLabel = user?.role === 'PROVIDER' ? 'Service Provider' : 'Student';
+
   return (
-    <View style={{ flex: 1, backgroundColor: colors.background }}>
-      <ScrollView
-        style={[styles.container, { backgroundColor: 'transparent' }]}
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: bottomTabSpacing }}
+    <AnimatedBackground style={{ flex: 1 }}>
+      {/* ── Fixed Header ── */}
+      <View
+        style={[
+          styles.headerBar,
+          { paddingTop: insets.top + 10, paddingHorizontal: 20, paddingBottom: 12 }
+        ]}
       >
-        {/* ── Profile Hero Section ── */}
-        <View style={[styles.profileHero, { paddingTop: Math.max(insets.top + 16, 40) }]}>
-          <AvatarUploader
-            currentAvatarUrl={profilePictureUrl}
-            userId={user?.id || ''}
-            displayName={fullName}
-            onUploadSuccess={async (newUrl) => {
-              setProfilePictureUrl(newUrl);
-              if (user) {
-                const { accessToken, refreshToken } = useAuthStore.getState();
-                if (accessToken && refreshToken) {
-                  await setAuth(accessToken, refreshToken, { ...user, profilePictureUrl: newUrl || undefined });
+        <Text style={[styles.headerTitle, { color: colors.text }]}>Account & Settings</Text>
+        <View style={[styles.roleBadge, { backgroundColor: colors.primaryLight }]}>
+          <Text style={[styles.roleBadgeText, { color: colors.primary }]}>
+            {roleLabel}
+          </Text>
+        </View>
+      </View>
+
+      <ScrollView
+        style={styles.container}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{
+          paddingTop: 8,
+          paddingBottom: bottomTabSpacing + 32,
+          paddingHorizontal: 20,
+        }}
+      >
+        {/* ── Profile Hero Card ── */}
+        <View
+          style={[
+            styles.profileHeroCard,
+            {
+              backgroundColor: isDark ? 'rgba(255, 107, 53, 0.08)' : '#FFF9F5',
+              borderColor: isDark ? 'rgba(255, 107, 53, 0.25)' : '#FCE2D6',
+            }
+          ]}
+        >
+          <View style={styles.avatarWrap}>
+            <AvatarUploader
+              currentAvatarUrl={profilePictureUrl}
+              userId={user?.id || ''}
+              displayName={fullName}
+              onUploadSuccess={async (newUrl) => {
+                setProfilePictureUrl(newUrl);
+                if (user) {
+                  const { accessToken, refreshToken } = useAuthStore.getState();
+                  if (accessToken && refreshToken) {
+                    await setAuth(accessToken, refreshToken, { ...user, profilePictureUrl: newUrl || undefined });
+                  }
                 }
-              }
-            }}
-            onToast={(t) => showToast({ status: t.type === 'error' ? 'error' : 'success', title: t.message })}
-          />
+              }}
+              onToast={(t) => showToast({ status: t.type === 'error' ? 'error' : 'success', title: t.message })}
+            />
+          </View>
 
-          <Text style={[styles.heroName, { color: colors.text }]}>{fullName}</Text>
-          <Text style={[styles.heroEmail, { color: colors.textMuted }]}>{user?.email}</Text>
+          <Text style={[styles.userName, { color: colors.text }]}>{fullName || 'Student User'}</Text>
+          <Text style={[styles.userEmail, { color: colors.textMuted }]}>{user?.email}</Text>
 
-          {/* Verification badge */}
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 8 }}>
-            {profile?.isVerified && (
-              <View style={[styles.verificationBadge, { backgroundColor: colors.primaryLight }]}>
-                <Ionicons name="shield-checkmark" size={14} color={colors.primary} />
-                <Text style={[styles.verificationText, { color: colors.primary }]}>Verified Student</Text>
-              </View>
-            )}
-            <View style={[styles.verificationBadge, { backgroundColor: colors.primaryLight }]}>
-              <Ionicons name={user?.role === 'PROVIDER' ? "briefcase-outline" : "school-outline"} size={14} color={colors.primary} />
-              <Text style={[styles.verificationText, { color: colors.primary }]}>Role: {user?.role === 'PROVIDER' ? "Provider" : "Student"}</Text>
-            </View>
+          {/* Verification Badge */}
+          <View style={[styles.verifiedPill, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
+            <Ionicons name="checkmark-circle" size={14} color={colors.primary} />
+            <Text style={[styles.verifiedPillText, { color: colors.primary }]}>
+              Verified {roleLabel} • KNUST
+            </Text>
           </View>
         </View>
 
-        <View style={styles.content}>
-          {/* ── Stats row ── */}
-          <View style={[styles.statsRow, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
-            <View style={styles.statItem}>
-              <Text style={[styles.statValue, { color: colors.primary }]}>KNUST</Text>
-              <Text style={[styles.statLabel, { color: colors.textMuted }]}>University</Text>
-            </View>
-            <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
-            <View style={styles.statItem}>
-              <Text style={[styles.statValue, { color: colors.primary }]}>{user?.role === 'PROVIDER' ? 'Provider' : 'Student'}</Text>
-              <Text style={[styles.statLabel, { color: colors.textMuted }]}>Account Role</Text>
-            </View>
-            {user?.role === 'PROVIDER' && (
-              <>
-                <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
-                <View style={styles.statItem}>
-                  <Text style={[styles.statValue, { color: colors.primary }]}>5.0 ⭐</Text>
-                  <Text style={[styles.statLabel, { color: colors.textMuted }]}>Rating</Text>
-                </View>
-              </>
-            )}
+        {/* ── Campus & Role Stats Card ── */}
+        <View style={[styles.statsCard, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
+          <View style={styles.statCol}>
+            <Text style={[styles.statTitle, { color: colors.primary }]}>KNUST</Text>
+            <Text style={[styles.statSubtitle, { color: colors.textMuted }]}>Campus Location</Text>
           </View>
-
-          {/* ── Appearance ── */}
-          <View style={[styles.card, { backgroundColor: colors.cardBackground, borderColor: colors.border, marginBottom: 16 }]}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 12, paddingHorizontal: 4 }}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1, gap: 12 }}>
-                <View style={[styles.menuIconWrap, { backgroundColor: colors.primaryLight }]}>
-                  <Ionicons name={isDark ? 'moon' : 'sunny'} size={18} color={colors.primary} />
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={{ fontSize: 15, fontWeight: '600', color: colors.text }}>Dark Mode</Text>
-                  <Text style={{ fontSize: 13, color: colors.textMuted, marginTop: 2 }}>
-                    {isDark ? 'Switch to light theme' : 'Switch to dark theme'}
-                  </Text>
-                </View>
-              </View>
-              <Switch
-                value={isDark}
-                onValueChange={toggleTheme}
-                trackColor={{ false: colors.primary, true: colors.primary }}
-                thumbColor="#FFFFFF"
-                ios_backgroundColor={colors.primary}
-              />
-            </View>
+          <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
+          <View style={styles.statCol}>
+            <Text style={[styles.statTitle, { color: colors.primary }]}>{roleLabel}</Text>
+            <Text style={[styles.statSubtitle, { color: colors.textMuted }]}>Account Role</Text>
           </View>
+        </View>
 
-          {/* ── Settings Menu Items ── */}
-          <View style={[styles.card, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
-            {[
-              {
-                icon: 'chatbubbles-outline',
-                label: 'My Chats',
-                sub: 'View conversations',
-                onPress: () => navigation.navigate('ChatList'),
-              },
-              {
-                icon: 'help-circle-outline',
-                label: 'Help & Support',
-                sub: 'Get assistance',
-                onPress: () => {
-                  Alert.alert(
-                    "Help & Support",
-                    "Email: allenhodoameda@gmail.com\nPhone: +233 20 535 2535"
-                  );
-                }
-              },
-              {
-                icon: 'log-out-outline',
-                label: 'Log Out',
-                sub: 'Sign out of your account',
-                onPress: handleLogout,
-              },
-              {
-                icon: 'trash-outline',
-                label: 'Delete Account',
-                sub: 'Permanently remove your data',
-                onPress: () => navigation.navigate('DeleteAccount'),
-              },
-            ].map((item, idx, arr) => (
-              <TouchableOpacity
-                key={item.label}
-                onPress={item.onPress}
-                style={[
-                  styles.menuRow,
-                  idx !== arr.length - 1 && { borderBottomWidth: 1, borderBottomColor: colors.border }
-                ]}
-              >
-                <View style={[styles.menuIconWrap, { backgroundColor: colors.primaryLight }]}>
-                  <Ionicons name={item.icon as any} size={18} color={colors.primary} />
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={[styles.menuLabel, { color: colors.text }]}>{item.label}</Text>
-                  <Text style={[styles.menuSub, { color: colors.textMuted }]}>{item.sub}</Text>
-                </View>
-                <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
-              </TouchableOpacity>
-            ))}
+        {/* ── PREFERENCES SECTION ── */}
+        <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>PREFERENCES</Text>
+        <View style={[styles.sectionCard, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
+          <View style={styles.menuRow}>
+            <View style={[styles.iconBox, { backgroundColor: colors.primaryLight }]}>
+              <Ionicons name={isDark ? 'moon' : 'sunny'} size={18} color={colors.primary} />
+            </View>
+            <View style={styles.menuTextWrap}>
+              <Text style={[styles.menuTitle, { color: colors.text }]}>Dark Mode</Text>
+              <Text style={[styles.menuSub, { color: colors.textMuted }]}>
+                {isDark ? 'Switch to light theme' : 'Switch to dark theme'}
+              </Text>
+            </View>
+            <Switch
+              value={isDark}
+              onValueChange={toggleTheme}
+              trackColor={{ false: colors.border, true: colors.primary }}
+              thumbColor="#FFFFFF"
+            />
           </View>
 
           {isViewingAsProvider && (
-            <View style={[styles.card, { backgroundColor: colors.cardBackground, borderColor: colors.border, marginTop: 16 }]}>
-              <Text style={{ fontSize: 16, fontWeight: '700', color: colors.text, marginBottom: 12, paddingHorizontal: 4 }}>
-                Preferences
-              </Text>
-              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 12, paddingHorizontal: 4 }}>
-                <View style={{ flex: 1, paddingRight: 16 }}>
-                  <Text style={{ fontSize: 15, fontWeight: '600', color: colors.text }}>
-                    New Request Notifications
-                  </Text>
-                  <Text style={{ fontSize: 13, color: colors.textMuted, marginTop: 2 }}>
-                    Get notified when a new request matches your categories.
-                  </Text>
+            <>
+              <View style={[styles.divider, { backgroundColor: colors.border }]} />
+              <View style={styles.menuRow}>
+                <View style={[styles.iconBox, { backgroundColor: colors.primaryLight }]}>
+                  <Ionicons name="notifications-outline" size={18} color={colors.primary} />
+                </View>
+                <View style={styles.menuTextWrap}>
+                  <Text style={[styles.menuTitle, { color: colors.text }]}>New Request Alerts</Text>
+                  <Text style={[styles.menuSub, { color: colors.textMuted }]}>Get notified of new campus jobs</Text>
                 </View>
                 <Switch
                   value={notifyNewRequests}
@@ -246,28 +189,109 @@ export default function SettingsScreen({ navigation }: any) {
                     try {
                       await api.put(`/users/${user?.id}/profile`, {
                         fullName: fullName.trim(),
-                        bio: bio.trim(),
-                        serviceCategory: serviceCategory,
                         notifyNewRequests: val,
                       });
-                      showToast({ status: 'success', title: 'Success', subtitle: 'Notification settings updated.' });
+                      showToast({ status: 'success', title: 'Success', subtitle: 'Notification preference saved.' });
                     } catch (e) {
-                      showToast({ status: 'error', title: 'Error', subtitle: 'Failed to update notification settings.' });
+                      showToast({ status: 'error', title: 'Error', subtitle: 'Could not update settings.' });
                     }
                   }}
-                  trackColor={{ false: colors.primary, true: colors.primary }}
+                  trackColor={{ false: colors.border, true: colors.primary }}
                   thumbColor="#FFFFFF"
-                  ios_backgroundColor={colors.primary}
                 />
               </View>
-            </View>
+            </>
           )}
+        </View>
 
+        {/* ── ACCOUNT & MESSAGES SECTION ── */}
+        <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>ACCOUNT & MESSAGES</Text>
+        <View style={[styles.sectionCard, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
+          <TouchableOpacity
+            style={styles.menuRowTouchable}
+            onPress={() => navigation.navigate('ChatList')}
+            activeOpacity={0.7}
+          >
+            <View style={[styles.iconBox, { backgroundColor: colors.primaryLight }]}>
+              <Ionicons name="chatbubbles-outline" size={18} color={colors.primary} />
+            </View>
+            <View style={styles.menuTextWrap}>
+              <Text style={[styles.menuTitle, { color: colors.text }]}>My Chats</Text>
+              <Text style={[styles.menuSub, { color: colors.textMuted }]}>View active conversations</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
+          </TouchableOpacity>
 
-          <View style={{ height: 40 }} />
+          <View style={[styles.divider, { backgroundColor: colors.border }]} />
+
+          <TouchableOpacity
+            style={styles.menuRowTouchable}
+            onPress={() => navigation.navigate('NotificationCenter')}
+            activeOpacity={0.7}
+          >
+            <View style={[styles.iconBox, { backgroundColor: colors.primaryLight }]}>
+              <Ionicons name="notifications-outline" size={18} color={colors.primary} />
+            </View>
+            <View style={styles.menuTextWrap}>
+              <Text style={[styles.menuTitle, { color: colors.text }]}>Notification Center</Text>
+              <Text style={[styles.menuSub, { color: colors.textMuted }]}>View recent system notifications</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
+          </TouchableOpacity>
+
+          <View style={[styles.divider, { backgroundColor: colors.border }]} />
+
+          <TouchableOpacity
+            style={styles.menuRowTouchable}
+            onPress={() => {
+              Alert.alert('Help & Support', 'Email: support@campusserv.com\nPhone: +233 20 535 2535\nKNUST Campus Care Office');
+            }}
+            activeOpacity={0.7}
+          >
+            <View style={[styles.iconBox, { backgroundColor: colors.primaryLight }]}>
+              <Ionicons name="help-circle-outline" size={18} color={colors.primary} />
+            </View>
+            <View style={styles.menuTextWrap}>
+              <Text style={[styles.menuTitle, { color: colors.text }]}>Help & Support</Text>
+              <Text style={[styles.menuSub, { color: colors.textMuted }]}>Contact campus customer care</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
+          </TouchableOpacity>
+        </View>
+
+        {/* ── SESSION & SECURITY SECTION ── */}
+        <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>SESSION & SECURITY</Text>
+        <View style={[styles.sectionCard, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
+          <TouchableOpacity style={styles.menuRowTouchable} onPress={handleLogout} activeOpacity={0.7}>
+            <View style={[styles.iconBox, { backgroundColor: '#FEF2F2' }]}>
+              <Ionicons name="log-out-outline" size={18} color="#DC2626" />
+            </View>
+            <View style={styles.menuTextWrap}>
+              <Text style={[styles.menuTitle, { color: '#DC2626' }]}>Sign Out</Text>
+              <Text style={[styles.menuSub, { color: colors.textMuted }]}>Sign out of your CampusServ account</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
+          </TouchableOpacity>
+
+          <View style={[styles.divider, { backgroundColor: colors.border }]} />
+
+          <TouchableOpacity
+            style={styles.menuRowTouchable}
+            onPress={() => navigation.navigate('DeleteAccount')}
+            activeOpacity={0.7}
+          >
+            <View style={[styles.iconBox, { backgroundColor: '#FEF2F2' }]}>
+              <Ionicons name="trash-outline" size={18} color="#DC2626" />
+            </View>
+            <View style={styles.menuTextWrap}>
+              <Text style={[styles.menuTitle, { color: '#DC2626' }]}>Delete Account</Text>
+              <Text style={[styles.menuSub, { color: colors.textMuted }]}>Permanently delete account and data</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
+          </TouchableOpacity>
         </View>
       </ScrollView>
-    </View>
+    </AnimatedBackground>
   );
 }
 
@@ -275,96 +299,158 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   loadingContainer: { flex: 1, alignItems: 'center', justifyContent: 'center' },
 
-  profileHero: {
-    paddingTop: 40, paddingBottom: 32,
-    alignItems: 'center', gap: 8,
-  },
-  avatarWrap: { position: 'relative', marginBottom: 4 },
-  avatar: { width: 90, height: 90, borderRadius: 28, borderWidth: 3, borderColor: 'rgba(255,255,255,0.5)' },
-  avatarPlaceholder: { width: 90, height: 90, borderRadius: 28, alignItems: 'center', justifyContent: 'center' },
-  avatarInitial: { fontSize: 38, fontWeight: '800', color: '#FFF' },
-  uploadingOverlay: { ...StyleSheet.absoluteFillObject, borderRadius: 28, backgroundColor: 'rgba(0,0,0,0.4)', alignItems: 'center', justifyContent: 'center' },
-  avatarEditBadge: {
-    position: 'absolute', bottom: -4, right: -4,
-    width: 24, height: 24, borderRadius: 8,
-    alignItems: 'center', justifyContent: 'center',
-    shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.15, shadowRadius: 4, elevation: 3,
-  },
-  heroName: { fontSize: 22, fontWeight: '800', color: '#FFF' },
-  heroEmail: { fontSize: 13, color: 'rgba(255,255,255,0.7)' },
-  verificationBadge: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 14, paddingVertical: 7, borderRadius: 20, marginTop: 4 },
-  verificationText: { color: '#FFF', fontSize: 12, fontWeight: '700' },
-
-  content: { padding: 16 },
-
-  statsRow: {
-    flexDirection: 'row', borderRadius: 20, borderWidth: 1, overflow: 'hidden', marginBottom: 16,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.05, shadowRadius: 10, elevation: 2,
-  },
-  statItem: { flex: 1, alignItems: 'center', paddingVertical: 16 },
-  statValue: { fontSize: 15, fontWeight: '800' },
-  statLabel: { fontSize: 11, marginTop: 3 },
-  statDivider: { width: 1, marginVertical: 12 },
-
-  card: {
-    borderRadius: 20, borderWidth: 1, padding: 18, marginBottom: 14,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.05, shadowRadius: 10, elevation: 2,
-  },
-  cardTitle: { fontSize: 15, fontWeight: '800', marginBottom: 14 },
-
-  themeRow: { flexDirection: 'row', alignItems: 'center', gap: 12, borderRadius: 14, padding: 12 },
-  themeIconBox: { width: 40, height: 40, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
-  themeLabel: { fontSize: 14, fontWeight: '700' },
-  themeSub: { fontSize: 11, marginTop: 2 },
-  toggleTrack: { width: 44, height: 26, borderRadius: 13, justifyContent: 'center' },
-  toggleThumb: { width: 22, height: 22, borderRadius: 11, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.2, shadowRadius: 2, elevation: 2 },
-
-  inputGroup: { marginBottom: 14 },
-  inputLabel: { fontSize: 12, fontWeight: '700', marginBottom: 6, textTransform: 'uppercase', letterSpacing: 0.4 },
-  input: { borderRadius: 12, height: 48, paddingHorizontal: 14, borderWidth: 1, fontSize: 14 },
-  textArea: { borderRadius: 12, padding: 14, minHeight: 80, borderWidth: 1, fontSize: 14 },
-  saveBtn: { borderRadius: 14, height: 50, alignItems: 'center', justifyContent: 'center', marginTop: 4, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 8, elevation: 3 },
-  saveBtnText: { color: '#FFF', fontWeight: '700', fontSize: 14 },
-
-  menuRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 14, gap: 12 },
-  menuIconWrap: { width: 40, height: 40, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
-  menuLabel: { fontSize: 14, fontWeight: '600' },
-  menuSub: { fontSize: 11, marginTop: 2 },
-
-  logoutBtn: { flexDirection: 'row', borderWidth: 1.5, borderRadius: 16, height: 52, alignItems: 'center', justifyContent: 'center', marginTop: 4 },
-  logoutBtnText: { fontSize: 15, fontWeight: '700' },
-  providerCard: {
+  headerBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 16,
+    justifyContent: 'space-between',
+  },
+  headerTitle: {
+    fontSize: 22,
+    fontWeight: '800',
+    letterSpacing: -0.4,
+  },
+  roleBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  roleBadgeText: {
+    fontSize: 11,
+    fontWeight: '800',
+    textTransform: 'uppercase',
+  },
+
+  profileHeroCard: {
+    alignItems: 'center',
+    borderRadius: 22,
+    borderWidth: 1,
+    paddingVertical: 22,
+    paddingHorizontal: 16,
+    marginBottom: 16,
+    shadowColor: '#FF6B35',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.06,
+    shadowRadius: 12,
+    elevation: 3,
+  },
+  avatarWrap: {
+    marginBottom: 12,
+  },
+  userName: {
+    fontSize: 22,
+    fontWeight: '800',
+    letterSpacing: -0.3,
+    marginBottom: 2,
+  },
+  userEmail: {
+    fontSize: 13,
+    fontWeight: '500',
+    marginBottom: 12,
+  },
+  verifiedPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 14,
+    paddingVertical: 6,
     borderRadius: 20,
     borderWidth: 1,
-    marginBottom: 14,
-    gap: 12,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.05,
-    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 4,
+    elevation: 1,
+  },
+  verifiedPillText: {
+    fontSize: 12,
+    fontWeight: '700',
+  },
+
+  statsCard: {
+    flexDirection: 'row',
+    borderRadius: 18,
+    borderWidth: 1,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    marginBottom: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 8,
     elevation: 2,
   },
-  providerIconWrap: {
-    width: 48,
-    height: 48,
-    borderRadius: 16,
+  statCol: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  statTitle: {
+    fontSize: 15,
+    fontWeight: '800',
+    letterSpacing: -0.2,
+  },
+  statSubtitle: {
+    fontSize: 11,
+    fontWeight: '500',
+    marginTop: 2,
+  },
+  statDivider: {
+    width: 1,
+    height: '80%',
+    alignSelf: 'center',
+  },
+
+  sectionTitle: {
+    fontSize: 11,
+    fontWeight: '700',
+    letterSpacing: 0.8,
+    marginBottom: 8,
+    marginLeft: 4,
+    textTransform: 'uppercase',
+  },
+  sectionCard: {
+    borderRadius: 18,
+    borderWidth: 1,
+    paddingHorizontal: 16,
+    marginBottom: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  menuRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 14,
+    gap: 12,
+  },
+  menuRowTouchable: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 14,
+    gap: 12,
+  },
+  iconBox: {
+    width: 38,
+    height: 38,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  providerTitle: {
-    fontSize: 15,
+  menuTextWrap: {
+    flex: 1,
+  },
+  menuTitle: {
+    fontSize: 14,
     fontWeight: '700',
-    marginBottom: 2,
   },
-  providerSub: {
-    fontSize: 13,
-    fontWeight: '500',
+  menuSub: {
+    fontSize: 12,
+    fontWeight: '400',
+    marginTop: 2,
   },
-  prefRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 4 },
-  prefLabel: { fontSize: 14, fontWeight: '600' },
-  prefSub: { fontSize: 12, marginTop: 2, lineHeight: 16 },
-  divider: { height: 1, marginVertical: 4 },
+  divider: {
+    height: 1,
+    width: '100%',
+  },
 });

@@ -22,6 +22,7 @@ export interface User {
   portfolio?: string[];
   keyServices?: string[];
   emailVerified?: boolean;
+  termsAcceptedVersion?: string;
 }
 
 interface AuthState {
@@ -35,6 +36,7 @@ interface AuthState {
   setAuth: (accessToken: string, refreshToken: string, user: User, roleMode?: 'CLIENT' | 'PROVIDER') => Promise<void>;
   updateUser: (userUpdates: Partial<User>) => Promise<void>;
   updateAccessToken: (accessToken: string) => Promise<void>;
+  updateTokens: (accessToken: string, refreshToken: string) => Promise<void>;
   logout: () => Promise<void>;
   clearAuth: () => Promise<void>;
   /** Call this when a refresh token fails — clears auth and marks session as expired so the UI can show a specific message. */
@@ -86,6 +88,12 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   updateAccessToken: async (accessToken) => {
     await SecureStore.setItemAsync('accessToken', accessToken);
     set({ accessToken });
+    stompClient.connect(accessToken);
+  },
+  updateTokens: async (accessToken, refreshToken) => {
+    await SecureStore.setItemAsync('accessToken', accessToken);
+    await SecureStore.setItemAsync('refreshToken', refreshToken);
+    set({ accessToken, refreshToken });
     stompClient.connect(accessToken);
   },
   logout: async () => {

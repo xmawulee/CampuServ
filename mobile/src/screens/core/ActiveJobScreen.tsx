@@ -20,6 +20,7 @@ import { useToast } from '../../styles/ToastContext';
 import { stompClient } from '../../services/socket';
 import CompletionCodeClientModal from '../../components/CompletionCodeClientModal';
 import CompletionCodeEntryModal from '../../components/CompletionCodeEntryModal';
+import AnimatedBackground from '../../components/AnimatedBackground';
 
 
 // Status steps for on-site jobs (code-exchange based)
@@ -432,8 +433,9 @@ export default function ActiveJobScreen({ navigation, route }: any) {
   }
 
   return (
-    <View style={{ flex: 1 }}>
-      <SafeAreaView edges={['top']} style={{ backgroundColor: colors.cardBackground, zIndex: 10, ...styles.headerShadow }}>
+    <AnimatedBackground style={{ flex: 1 }}>
+      <View style={{ flex: 1 }}>
+        <SafeAreaView edges={['top']} style={{ backgroundColor: colors.cardBackground, zIndex: 10, ...styles.headerShadow }}>
         <View style={styles.header}>
           <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
             <Ionicons name="arrow-back" size={24} color={colors.text} />
@@ -468,7 +470,8 @@ export default function ActiveJobScreen({ navigation, route }: any) {
                     styles.stepLine,
                     { backgroundColor: currentStepIndex > idx ? colors.primary : colors.border }
                   ]} />
-                )}                 <Text style={[
+                )}
+                <Text style={[
                   styles.stepText,
                   { color: isCurrent ? colors.primary : colors.textMuted, fontWeight: isCurrent ? '800' : '600' }
                 ]} numberOfLines={1}>
@@ -636,7 +639,7 @@ export default function ActiveJobScreen({ navigation, route }: any) {
                     )}
                   </View>
                 ) : (
-                  job.locationHint && (
+                  !!job.locationHint && (
                     <TouchableOpacity 
                       style={[styles.hintCard, { backgroundColor: colors.inputBackground }]}
                       onPress={isProvider ? handleOpenGoogleMaps : undefined}
@@ -648,7 +651,7 @@ export default function ActiveJobScreen({ navigation, route }: any) {
                   )
                 )}
 
-                {isProvider && (job.locationLat || (isDelivery && job.pickupLocation?.latitude)) && (
+                {isProvider && !!(job.locationLat || (isDelivery && job.pickupLocation?.latitude)) && (
                   <TouchableOpacity 
                     style={[styles.mapsBtn, { borderColor: colors.border }]} 
                     onPress={handleOpenGoogleMaps}
@@ -659,7 +662,7 @@ export default function ActiveJobScreen({ navigation, route }: any) {
                   </TouchableOpacity>
                 )}
 
-                {(job.locationLat || (isDelivery && job.pickupLocation?.latitude)) && (
+                {!!(job.locationLat || (isDelivery && job.pickupLocation?.latitude)) && (
                   <View style={styles.mapContainer}>
                     <MapView
                       style={styles.map}
@@ -742,7 +745,8 @@ export default function ActiveJobScreen({ navigation, route }: any) {
         imageUrl={selectedImage}
         onClose={() => setSelectedImage(null)}
       />
-    </View>
+      </View>
+    </AnimatedBackground>
   );
 }
 

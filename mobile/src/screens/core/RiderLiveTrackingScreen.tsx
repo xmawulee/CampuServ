@@ -21,6 +21,7 @@ import { stompClient } from '../../services/socket';
 import { api } from '../../services/api';
 import { useToast } from '../../styles/ToastContext';
 import StatusDialog from '../../components/StatusDialog';
+import AnimatedBackground from '../../components/AnimatedBackground';
 
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -256,7 +257,8 @@ export default function RiderLiveTrackingScreen({ route, navigation }: any) {
   }
 
   return (
-    <View style={styles.container}>
+    <AnimatedBackground style={{ flex: 1 }}>
+      <View style={styles.container}>
       {/* ── Header with Back Button ── */}
       <SafeAreaView edges={['top']} style={{ backgroundColor: colors.cardBackground, zIndex: 11 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, height: 56, borderBottomWidth: 1, borderBottomColor: colors.border }}>
@@ -285,7 +287,7 @@ export default function RiderLiveTrackingScreen({ route, navigation }: any) {
       </View>
 
       {/* ── Active Warning Alerts ── */}
-      {signalLostText && (
+      {!!signalLostText && (
         <View style={[styles.alertBanner, { backgroundColor: colors.errorLight, borderColor: colors.error }]}>
           <Ionicons name="wifi-outline" size={16} color={colors.error} style={{ marginRight: 8 }} />
           <Text style={[styles.alertText, { color: colors.error }]}>{signalLostText}</Text>
@@ -430,6 +432,7 @@ export default function RiderLiveTrackingScreen({ route, navigation }: any) {
         onClose={() => setCompleteDialogVisible(false)}
       />
     </View>
+    </AnimatedBackground>
   );
 }
 

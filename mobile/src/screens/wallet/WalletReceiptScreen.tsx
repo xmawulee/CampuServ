@@ -15,6 +15,7 @@ import { useRoute, useNavigation } from '@react-navigation/native';
 import { useToast } from '../../styles/ToastContext';
 import StatusDialog from '../../components/StatusDialog';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import AnimatedBackground from '../../components/AnimatedBackground';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '../../services/api';
 import {
@@ -114,10 +115,11 @@ export default function WalletReceiptScreen() {
   const amountPrefix = isWithdrawal ? '-' : '';
 
   return (
-    <View style={styles.mainContainer}>
+    <AnimatedBackground style={{ flex: 1 }}>
+      <View style={styles.mainContainer}>
       {/* Header Bar */}
       <View style={styles.headerBar}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+        <TouchableOpacity onPress={() => (navigation.canGoBack() ? navigation.goBack() : (navigation as any).navigate('Main'))} style={styles.backButton}>
           <Ionicons name="close" size={24} color="#111827" />
         </TouchableOpacity>
         <Text style={styles.headerBarTitle}>Wallet Receipt</Text>
@@ -139,7 +141,6 @@ export default function WalletReceiptScreen() {
             <Text style={styles.largeAmountText} adjustsFontSizeToFit numberOfLines={1}>
               {amountPrefix}{formatGHS(receipt.amount)}
             </Text>
-            <Text style={styles.narrationSubtitle}>{receipt.narration}</Text>
           </View>
 
           <View style={styles.dashedDividerWrapper}><View style={styles.dashedDivider} /></View>
@@ -187,28 +188,28 @@ export default function WalletReceiptScreen() {
               <Text style={styles.fieldValueBold}>{receipt.paymentMethod}</Text>
             </View>
 
-            {receipt.mobileNumber && (
+            {!!receipt.mobileNumber && (
               <View style={styles.fieldRow}>
                 <Text style={styles.fieldLabel}>Mobile Number</Text>
                 <Text style={styles.fieldValue}>{receipt.mobileNumber}</Text>
               </View>
             )}
 
-            {receipt.bankName && (
+            {!!receipt.bankName && (
               <View style={styles.fieldRow}>
                 <Text style={styles.fieldLabel}>Bank Name</Text>
                 <Text style={styles.fieldValue}>{receipt.bankName}</Text>
               </View>
             )}
 
-            {receipt.accountNumberMasked && (
+            {!!receipt.accountNumberMasked && (
               <View style={styles.fieldRow}>
                 <Text style={styles.fieldLabel}>Account Number</Text>
                 <Text style={styles.fieldValue}>{receipt.accountNumberMasked}</Text>
               </View>
             )}
 
-            {receipt.paystackReference && (
+            {!!receipt.paystackReference && (
               <View style={styles.fieldRow}>
                 <Text style={styles.fieldLabel}>Paystack Reference</Text>
                 <Text style={styles.fieldValueMuted} selectable={true}>{receipt.paystackReference}</Text>
@@ -339,6 +340,7 @@ export default function WalletReceiptScreen() {
         onClose={() => setReportDialogVisible(false)}
       />
     </View>
+    </AnimatedBackground>
   );
 }
 
