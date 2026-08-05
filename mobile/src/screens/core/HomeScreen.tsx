@@ -126,8 +126,8 @@ const LOCAL_IMAGES = {
   errand: require('../../../assets/images/home/errand.jpg'),
   tutor: require('../../../assets/images/home/tutor.jpg'),
   laundry: require('../../../assets/images/home/laundry.jpg'),
-  cleaning: require('../../../assets/images/home/cleaning.png'),
-  design_print: require('../../../assets/images/home/design_print.png'),
+  cleaning: require('../../../assets/images/home/cleaning.jpg'),
+  design_print: require('../../../assets/images/home/design_print.jpg'),
   fallback: require('../../../assets/images/home/browse_services.jpg'),
   new_request: require('../../../assets/images/home/new_request.jpg'),
   browse_services: require('../../../assets/images/home/browse_services.jpg'),
@@ -939,6 +939,9 @@ export default function HomeScreen({ route, navigation }: any) {
         data={listData}
         keyExtractor={(item) => item.id || item.providerId}
         renderItem={renderItem}
+        initialNumToRender={8}
+        maxToRenderPerBatch={5}
+        windowSize={5}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}
         contentContainerStyle={[styles.listContent, { paddingBottom: bottomTabSpacing }]}
         ItemSeparatorComponent={isProvider ? () => <View style={{ height: 12 }} /> : null}

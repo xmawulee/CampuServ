@@ -12,7 +12,6 @@ import { api } from '../../services/api';
 import { stompClient } from '../../services/socket';
 import { useAuthStore } from '../../store/authStore';
 import type { OpenRequest } from '../../types/provider';
-import AnimatedBackground from '../../components/AnimatedBackground';
 
 
 const PAGE_SIZE = 20;
@@ -173,8 +172,7 @@ export default function IncomingRequestsScreen({ navigation }: any) {
   );
 
   return (
-    <AnimatedBackground style={{ flex: 1 }}>
-      <View style={styles.container}>
+    <View style={[styles.container, { paddingTop: insets.top, backgroundColor: colors.background }]}>
       <View style={styles.headerBlock}>
         <Text style={[styles.headerTitle, { color: colors.text }]}>Opportunity Feed</Text>
         <Text style={[styles.headerSub, { color: colors.textMuted }]}>
@@ -191,6 +189,9 @@ export default function IncomingRequestsScreen({ navigation }: any) {
           data={requests}
           keyExtractor={(item) => item.id}
           renderItem={renderItem}
+          initialNumToRender={8}
+          maxToRenderPerBatch={5}
+          windowSize={5}
           contentContainerStyle={[
             styles.listContent,
             { paddingBottom: 110 + insets.bottom },
@@ -212,7 +213,6 @@ export default function IncomingRequestsScreen({ navigation }: any) {
         />
       )}
     </View>
-    </AnimatedBackground>
   );
 }
 

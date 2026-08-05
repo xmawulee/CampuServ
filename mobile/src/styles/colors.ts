@@ -21,52 +21,52 @@ export type ThemeColors = {
   errorLight: string;
 };
 
-// ── Light Mode Design Tokens ──────────────────────────────────────────────────
+// ── Light Mode ────────────────────────────────────────────────────────────────
 export const LightColors: ThemeColors = {
-  primary: '#FF6B35',        // Coral Orange Primary
-  primaryLight: '#FFF5F0',   // Warm Cream Tint (12% accent)
-  primaryDark: '#D9531E',    // Deep Terracotta Orange (High Contrast AA compliant)
-  accent: '#FF6B35',
-  secondary: '#52525B',      // Slate Charcoal
-  background: '#FAF7F4',     // Warm Soft Off-White Screen Canvas
-  screenBackground: '#FAF7F4',
-  cardBackground: '#FFFFFF', // Crisp Surface Card
-  inputBackground: '#F4F0EB',// Soft Warm Off-White Input Surface
-  border: '#E6E0D9',         // Warm Soft Off-White Border
-  text: '#18181B',           // Deep Charcoal Ink
-  textMuted: '#52525B',      // Medium Charcoal Body
-  placeholderText: '#A1A1AA',// Neutral Placeholder
-  navIcon: '#71717A',
-  success: '#059669',        // Emerald Green
-  successLight: '#ECFDF5',
-  warning: '#D97706',        // Warm Amber
-  warningLight: '#FFFBEB',
-  error: '#DC2626',          // Warm Crimson
-  errorLight: '#FEF2F2',
+  primary: '#FF7846',        // Coral Orange
+  primaryLight: '#FFEBE3',   // Subtle orange tint
+  primaryDark: '#FF7846',    // Same as primary (no dark gradient)
+  accent: '#FF7846',         // Coral Orange
+  secondary: '#4A4A4D',      // Darker muted grey for readability
+  background: '#F9F7F2',     // Creamy off-white (like login page)
+  screenBackground: '#F9F7F2',
+  cardBackground: '#FFFFFF', // Clean white
+  inputBackground: '#FFFFFF',
+  border: '#D1D1D1',         
+  text: '#1C1C1E',           // Almost black
+  textMuted: '#2C2C2E',      // Darker muted for readability on patterns
+  placeholderText: '#7A7A80',// Darker placeholder for readability
+  navIcon: '#636366',
+  success: '#34C759',        // Apple-style green
+  successLight: '#E8F8ED',
+  warning: '#F59E0B',        // Amber
+  warningLight: '#FEF3D7',
+  error: '#C0392B',          // Warm crimson
+  errorLight: '#FDECEB',
 };
 
-// ── Dark Mode Design Tokens ───────────────────────────────────────────────────
+// ── Dark Mode ─────────────────────────────────────────────────────────────────
 export const DarkColors: ThemeColors = {
-  primary: '#FF6B35',        // Coral Orange Primary
-  primaryLight: 'rgba(255, 107, 53, 0.15)',
-  primaryDark: '#D9531E',
-  accent: '#FF6B35',
-  secondary: '#A1A1AA',
-  background: '#121215',     // Deep Obsidian Canvas
-  screenBackground: '#121215',
-  cardBackground: '#1C1C21', // Elevated Card Surface
-  inputBackground: '#24242A',// Input Surface
-  border: '#2E2E36',         // Subtle Structural Border
-  text: '#FAFAFA',           // Soft Off-White Heading
-  textMuted: '#A1A1AA',      // Muted Body Text
-  placeholderText: '#71717A',
-  navIcon: '#A1A1AA',
-  success: '#10B981',
-  successLight: 'rgba(16, 185, 129, 0.14)',
-  warning: '#F59E0B',
-  warningLight: 'rgba(245, 158, 11, 0.14)',
-  error: '#EF4444',
-  errorLight: 'rgba(239, 68, 68, 0.14)',
+  primary: '#FF7846',        // Coral Orange (same across themes)
+  primaryLight: 'rgba(255, 120, 70, 0.15)',
+  primaryDark: '#D9663C',
+  accent: '#FF7846',
+  secondary: '#A0A0B0',      // Soft grey for secondary text
+  background: '#1A1A2E',     // Deep navy-black
+  screenBackground: '#1A1A2E',
+  cardBackground: '#222240', // Slightly elevated surface
+  inputBackground: '#2A2A48',// Subtle contrast for inputs
+  border: '#3A3A55',         // Visible but subtle borders
+  text: '#F0F0F5',           // Soft white (easier on the eyes than pure white)
+  textMuted: '#D0D0E0',      // More opaque muted text for readability
+  placeholderText: '#8A8A9E',// Brighter placeholder for readability
+  navIcon: '#B0B0C0',
+  success: '#34D399',
+  successLight: 'rgba(52, 211, 153, 0.14)',
+  warning: '#FBBF24',
+  warningLight: 'rgba(251, 191, 36, 0.14)',
+  error: '#F87171',
+  errorLight: 'rgba(248, 113, 113, 0.14)',
 };
 
 // Static fallback (used before ThemeContext initialises)

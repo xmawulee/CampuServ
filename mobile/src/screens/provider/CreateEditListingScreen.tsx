@@ -277,7 +277,7 @@ export default function CreateEditListingScreen({ navigation, route }: any) {
       </View>
 
       <ScrollView
-        style={{ flex: 1 }}
+        style={{ flex: 1, backgroundColor: colors.background }}
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
@@ -340,11 +340,9 @@ export default function CreateEditListingScreen({ navigation, route }: any) {
                   style={[
                     styles.catCard,
                     {
-                      width: 112,
+                      backgroundColor: isSelected ? colors.primary : colors.cardBackground,
+                      borderColor: isSelected ? colors.primary : colors.border,
                       opacity: allowed ? 1 : 0.5,
-                      borderColor: isSelected ? '#FF7846' : '#E2E8F0',
-                      backgroundColor: isSelected ? 'rgba(255, 120, 70, 0.08)' : '#FFFFFF',
-                      borderWidth: isSelected ? 2 : 1.5,
                     },
                   ]}
                   onPress={() => {
@@ -356,18 +354,18 @@ export default function CreateEditListingScreen({ navigation, route }: any) {
                   }}
                   activeOpacity={0.85}
                 >
-                  <View style={[styles.catIconWrap, { backgroundColor: isSelected ? '#FFFFFF' : '#F8FAFC' }]}>
+                  <View style={[styles.catIconWrap, { backgroundColor: isSelected ? 'rgba(255,255,255,0.2)' : colors.primaryLight }]}>
                     <Ionicons
                       name={allowed ? (config.icon as any) : "lock-closed"}
-                      size={20}
-                      color={isSelected ? '#FF7846' : '#64748B'}
+                      size={28}
+                      color={isSelected ? '#FFFFFF' : colors.primary}
                     />
                   </View>
-                  <Text style={[styles.catLabel, { color: isSelected ? '#FF7846' : '#475569' }]}>
+                  <Text style={[styles.catLabel, { color: isSelected ? '#FFFFFF' : colors.text }]}>
                     {cat.name}
                   </Text>
                   {isSelected && (
-                    <View style={[styles.catCheck, { backgroundColor: '#FF7846' }]}>
+                    <View style={[styles.catCheck, { backgroundColor: colors.primary }]}>
                       <Ionicons name="checkmark" size={10} color="#FFF" />
                     </View>
                   )}
@@ -588,14 +586,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#FFFFFF',
-    borderBottomWidth: 1,
-    borderBottomColor: '#F1F5F9',
-    shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.03,
-    shadowRadius: 8,
-    elevation: 2,
+    backgroundColor: 'transparent',
   },
   backBtn: {
     width: 40,
@@ -603,18 +594,15 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#F8FAFC',
   },
   headerTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#0F172A',
     fontFamily: 'System',
   },
   content: {
     padding: 20,
     paddingBottom: 100,
-    backgroundColor: '#F8FAFC',
   },
 
   infoBanner: {
@@ -642,7 +630,6 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '700',
     marginBottom: 8,
-    color: '#334155',
     textTransform: 'uppercase',
     letterSpacing: 0.8,
   },
@@ -650,54 +637,39 @@ const styles = StyleSheet.create({
     height: 54,
     borderRadius: 16,
     borderWidth: 1.5,
-    borderColor: '#E2E8F0',
     paddingHorizontal: 16,
     fontSize: 15,
-    color: '#0F172A',
-    backgroundColor: '#FFFFFF',
-    shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.02,
-    shadowRadius: 4,
-    elevation: 1,
   },
   hint: {
     fontSize: 12,
     marginTop: 6,
     lineHeight: 17,
-    color: '#64748B',
   },
 
   catCard: {
-    borderRadius: 16,
-    padding: 12,
+    width: 125,
+    height: 125,
+    borderRadius: 20,
+    padding: 14,
     alignItems: 'center',
-    gap: 8,
-    minHeight: 84,
     justifyContent: 'center',
-    position: 'relative',
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1.5,
-    borderColor: '#E2E8F0',
-    shadowColor: '#0F172A',
+    borderWidth: 1,
+    gap: 12,
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.03,
+    shadowOpacity: 0.05,
     shadowRadius: 6,
     elevation: 2,
+    position: 'relative',
   },
   catIconWrap: {
-    width: 42,
-    height: 42,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#F8FAFC',
+    width: 60, height: 60, borderRadius: 30,
+    alignItems: 'center', justifyContent: 'center',
   },
   catLabel: {
-    fontSize: 11,
+    fontSize: 14,
     fontWeight: '700',
     textAlign: 'center',
-    color: '#334155',
   },
   catCheck: {
     position: 'absolute',
@@ -781,8 +753,6 @@ const styles = StyleSheet.create({
     padding: 14,
     borderRadius: 14,
     borderWidth: 1.5,
-    borderColor: '#E2E8F0',
-    backgroundColor: '#FFFFFF',
     marginBottom: 12,
   },
   photoThumbWrap: {
@@ -790,10 +760,8 @@ const styles = StyleSheet.create({
     height: 96,
     borderRadius: 14,
     borderWidth: 1.5,
-    borderColor: '#E2E8F0',
     overflow: 'hidden',
     position: 'relative',
-    backgroundColor: '#FFFFFF',
   },
   photoThumb: {
     width: '100%',
@@ -817,9 +785,7 @@ const styles = StyleSheet.create({
     padding: 28,
     borderRadius: 16,
     borderWidth: 1.5,
-    borderColor: '#CBD5E1',
     borderStyle: 'dashed',
-    backgroundColor: '#FFFFFF',
   },
   deleteBtn: {
     height: 52,
@@ -829,7 +795,7 @@ const styles = StyleSheet.create({
     marginTop: 12,
     borderWidth: 1.5,
     borderColor: '#EF4444',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: 'transparent',
   },
   deleteBtnText: {
     color: '#EF4444',
@@ -841,13 +807,10 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 24,
     borderWidth: 1.5,
-    backgroundColor: '#FFFFFF',
-    borderColor: '#E2E8F0',
   },
   tagChipText: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#475569',
   },
   addTagBtn: {
     paddingHorizontal: 20,

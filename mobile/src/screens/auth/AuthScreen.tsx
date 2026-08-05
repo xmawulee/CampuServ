@@ -12,15 +12,14 @@ import {
   Alert,
   Image,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
+import SystemGradient from '../../components/SystemGradient';
 import { CustomIonicons as Ionicons } from '../../components/CustomIcons';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { api, isHtmlString } from '../../services/api';
+import { api } from '../../services/api';
 import { useAuthStore } from '../../store/authStore';
 import { useTheme } from '../../styles/ThemeContext';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useToast } from '../../styles/ToastContext';
-import AnimatedBackground from '../../components/AnimatedBackground';
 
 
 // Note: Ensure logo.png is placed in the assets folder later or use a generic require if it exists.
@@ -121,12 +120,12 @@ export default function AuthScreen({ navigation }: any) {
 
     } catch (error: any) {
       const serverMessage = error.response?.data;
-      const isStringMsg = typeof serverMessage === 'string' && !isHtmlString(serverMessage);
+      const isStringMsg = typeof serverMessage === 'string';
 
       if (error.response?.status === 401) {
         setBannerError('Invalid email or password. Please try again.');
       } else {
-        setBannerError(isStringMsg ? serverMessage : 'Unable to connect to server. Check your connection and try again.');
+        setBannerError(isStringMsg ? serverMessage : 'Something went wrong. Check your connection and try again.');
       }
       setIsLoading(false);
     }
@@ -184,23 +183,23 @@ export default function AuthScreen({ navigation }: any) {
 
     } catch (error: any) {
       const serverMessage = error.response?.data;
-      const isStringMsg = typeof serverMessage === 'string' && !isHtmlString(serverMessage);
+      const isStringMsg = typeof serverMessage === 'string';
 
       if (error.response?.status === 409 || (isStringMsg && serverMessage.includes('registered'))) {
         setBannerError('An account with this email already exists. Try signing in instead.');
       } else if (error.response?.status === 400) {
         setBannerError(isStringMsg ? serverMessage : 'Registration failed. Please check your details and try again.');
       } else {
-        setBannerError(isStringMsg ? serverMessage : 'Unable to connect to server. Check your connection and try again.');
+        setBannerError(isStringMsg ? serverMessage : 'Something went wrong. Check your connection and try again.');
       }
       setIsLoading(false);
     }
   };
 
   return (
-    <AnimatedBackground style={{ flex: 1 }}>
+    <SystemGradient colors={['#0A2E6E', '#1565C0']} style={styles.container}>
       <KeyboardAvoidingView 
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'} 
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined} 
         style={styles.keyboardView}
       >
         <ScrollView 
@@ -211,7 +210,7 @@ export default function AuthScreen({ navigation }: any) {
           
           {/* Logo Area */}
           <View style={styles.logoArea}>
-            <Image source={logoImage} style={styles.logo} resizeMode="contain" />
+            <Image source={logoImage} style={[styles.logo, { tintColor: colors.primary }]} resizeMode="contain" />
             <Text style={styles.tagline}>Your campus. Your services.</Text>
           </View>
 
@@ -269,7 +268,7 @@ export default function AuthScreen({ navigation }: any) {
                   editable={!isLoading}
                   accessibilityLabel="Email address input"
                 />
-                {!!inErrors.email && <Text style={styles.errorText}>{inErrors.email}</Text>}
+                {inErrors.email && <Text style={styles.errorText}>{inErrors.email}</Text>}
 
                 <Text style={[styles.label, { marginTop: 16 }]}>Password</Text>
                 <View style={styles.passwordContainer}>
@@ -294,7 +293,7 @@ export default function AuthScreen({ navigation }: any) {
                     <Ionicons name={inShowPassword ? 'eye-off-outline' : 'eye-outline'} size={22} color="#94A3B8" />
                   </TouchableOpacity>
                 </View>
-                {!!inErrors.password && <Text style={styles.errorText}>{inErrors.password}</Text>}
+                {inErrors.password && <Text style={styles.errorText}>{inErrors.password}</Text>}
 
                 <TouchableOpacity 
                   style={styles.forgotBtn}
@@ -331,7 +330,7 @@ export default function AuthScreen({ navigation }: any) {
                   editable={!isLoading}
                   accessibilityLabel="Full Name input"
                 />
-                {!!upErrors.name && <Text style={styles.errorText}>{upErrors.name}</Text>}
+                {upErrors.name && <Text style={styles.errorText}>{upErrors.name}</Text>}
 
                 <Text style={[styles.label, { marginTop: 16 }]}>Email Address</Text>
                 <TextInput
@@ -350,7 +349,7 @@ export default function AuthScreen({ navigation }: any) {
                   editable={!isLoading}
                   accessibilityLabel="Email address input"
                 />
-                {!!upErrors.email && <Text style={styles.errorText}>{upErrors.email}</Text>}
+                {upErrors.email && <Text style={styles.errorText}>{upErrors.email}</Text>}
 
                 <Text style={[styles.label, { marginTop: 16 }]}>Password</Text>
                 <View style={styles.passwordContainer}>
@@ -376,7 +375,7 @@ export default function AuthScreen({ navigation }: any) {
                     <Ionicons name={upShowPassword ? 'eye-off-outline' : 'eye-outline'} size={22} color="#94A3B8" />
                   </TouchableOpacity>
                 </View>
-                {!!upErrors.password && <Text style={styles.errorText}>{upErrors.password}</Text>}
+                {upErrors.password && <Text style={styles.errorText}>{upErrors.password}</Text>}
 
                 <Text style={[styles.label, { marginTop: 16 }]}>Confirm Password</Text>
                 <View style={styles.passwordContainer}>
@@ -400,7 +399,7 @@ export default function AuthScreen({ navigation }: any) {
                     <Ionicons name={upShowConfirmPassword ? 'eye-off-outline' : 'eye-outline'} size={22} color="#94A3B8" />
                   </TouchableOpacity>
                 </View>
-                {!!upErrors.confirmPassword && <Text style={styles.errorText}>{upErrors.confirmPassword}</Text>}
+                {upErrors.confirmPassword && <Text style={styles.errorText}>{upErrors.confirmPassword}</Text>}
 
                 <Text style={[styles.label, { marginTop: 16 }]}>Account Type</Text>
                 <View style={styles.roleContainer}>
@@ -445,7 +444,7 @@ export default function AuthScreen({ navigation }: any) {
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
-    </AnimatedBackground>
+    </SystemGradient>
   );
 }
 

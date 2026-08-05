@@ -178,13 +178,13 @@ function CustomTabBar({ state, descriptors, navigation, colors, isDark }: any) {
 
 // ── Provider Bottom Tabs ────────────────────────────────────────────────────
 function ProviderNavigator() {
-  const { colors, isDark } = useTheme();
+  const { colors, isDark, reduceMotion } = useTheme();
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.background }}>
+    <View style={{ flex: 1, backgroundColor: 'transparent' }}>
       <Tab.Navigator
         tabBar={(props) => <CustomTabBar {...props} colors={colors} isDark={isDark} />}
-        screenOptions={{ headerShown: false }}
+        screenOptions={{ headerShown: false, animation: reduceMotion ? 'fade' : 'shift' }}
       >
         <Tab.Screen name="ProviderDashboardHome" component={ProviderDashboardHomeScreen} />
         <Tab.Screen name="IncomingRequests" component={IncomingRequestsScreen} />
@@ -198,13 +198,13 @@ function ProviderNavigator() {
 
 // ── Client Bottom Tabs ──────────────────────────────────────────────────────
 function AppTabs() {
-  const { colors, isDark } = useTheme();
+  const { colors, isDark, reduceMotion } = useTheme();
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.background }}>
+    <View style={{ flex: 1, backgroundColor: 'transparent' }}>
       <Tab.Navigator
         tabBar={(props) => <CustomTabBar {...props} colors={colors} isDark={isDark} />}
-        screenOptions={{ headerShown: false }}
+        screenOptions={{ headerShown: false, animation: reduceMotion ? 'fade' : 'shift' }}
       >
         <Tab.Screen name="Home" component={HomeScreen} />
         <Tab.Screen name="Search" component={PostRequestScreen} />
@@ -335,7 +335,7 @@ function resolveRoute(
 
 function AppNavigatorInner() {
   const { isAuthenticated, user, sessionExpired, updateUser } = useAuthStore();
-  const { colors } = useTheme();
+  const { colors, reduceMotion } = useTheme();
   const { showToast } = useToast();
   const sessionExpiredShown = useRef(false);
 
@@ -390,23 +390,7 @@ function AppNavigatorInner() {
     };
   }, [isAuthenticated, user?.id]);
 
-  // Show session-expired toast exactly once after forced sign-out
-  useEffect(() => {
-    if (sessionExpired && !sessionExpiredShown.current) {
-      sessionExpiredShown.current = true;
-      const t = setTimeout(() => {
-        showToast({
-          status: 'error',
-          title: 'Session Expired',
-          subtitle: 'Please sign in again to continue.',
-          duration: 5000,
-        });
-        useAuthStore.setState({ sessionExpired: false });
-      }, 400);
-      return () => clearTimeout(t);
-    }
-    if (!sessionExpired) sessionExpiredShown.current = false;
-  }, [sessionExpired, showToast]);
+  // (Removed Session Expired toast)
 
   const route = resolveRoute(isAuthenticated, user);
   // Include accountStatus in the key so the navigator fully remounts when an account
@@ -418,15 +402,15 @@ function AppNavigatorInner() {
   // Shared sub-screens
   const sharedScreens = (
     <>
-      <Stack.Screen name="ChatList" component={ChatListScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="ChatList" component={ChatListScreen} options={{ headerShown: false, animation: 'default' }} />
       <Stack.Screen name="ChatThread" component={ChatThreadScreen} options={{ headerShown: false }} />
       <Stack.Screen name="ActiveJob" component={ActiveJobScreen} options={{ headerShown: false }} />
       <Stack.Screen name="RiderLiveTracking" component={RiderLiveTrackingScreen} options={{ title: 'Track Provider', headerShown: false }} />
       <Stack.Screen name="ReviewSubmission" component={ReviewSubmissionScreen} options={{ title: 'Submit Review', presentation: 'modal' }} />
-      <Stack.Screen name="Withdrawal" component={WithdrawalScreen} options={{ headerShown: false }} />
-      <Stack.Screen name="Deposit" component={DepositScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="Withdrawal" component={WithdrawalScreen} options={{ title: 'Withdraw Funds' }} />
+      <Stack.Screen name="Deposit" component={DepositScreen} options={{ title: 'Deposit Funds', animation: 'default' }} />
       <Stack.Screen name="WalletReceiptScreen" component={WalletReceiptScreen} options={{ presentation: 'modal', headerShown: false, animation: 'slide_from_bottom' }} />
-      <Stack.Screen name="NotificationCenter" component={NotificationCenterScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="NotificationCenter" component={NotificationCenterScreen} options={{ headerShown: false, animation: 'default' }} />
       <Stack.Screen name="DeleteAccount" component={DeleteAccountScreen} options={{ headerShown: false }} />
       <Stack.Screen name="RaiseDispute" component={RaiseDisputeScreen} options={{ headerShown: false }} />
       <Stack.Screen name="DisputeThread" component={DisputeThreadScreen} options={{ headerShown: false }} />
@@ -450,7 +434,8 @@ function AppNavigatorInner() {
         headerShadowVisible: false,
         headerTintColor: colors.text,
         headerTitleStyle: { fontWeight: '700', fontSize: 17 },
-        contentStyle: { backgroundColor: colors.background },
+        contentStyle: { backgroundColor: route === 'auth' ? 'transparent' : colors.background },
+        animation: reduceMotion ? 'default' : (route === 'auth' ? 'default' : 'fade_from_bottom'),
       }}
     >
       {/* ── Unauthenticated ── */}
@@ -522,8 +507,8 @@ function AppNavigatorInner() {
           <Stack.Screen name="RequestDetails" component={RequestDetailsScreen} options={{ title: 'Request Details' }} />
           <Stack.Screen name="PostRequest" component={PostRequestScreen} options={{ headerShown: false, presentation: 'modal' }} />
           <Stack.Screen name="CategoryProviders" component={CategoryProvidersScreen} options={{ headerShown: false }} />
-          <Stack.Screen name="ProviderProfile" component={ListingDetailScreen} options={{ headerShown: false }} />
-          <Stack.Screen name="ListingDetail" component={ListingDetailScreen} options={{ headerShown: false }} />
+          <Stack.Screen name="ProviderProfile" component={ListingDetailScreen} options={{ headerShown: false, animation: 'default' }} />
+          <Stack.Screen name="ListingDetail" component={ListingDetailScreen} options={{ headerShown: false, animation: 'default' }} />
           <Stack.Screen name="SelectProvider" component={SelectProviderScreen} options={{ title: 'Select Provider', presentation: 'card' }} />
           <Stack.Screen name="RateProvider" component={RateProviderScreen} options={{ headerShown: false, presentation: 'modal' }} />
           <Stack.Screen name="TransactionReceipt" component={TransactionReceiptScreen} options={{ presentation: 'modal', headerShown: false }} />
@@ -533,7 +518,11 @@ function AppNavigatorInner() {
     </Stack.Navigator>
   );
 
-  return <AnimatedBackground style={{ flex: 1 }}>{navigator}</AnimatedBackground>;
+  if (route === 'auth') {
+    return <AnimatedBackground style={{ flex: 1 }}>{navigator}</AnimatedBackground>;
+  }
+
+  return navigator;
 }
 
 export default function AppNavigator() {

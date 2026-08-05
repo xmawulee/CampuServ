@@ -14,13 +14,12 @@ import {
   Dimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
+import SystemGradient from '../../components/SystemGradient';
 import { CustomIonicons as Ionicons } from '../../components/CustomIcons';
 import { useTheme } from '../../styles/ThemeContext';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuthStore } from '../../store/authStore';
-import { api, isHtmlString } from '../../services/api';
-import AnimatedBackground from '../../components/AnimatedBackground';
+import { api } from '../../services/api';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 const KNUST_EMAIL_REGEX = /^[^\s@]+@(st\.)?knust\.edu\.gh$/i;
@@ -156,13 +155,10 @@ export default function ClientSignUpScreen({ navigation }: any) {
     } catch (error: any) {
       const responseData = error.response?.data;
       let serverMessage: string | null = null;
-      if (typeof responseData === 'string' && !isHtmlString(responseData)) {
+      if (typeof responseData === 'string') {
         serverMessage = responseData;
       } else if (responseData && typeof responseData === 'object') {
-        const msg = responseData.message || responseData.error;
-        if (typeof msg === 'string' && !isHtmlString(msg)) {
-          serverMessage = msg;
-        }
+        serverMessage = responseData.message || responseData.error || null;
       }
 
       if (error.response?.status === 409) {
@@ -170,7 +166,7 @@ export default function ClientSignUpScreen({ navigation }: any) {
       } else if (error.response?.status === 400) {
         setBannerError(serverMessage || 'Registration failed. Please check your details.');
       } else {
-        setBannerError(serverMessage || 'Unable to connect to server. Check your connection and try again.');
+        setBannerError(serverMessage || 'Something went wrong. Check your connection and try again.');
       }
       setIsLoading(false);
     }
@@ -183,14 +179,14 @@ export default function ClientSignUpScreen({ navigation }: any) {
   const clientBtnGradient = [colors.primary, colors.primaryDark] as const;
 
   return (
-    <AnimatedBackground style={{ flex: 1 }}>
+    <View style={{ flex: 1, backgroundColor: colors.background + '99' }}>
       <SafeAreaView style={[styles.container, { paddingBottom: insets.bottom }]}>
         <StatusBar barStyle={isDark ? "light-content" : "dark-content"} translucent backgroundColor="transparent" />
 
 
 
         <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
           style={styles.keyboardView}
         >
           <ScrollView
@@ -208,9 +204,10 @@ export default function ClientSignUpScreen({ navigation }: any) {
               <Ionicons name="arrow-back" size={24} color={colors.text} />
             </TouchableOpacity>
 
+            {/* Logo */}
             <Image 
               source={logoImage} 
-              style={styles.logo} 
+              style={[styles.logo, { tintColor: colors.primary }]} 
               resizeMode="contain"
             />
 
@@ -231,7 +228,7 @@ export default function ClientSignUpScreen({ navigation }: any) {
             <View style={styles.form}>
               <Text style={[styles.label, { color: colors.textMuted }]}>Full Name</Text>
               <TextInput
-                style={[styles.input, { backgroundColor: isDark ? 'rgba(255,255,255,0.02)' : colors.inputBackground, color: colors.text, borderColor: errors.name ? colors.error : (isDark ? 'rgba(255,255,255,0.08)' : 'transparent'), borderWidth: 1.5 }]}
+                style={[styles.input, { backgroundColor: isDark ? 'rgba(255,255,255,0.02)' : colors.inputBackground, color: colors.text, borderColor: errors.name ? colors.error : (isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.12)'), borderWidth: 1.5 }]}
                 value={name}
                 onChangeText={(v) => { setName(v); if (errors.name) setErrors((e) => ({ ...e, name: undefined })); }}
                 placeholder="e.g. Kofi Mensah"
@@ -242,12 +239,12 @@ export default function ClientSignUpScreen({ navigation }: any) {
                 blurOnSubmit={false}
                 editable={!isLoading}
               />
-              {!!errors.name && <Text style={[styles.fieldError, { color: colors.error }]}>{errors.name}</Text>}
+              {errors.name && <Text style={[styles.fieldError, { color: colors.error }]}>{errors.name}</Text>}
 
               <Text style={[styles.label, styles.labelTop, { color: colors.textMuted }]}>KNUST Email</Text>
               <TextInput
                 ref={emailRef}
-                style={[styles.input, { backgroundColor: isDark ? 'rgba(255,255,255,0.02)' : colors.inputBackground, color: colors.text, borderColor: errors.email ? colors.error : (isDark ? 'rgba(255,255,255,0.08)' : 'transparent'), borderWidth: 1.5 }]}
+                style={[styles.input, { backgroundColor: isDark ? 'rgba(255,255,255,0.02)' : colors.inputBackground, color: colors.text, borderColor: errors.email ? colors.error : (isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.12)'), borderWidth: 1.5 }]}
                 value={email}
                 onChangeText={(v) => { setEmail(v); if (errors.email) setErrors((e) => ({ ...e, email: undefined })); }}
                 placeholder="your.name@st.knust.edu.gh"
@@ -269,10 +266,10 @@ export default function ClientSignUpScreen({ navigation }: any) {
                   </Text>
                 </View>
               )}
-              {!!errors.email && <Text style={[styles.fieldError, { color: colors.error }]}>{errors.email}</Text>}
+              {errors.email && <Text style={[styles.fieldError, { color: colors.error }]}>{errors.email}</Text>}
 
               <Text style={[styles.label, styles.labelTop, { color: colors.textMuted }]}>Password</Text>
-              <View style={[styles.passwordRow, { backgroundColor: isDark ? 'rgba(255,255,255,0.02)' : colors.inputBackground, borderColor: errors.password ? colors.error : (isDark ? 'rgba(255,255,255,0.08)' : 'transparent'), borderWidth: 1.5 }]}>
+              <View style={[styles.passwordRow, { backgroundColor: isDark ? 'rgba(255,255,255,0.02)' : colors.inputBackground, borderColor: errors.password ? colors.error : (isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.12)'), borderWidth: 1.5 }]}>
                 <TextInput
                   ref={passwordRef}
                   style={[styles.passwordInput, { color: colors.text }]}
@@ -306,10 +303,10 @@ export default function ClientSignUpScreen({ navigation }: any) {
                   </View>
                 </View>
               )}
-              {!!errors.password && <Text style={[styles.fieldError, { color: colors.error }]}>{errors.password}</Text>}
+              {errors.password && <Text style={[styles.fieldError, { color: colors.error }]}>{errors.password}</Text>}
 
               <Text style={[styles.label, styles.labelTop, { color: colors.textMuted }]}>Confirm Password</Text>
-              <View style={[styles.passwordRow, { backgroundColor: isDark ? 'rgba(255,255,255,0.02)' : colors.inputBackground, borderColor: errors.confirmPassword ? colors.error : (isDark ? 'rgba(255,255,255,0.08)' : 'transparent'), borderWidth: 1.5 }]}>
+              <View style={[styles.passwordRow, { backgroundColor: isDark ? 'rgba(255,255,255,0.02)' : colors.inputBackground, borderColor: errors.confirmPassword ? colors.error : (isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.12)'), borderWidth: 1.5 }]}>
                 <TextInput
                   ref={confirmPasswordRef}
                   style={[styles.passwordInput, { color: colors.text }]}
@@ -334,7 +331,7 @@ export default function ClientSignUpScreen({ navigation }: any) {
                   </Text>
                 </View>
               )}
-              {!!errors.confirmPassword && <Text style={[styles.fieldError, { color: colors.error }]}>{errors.confirmPassword}</Text>}
+              {errors.confirmPassword && <Text style={[styles.fieldError, { color: colors.error }]}>{errors.confirmPassword}</Text>}
             </View>
 
             {/* Create Account Button */}
@@ -344,7 +341,7 @@ export default function ClientSignUpScreen({ navigation }: any) {
               disabled={!isFormValid || isLoading}
               activeOpacity={0.88}
             >
-              <LinearGradient
+              <SystemGradient
                 colors={clientBtnGradient}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
@@ -355,19 +352,19 @@ export default function ClientSignUpScreen({ navigation }: any) {
                 ) : (
                   <Text style={styles.submitBtnText}>Create Account</Text>
                 )}
-              </LinearGradient>
+              </SystemGradient>
             </TouchableOpacity>
 
             <View style={styles.footerRow}>
               <Text style={[styles.footerText, { color: colors.textMuted }]}>Already have an account? </Text>
               <TouchableOpacity onPress={() => navigation.navigate('SignIn', { initialRole: 'CLIENT' })} disabled={isLoading}>
-                <Text style={[styles.footerLink, { color: isDark ? '#818CF8' : colors.primary }]}>Sign In</Text>
+                <Text style={[styles.footerLink, { color: isDark ? '#FF8A66' : '#FF5500' }]}>Sign in</Text>
               </TouchableOpacity>
             </View>
           </ScrollView>
         </KeyboardAvoidingView>
       </SafeAreaView>
-    </AnimatedBackground>
+    </View>
   );
 }
 
@@ -448,6 +445,6 @@ const styles = StyleSheet.create({
   submitBtnDisabled: { opacity: 0.85 },
   submitBtnText: { color: '#FFF', fontSize: 16, fontFamily: 'Outfit-Bold' },
   footerRow: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginTop: 24 },
-  footerText: { fontSize: 14, fontFamily: 'Inter-Medium' },
-  footerLink: { fontSize: 14, fontFamily: 'Outfit-Bold' },
+  footerText: { fontSize: 16, fontFamily: 'Inter-Medium' },
+  footerLink: { fontSize: 18, fontFamily: 'Outfit-Bold', fontWeight: '800' },
 });

@@ -1,4 +1,4 @@
-import React, { useCallback, useState, useMemo } from 'react';
+import React, { useCallback, useState } from 'react';
 import {
   View,
   Text,
@@ -8,7 +8,6 @@ import {
   ActivityIndicator,
   RefreshControl,
   Alert,
-  ScrollView,
 } from 'react-native';
 import { useAuthStore } from '../../store/authStore';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -18,7 +17,6 @@ import { CustomIonicons as Ionicons } from '../../components/CustomIcons';
 import { api } from '../../services/api';
 import { useTheme } from '../../styles/ThemeContext';
 import { useToast } from '../../styles/ToastContext';
-import AnimatedBackground from '../../components/AnimatedBackground';
 
 // ─────────────────────────────────────────────────────────
 //  Types
@@ -42,7 +40,7 @@ interface Notification {
   title: string;
   body: string;
   read: boolean;
-  referenceId?: string;
+  referenceId?: string; // jobId, requestId, disputeId, etc.
   createdAt: string;
   isAnnouncement?: boolean;
   severity?: string;
@@ -53,7 +51,7 @@ interface Notification {
 // ─────────────────────────────────────────────────────────
 
 const NOTIF_META: Record<NotifType, { icon: string; color: string }> = {
-  NEW_BID: { icon: 'pricetag-outline', color: '#FF6B35' },
+  NEW_BID: { icon: 'pricetag-outline', color: '#7C3AED' },
   BID_ACCEPTED: { icon: 'checkmark-circle-outline', color: '#10B981' },
   JOB_STARTED: { icon: 'play-circle-outline', color: '#3B82F6' },
   JOB_COMPLETE: { icon: 'trophy-outline', color: '#F59E0B' },
@@ -62,22 +60,28 @@ const NOTIF_META: Record<NotifType, { icon: string; color: string }> = {
   REVIEW_REQUEST: { icon: 'star-outline', color: '#F59E0B' },
   SYSTEM: { icon: 'information-circle-outline', color: '#6B7280' },
   ANNOUNCEMENT: { icon: 'megaphone-outline', color: '#3B82F6' },
-  CHAT_MESSAGE: { icon: 'chatbubble-outline', color: '#8B5CF6' },
+  CHAT_MESSAGE: { icon: 'chatbubble-outline', color: '#7C3AED' },
 };
 
 const getMeta = (type: NotifType) =>
   NOTIF_META[type] ?? NOTIF_META.SYSTEM;
 
+// ─────────────────────────────────────────────────────────
+//  Relative time helper
+// ─────────────────────────────────────────────────────────
+
 function relativeTime(iso: string): string {
-  if (!iso) return '';
   const diff = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
-  if (isNaN(diff)) return '';
   if (diff < 60) return 'Just now';
   if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
   if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
   if (diff < 604800) return `${Math.floor(diff / 86400)}d ago`;
   return new Date(iso).toLocaleDateString();
 }
+
+// ─────────────────────────────────────────────────────────
+//  Navigation resolver: determine where each notification leads
+// ─────────────────────────────────────────────────────────
 
 function resolveNavigationTarget(notification: Notification): { screen: string; params: Record<string, any> } | null {
   const { type, referenceId } = notification;
@@ -101,16 +105,18 @@ function resolveNavigationTarget(notification: Notification): { screen: string; 
   }
 }
 
+// ─────────────────────────────────────────────────────────
+//  Notification row component
+// ─────────────────────────────────────────────────────────
+
 function NotificationRow({
   item,
   colors,
-  isDark,
   onPress,
   onDelete,
 }: {
   item: Notification;
   colors: any;
-  isDark: boolean;
   onPress: (n: Notification) => void;
   onDelete: (id: string) => void;
 }) {
@@ -125,30 +131,27 @@ function NotificationRow({
   return (
     <View
       style={[
-        styles.rowCard,
+        styles.row,
         {
-          backgroundColor: isUnread
-            ? (isDark ? 'rgba(255, 107, 53, 0.08)' : '#FFF9F5')
-            : colors.cardBackground,
-          borderColor: isUnread ? colors.primary + '50' : colors.border,
-          borderWidth: 1,
+          backgroundColor: isUnread ? colors.cardBackground : colors.inputBackground,
         },
+        isUnread && styles.rowUnreadShadow,
       ]}
     >
       <TouchableOpacity
         style={styles.rowPressable}
         onPress={() => onPress(item)}
-        activeOpacity={0.88}
+        activeOpacity={0.85}
       >
         {/* Icon Container */}
         <View style={[styles.iconWrap, { backgroundColor: `${meta.color}15` }]}>
-          <Ionicons name={meta.icon as any} size={22} color={meta.color} />
+          <Ionicons name={meta.icon as any} size={24} color={meta.color} />
         </View>
 
         {/* Content */}
         <View style={styles.textWrap}>
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flex: 1 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flex: 1 }}>
               <Text style={[styles.rowTitle, { color: colors.text }]} numberOfLines={1}>
                 {item.title}
               </Text>
@@ -165,22 +168,25 @@ function NotificationRow({
       {/* Delete button */}
       {!item.isAnnouncement && (
         <TouchableOpacity 
-          style={styles.deleteItemBtn} 
+          style={[styles.deleteItemBtn, { backgroundColor: 'rgba(239, 68, 68, 0.08)' }]} 
           onPress={() => onDelete(item.id)}
           activeOpacity={0.7}
         >
-          <Ionicons name="trash-outline" size={16} color={colors.textMuted} />
+          <Ionicons name="trash-outline" size={18} color="#EF4444" />
         </TouchableOpacity>
       )}
     </View>
   );
 }
 
+// ─────────────────────────────────────────────────────────
+//  Main screen
+// ─────────────────────────────────────────────────────────
+
 export default function NotificationCenterScreen({ navigation }: any) {
-  const { colors, isDark } = useTheme();
+  const { colors } = useTheme();
   const { showToast } = useToast();
   const insets = useSafeAreaInsets();
-  const [activeTabFilter, setActiveTabFilter] = useState<'ALL' | 'UNREAD' | 'BIDS'>('ALL');
 
   const { user } = useAuthStore();
   const isViewingAsProvider = user?.role === 'PROVIDER';
@@ -226,33 +232,22 @@ export default function NotificationCenterScreen({ navigation }: any) {
 
   const notifications = notificationsData || [];
 
-  const roleFilteredNotifications = useMemo(() => {
-    return (notifications ?? []).filter((item) => {
-      if (item.isAnnouncement) return true;
-      const isProvType = ['BID_ACCEPTED', 'PAYMENT_RELEASED'].includes(item.type);
-      if (isViewingAsProvider) {
-        return isProvType || item.type === 'SYSTEM' || item.type === 'DISPUTE_UPDATE';
-      } else {
-        return !isProvType;
-      }
-    });
-  }, [notifications, isViewingAsProvider]);
-
-  const displayNotifications = useMemo(() => {
-    if (activeTabFilter === 'UNREAD') {
-      return roleFilteredNotifications.filter(n => !n.read);
+  const filteredNotifications = (notifications ?? []).filter((item) => {
+    if (item.isAnnouncement) return true; // Show announcements to everyone
+    const isProvType = ['BID_ACCEPTED', 'PAYMENT_RELEASED'].includes(item.type);
+    if (isViewingAsProvider) {
+      return isProvType || item.type === 'SYSTEM' || item.type === 'DISPUTE_UPDATE';
+    } else {
+      return !isProvType;
     }
-    if (activeTabFilter === 'BIDS') {
-      return roleFilteredNotifications.filter(n => n.type === 'NEW_BID' || n.type === 'BID_ACCEPTED');
-    }
-    return roleFilteredNotifications;
-  }, [roleFilteredNotifications, activeTabFilter]);
+  });
 
   const handlePress = async (notification: Notification) => {
     if (notification.isAnnouncement) {
       Alert.alert(notification.title, notification.body);
       return;
     }
+    // Mark as read
     if (!notification.read) {
       try {
         await api.put(`/notifications/${notification.id}/read`);
@@ -264,18 +259,22 @@ export default function NotificationCenterScreen({ navigation }: any) {
       }
     }
 
+    // Navigate to relevant screen
     const target = resolveNavigationTarget(notification);
     if (target) {
       let finalScreen = target.screen;
       const finalParams = target.params;
 
+      // Guard and redirect based on role view
       if (isViewingAsProvider) {
         if (finalScreen === 'RequestDetails') {
           finalScreen = 'RequestDetailForProvider';
         } else if (finalScreen === 'RateProvider') {
+          // Providers don't rate providers
           return;
         }
       } else {
+        // Client view
         if (finalScreen === 'RequestDetailForProvider') {
           finalScreen = 'RequestDetails';
         }
@@ -328,197 +327,172 @@ export default function NotificationCenterScreen({ navigation }: any) {
     }
   };
 
-  const unreadCount = (roleFilteredNotifications ?? []).filter((n) => !n.read).length;
+  const unreadCount = (filteredNotifications ?? []).filter((n) => !n.read).length;
 
   return (
-    <AnimatedBackground style={{ flex: 1 }}>
-      <View style={styles.container}>
-        {/* Fixed Header */}
-        <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
-          <TouchableOpacity
-            style={styles.backBtn}
-            onPress={() => (navigation.canGoBack() ? navigation.goBack() : navigation.navigate('Main'))}
-            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-          >
-            <Ionicons name="arrow-back" size={24} color={colors.text} />
+    <View style={styles.container}>
+      {/* Header */}
+      <SafeAreaView edges={['top']} style={{ backgroundColor: colors.primary, zIndex: 10 }}>
+        <View style={[styles.header, { backgroundColor: colors.primary }]}>
+          <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
+            <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
           </TouchableOpacity>
-          <Text style={[styles.headerTitle, { color: colors.text }]}>
+          <Text style={[styles.headerTitle, { color: '#FFFFFF' }]}>
             Notifications{unreadCount > 0 ? ` (${unreadCount})` : ''}
           </Text>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-            {unreadCount > 0 && (
-              <TouchableOpacity onPress={handleMarkAllRead} style={[styles.headerActionBtn, { backgroundColor: 'rgba(16, 185, 129, 0.12)' }]}>
-                <Ionicons name="mail-open" size={18} color="#10B981" />
-              </TouchableOpacity>
-            )}
-            {roleFilteredNotifications.length > 0 && (
-              <TouchableOpacity onPress={handleClearAll} style={[styles.headerActionBtn, { backgroundColor: 'rgba(239, 68, 68, 0.12)' }]}>
-                <Ionicons name="trash" size={18} color="#EF4444" />
-              </TouchableOpacity>
-            )}
-          </View>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, minWidth: 60, justifyContent: 'flex-end' }}>
+          {unreadCount > 0 && (
+            <TouchableOpacity onPress={handleMarkAllRead} style={[styles.headerActionBtn, { backgroundColor: 'rgba(255, 255, 255, 0.2)' }]}>
+              <Ionicons name="mail-open" size={20} color="#FFFFFF" />
+            </TouchableOpacity>
+          )}
+          {filteredNotifications.length > 0 && (
+            <TouchableOpacity onPress={handleClearAll} style={[styles.headerActionBtn, { backgroundColor: 'rgba(255, 255, 255, 0.2)' }]}>
+              <Ionicons name="trash" size={20} color="#FFFFFF" />
+            </TouchableOpacity>
+          )}
         </View>
-
-        {/* Tab Filters */}
-        <View style={{ paddingHorizontal: 16, marginBottom: 12 }}>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
-            {[
-              { id: 'ALL', label: 'All' },
-              { id: 'UNREAD', label: `Unread (${unreadCount})` },
-              { id: 'BIDS', label: 'Bids & Offers' },
-            ].map(tab => {
-              const isActive = activeTabFilter === tab.id;
-              return (
-                <TouchableOpacity
-                  key={tab.id}
-                  style={[
-                    styles.tabPill,
-                    isActive
-                      ? { backgroundColor: colors.primary, borderColor: colors.primary }
-                      : { backgroundColor: colors.cardBackground, borderColor: colors.border, borderWidth: 1 }
-                  ]}
-                  onPress={() => setActiveTabFilter(tab.id as any)}
-                  activeOpacity={0.8}
-                >
-                  <Text style={[styles.tabPillText, { color: isActive ? '#FFF' : colors.text, fontWeight: isActive ? '800' : '600' }]}>
-                    {tab.label}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
-          </ScrollView>
-        </View>
-
-        {loading ? (
-          <View style={styles.centeredState}>
-            <ActivityIndicator size="large" color={colors.primary} />
-          </View>
-        ) : (
-          <FlatList
-            data={displayNotifications}
-            keyExtractor={(item) => item.id}
-            renderItem={({ item }) => (
-              <NotificationRow 
-                item={item} 
-                colors={colors}
-                isDark={isDark} 
-                onPress={handlePress} 
-                onDelete={handleDeleteNotification}
-              />
-            )}
-            contentContainerStyle={[
-              styles.listContent,
-              { paddingBottom: Math.max(insets.bottom + 24, 40) },
-            ]}
-            showsVerticalScrollIndicator={false}
-            ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
-            refreshControl={
-              <RefreshControl
-                refreshing={refreshing}
-                onRefresh={() => refetch()}
-                tintColor={colors.primary}
-              />
-            }
-            ListEmptyComponent={
-              <View style={styles.centeredState}>
-                <View style={[styles.emptyIconWrap, { backgroundColor: colors.primaryLight }]}>
-                  <Ionicons name="notifications-off-outline" size={44} color={colors.primary} />
-                </View>
-                <Text style={[styles.emptyTitle, { color: colors.text }]}>No Notifications</Text>
-                <Text style={[styles.emptySubtitle, { color: colors.textMuted }]}>
-                  You're all caught up! Notifications for bids, job updates, and payments will appear here.
-                </Text>
-              </View>
-            }
-          />
-        )}
       </View>
-    </AnimatedBackground>
+      </SafeAreaView>
+
+      {loading ? (
+        <View style={styles.centeredState}>
+          <ActivityIndicator size="large" color={colors.primary} />
+        </View>
+      ) : (
+        <FlatList
+          data={filteredNotifications}
+          keyExtractor={(item) => item.id}
+          renderItem={({ item }) => (
+            <NotificationRow 
+              item={item} 
+              colors={colors} 
+              onPress={handlePress} 
+              onDelete={handleDeleteNotification}
+            />
+          )}
+          contentContainerStyle={[
+            styles.listContent,
+            { paddingBottom: Math.max(insets.bottom, 40) },
+            (!filteredNotifications || filteredNotifications.length === 0) && { flexGrow: 1 }
+          ]}
+          showsVerticalScrollIndicator={false}
+          ItemSeparatorComponent={() => <View style={{ height: 16 }} />}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={() => refetch()}
+              tintColor={colors.primary}
+            />
+          }
+          ListEmptyComponent={
+            <View style={styles.centeredState}>
+              <View style={[styles.emptyIconWrap, { backgroundColor: colors.primaryLight }]}>
+                <Ionicons name="notifications-off-outline" size={48} color={colors.primary} />
+              </View>
+              <Text style={[styles.emptyTitle, { color: colors.text }]}>No Notifications</Text>
+              <Text style={[styles.emptySubtitle, { color: colors.textMuted }]}>
+                You're all caught up! Notifications for bids, job updates, and payments will appear here.
+              </Text>
+            </View>
+          }
+        />
+      )}
+    </View>
   );
 }
+
+// ─────────────────────────────────────────────────────────
+//  Styles
+// ─────────────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
   header: {
+    height: 60,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
-    paddingBottom: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.05,
+    shadowRadius: 12,
+    elevation: 4,
+    zIndex: 10,
   },
-  headerTitle: { fontSize: 20, fontWeight: '800', letterSpacing: -0.4 },
-  backBtn: { width: 40, alignItems: 'flex-start' },
+  headerTitle: { fontSize: 18, fontWeight: '800', letterSpacing: -0.3 },
+  backBtn: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
   headerActionBtn: {
-    width: 38, height: 38, borderRadius: 19,
+    width: 40, height: 40, borderRadius: 20,
     alignItems: 'center', justifyContent: 'center',
   },
-  tabPill: {
-    paddingHorizontal: 14,
-    paddingVertical: 7,
-    borderRadius: 20,
-  },
-  tabPillText: {
-    fontSize: 12,
-  },
-  listContent: { paddingHorizontal: 16, paddingTop: 4 },
-  rowCard: {
+  
+  listContent: { padding: 20, paddingTop: 16 },
+  row: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: 20,
-    paddingRight: 10,
+    borderRadius: 24,
+    paddingRight: 12,
+  },
+  rowUnreadShadow: {
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
-    shadowRadius: 8,
-    elevation: 2,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.06,
+    shadowRadius: 16,
+    elevation: 3,
   },
   rowPressable: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    padding: 14,
+    padding: 16,
     flex: 1,
-    gap: 14,
+    gap: 16,
   },
   deleteItemBtn: {
-    width: 36, height: 36, borderRadius: 18,
+    width: 40, height: 40, borderRadius: 20,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingRight: 4,
   },
   iconWrap: {
-    width: 44,
-    height: 44,
-    borderRadius: 14,
+    width: 52,
+    height: 52,
+    borderRadius: 26,
     alignItems: 'center',
     justifyContent: 'center',
     flexShrink: 0,
   },
   textWrap: { flex: 1, paddingTop: 2 },
-  rowTitle: { fontSize: 15, fontWeight: '800', letterSpacing: -0.2 },
-  rowBody: { fontSize: 13, lineHeight: 19, marginBottom: 6, marginTop: 2 },
-  rowTime: { fontSize: 11, fontWeight: '600' },
+  rowTitle: { fontSize: 16, fontWeight: '800', letterSpacing: -0.2 },
+  rowBody: { fontSize: 14, lineHeight: 22, marginBottom: 8 },
+  rowTime: { fontSize: 12, fontWeight: '600' },
   unreadDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
+    width: 10,
+    height: 10,
+    borderRadius: 5,
     flexShrink: 0,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 2,
   },
+  
   centeredState: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 40,
-    gap: 12,
-    marginTop: 60,
+    gap: 16,
   },
   emptyIconWrap: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+    width: 100,
+    height: 100,
+    borderRadius: 50,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 4,
+    marginBottom: 8,
   },
-  emptyTitle: { fontSize: 18, fontWeight: '800', textAlign: 'center', letterSpacing: -0.4 },
-  emptySubtitle: { fontSize: 14, textAlign: 'center', lineHeight: 20 },
+  emptyTitle: { fontSize: 20, fontWeight: '800', textAlign: 'center', letterSpacing: -0.4 },
+  emptySubtitle: { fontSize: 15, textAlign: 'center', lineHeight: 24 },
 });

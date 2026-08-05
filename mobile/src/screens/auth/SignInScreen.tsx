@@ -14,13 +14,12 @@ import {
   Dimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
+import SystemGradient from '../../components/SystemGradient';
 import { CustomIonicons as Ionicons } from '../../components/CustomIcons';
 import { useTheme } from '../../styles/ThemeContext';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuthStore } from '../../store/authStore';
-import { api, isHtmlString } from '../../services/api';
-import AnimatedBackground from '../../components/AnimatedBackground';
+import { api } from '../../services/api';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 const KNUST_EMAIL_REGEX = /^[^\s@]+@st\.knust\.edu\.gh$/i;
@@ -146,13 +145,13 @@ export default function SignInScreen({ route, navigation }: any) {
       setBannerError('Unexpected account state. Please contact support.');
       setIsLoading(false);
     } catch (error: unknown) {
+      const targetUrl = api.defaults.baseURL;
+      console.error('LOGIN ERROR URL:', targetUrl, 'ERROR:', error);
       if (error && typeof error === 'object' && 'response' in error) {
         const axiosErr = error as { response?: { status?: number; data?: any } };
         const status = axiosErr.response?.status;
         const data = axiosErr.response?.data;
-        const msg = typeof data === 'string' && !isHtmlString(data) 
-          ? data 
-          : (data && typeof data === 'object' && typeof (data as any).message === 'string' && !isHtmlString((data as any).message) ? (data as any).message : null);
+        const msg = typeof data === 'string' ? data : (data && typeof data === 'object' && 'message' in data ? (data as any).message : null);
 
         if (status === 429) {
           setBannerError(msg || 'Too many failed login attempts. Please try again in 15 minutes.');
@@ -167,12 +166,10 @@ export default function SignInScreen({ route, navigation }: any) {
             setBannerError(msg || 'Account is restricted. Please contact support.');
           }
         } else {
-          setBannerError(msg || `Unable to connect to server. Please check your connection and try again.`);
+          setBannerError(msg || 'Something went wrong. Check your connection and try again.');
         }
-      } else if (error instanceof Error && !isHtmlString(error.message)) {
-        setBannerError(error.message);
       } else {
-        setBannerError(`Unable to connect to server. Please check your connection and try again.`);
+        setBannerError('Something went wrong. Check your connection and try again.');
       }
       setIsLoading(false);
     }
@@ -187,14 +184,14 @@ export default function SignInScreen({ route, navigation }: any) {
   const submitBtnColors = activeRole === 'CLIENT' ? clientBtnGradient : providerBtnGradient;
 
   return (
-    <AnimatedBackground style={{ flex: 1 }}>
+    <View style={{ flex: 1, backgroundColor: colors.background + '99' }}>
       <SafeAreaView style={[styles.container, { paddingBottom: insets.bottom }]}>
         <StatusBar barStyle={isDark ? "light-content" : "dark-content"} translucent backgroundColor="transparent" />
 
 
 
         <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
           style={styles.flex}
         >
           <ScrollView
@@ -213,9 +210,10 @@ export default function SignInScreen({ route, navigation }: any) {
               </TouchableOpacity>
             )}
 
+            {/* Logo */}
             <Image 
               source={logoImage} 
-              style={styles.logo} 
+              style={[styles.logo, { tintColor: colors.primary }]} 
               resizeMode="contain"
             />
 
@@ -259,7 +257,7 @@ export default function SignInScreen({ route, navigation }: any) {
                   backgroundColor: isDark ? 'rgba(255,255,255,0.02)' : colors.inputBackground, 
                   borderColor: emailFocused 
                     ? colors.primary
-                    : (isDark ? 'rgba(255,255,255,0.08)' : 'transparent') 
+                    : (isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.12)') 
                 }
               ]}>
                 <Ionicons name="mail-outline" size={18} color={colors.textMuted} style={styles.inputIcon} />
@@ -279,7 +277,7 @@ export default function SignInScreen({ route, navigation }: any) {
                   editable={!isLoading}
                 />
               </View>
-              {!!errors.email && <Text style={[styles.fieldError, { color: colors.error }]}>{errors.email}</Text>}
+              {errors.email && <Text style={[styles.fieldError, { color: colors.error }]}>{errors.email}</Text>}
             </View>
 
             {/* Password Input */}
@@ -291,7 +289,7 @@ export default function SignInScreen({ route, navigation }: any) {
                   backgroundColor: isDark ? 'rgba(255,255,255,0.02)' : colors.inputBackground, 
                   borderColor: passwordFocused 
                     ? colors.primary 
-                    : (isDark ? 'rgba(255,255,255,0.08)' : 'transparent') 
+                    : (isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.12)') 
                 }
               ]}>
                 <Ionicons name="lock-closed-outline" size={18} color={colors.textMuted} style={styles.inputIcon} />
@@ -313,7 +311,7 @@ export default function SignInScreen({ route, navigation }: any) {
                   <Ionicons name={showPassword ? 'eye-off-outline' : 'eye-outline'} size={20} color={colors.textMuted} />
                 </TouchableOpacity>
               </View>
-              {!!errors.password && <Text style={[styles.fieldError, { color: colors.error }]}>{errors.password}</Text>}
+              {errors.password && <Text style={[styles.fieldError, { color: colors.error }]}>{errors.password}</Text>}
             </View>
 
             {/* Forgot Password Link */}
@@ -333,7 +331,7 @@ export default function SignInScreen({ route, navigation }: any) {
               disabled={isLoading}
               activeOpacity={0.88}
             >
-              <LinearGradient
+              <SystemGradient
                 colors={submitBtnColors}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
@@ -344,20 +342,20 @@ export default function SignInScreen({ route, navigation }: any) {
                 ) : (
                   <Text style={styles.submitBtnText}>Sign In</Text>
                 )}
-              </LinearGradient>
+              </SystemGradient>
             </TouchableOpacity>
 
             {/* Footer */}
             <View style={styles.footer}>
               <Text style={[styles.footerText, { color: colors.textMuted }]}>Don't have an account? </Text>
               <TouchableOpacity onPress={() => navigation.navigate('RoleSelect')} disabled={isLoading}>
-                <Text style={[styles.footerLink, { color: isDark ? '#818CF8' : colors.primary }]}>Sign Up</Text>
+                <Text style={[styles.footerLink, { color: isDark ? '#FF8A66' : '#FF5500' }]}>Sign up</Text>
               </TouchableOpacity>
             </View>
           </ScrollView>
         </KeyboardAvoidingView>
       </SafeAreaView>
-    </AnimatedBackground>
+    </View>
   );
 }
 
@@ -466,6 +464,6 @@ const styles = StyleSheet.create({
   submitBtnDisabled: { opacity: 0.85 },
   submitBtnText: { color: '#FFF', fontSize: 16, fontFamily: 'Outfit-Bold' },
   footer: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginTop: 28 },
-  footerText: { fontSize: 14, fontFamily: 'Inter-Medium' },
-  footerLink: { fontSize: 14, fontFamily: 'Outfit-Bold' },
+  footerText: { fontSize: 16, fontFamily: 'Inter-Medium' },
+  footerLink: { fontSize: 18, fontFamily: 'Outfit-Bold', fontWeight: '800' },
 });

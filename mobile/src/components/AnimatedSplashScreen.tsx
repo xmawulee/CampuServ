@@ -12,7 +12,7 @@ interface Props {
 const { width, height } = Dimensions.get('window');
 
 export default function AnimatedSplashScreen({ onAnimationComplete, isAppReady, children }: Props) {
-  const { isDark } = useTheme();
+  const { isDark, colors } = useTheme();
   const [isAnimationComplete, setIsAnimationComplete] = useState(false);
   
   // Animation values
@@ -72,7 +72,7 @@ export default function AnimatedSplashScreen({ onAnimationComplete, isAppReady, 
   }, [isAppReady]);
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <Animated.View style={[styles.appContainer, { opacity: appOpacityAnim }]}>
         {children}
       </Animated.View>

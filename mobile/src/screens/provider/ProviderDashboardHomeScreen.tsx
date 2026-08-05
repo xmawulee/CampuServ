@@ -17,7 +17,6 @@ import { stompClient } from '../../services/socket';
 import { RoleSwitcher } from '../../components/RoleSwitcher';
 import { useQuery } from '@tanstack/react-query';
 import { getChats } from '../../services/chatService';
-import AnimatedBackground from '../../components/AnimatedBackground';
 
 
 type DashboardStats = {
@@ -109,8 +108,7 @@ export default function ProviderDashboardHomeScreen({ navigation }: any) {
   }
 
   return (
-    <AnimatedBackground style={{ flex: 1 }}>
-      <View style={styles.container}>
+    <View style={[styles.container, { paddingTop: insets.top, backgroundColor: colors.background }]}>
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={[styles.scrollContent, { paddingBottom: bottomTabSpacing }]}
@@ -134,7 +132,7 @@ export default function ProviderDashboardHomeScreen({ navigation }: any) {
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flexShrink: 0 }}>
             <RoleSwitcher />
             <TouchableOpacity
-              style={[styles.notificationBtn, { backgroundColor: colors.inputBackground, position: 'relative' }]}
+              style={[styles.notificationBtn, { backgroundColor: colors.cardBackground, position: 'relative' }]}
               onPress={() => navigation.navigate('ChatList')}
               accessibilityLabel="Open Messages"
               activeOpacity={0.8}
@@ -149,7 +147,7 @@ export default function ProviderDashboardHomeScreen({ navigation }: any) {
               )}
             </TouchableOpacity>
             <TouchableOpacity
-              style={[styles.notificationBtn, { backgroundColor: colors.inputBackground }]}
+              style={[styles.notificationBtn, { backgroundColor: colors.cardBackground }]}
               onPress={() => navigation.navigate('NotificationCenter')}
               accessibilityLabel="Open Notifications"
               activeOpacity={0.8}
@@ -205,6 +203,36 @@ export default function ProviderDashboardHomeScreen({ navigation }: any) {
             </Text>
             <Text style={[styles.snapshotLabel, { color: colors.textMuted }]}>In Progress</Text>
           </TouchableOpacity>
+        </View>
+
+        {/* ── Marketplace Listings & Services Quick Action Card ── */}
+        <View style={[styles.promoCard, { backgroundColor: colors.primaryLight, borderColor: colors.primary + '30' }]}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+            <View style={[styles.promoIconWrap, { backgroundColor: colors.primary }]}>
+              <Ionicons name="sparkles" size={18} color="#FFF" />
+            </View>
+            <Text style={[styles.promoTitle, { color: colors.text }]}>Marketplace Listings & Services</Text>
+          </View>
+          <Text style={[styles.promoSub, { color: colors.textMuted }]}>
+            Create service offerings, upload work sample photos to your portfolio, and set base pricing for student feeds.
+          </Text>
+          <View style={styles.promoActions}>
+            <TouchableOpacity
+              style={[styles.promoBtnPrimary, { backgroundColor: colors.primary }]}
+              onPress={() => navigation.navigate('CreateEditListing')}
+              activeOpacity={0.85}
+            >
+              <Ionicons name="add-circle-outline" size={16} color="#FFF" />
+              <Text style={styles.promoBtnPrimaryText}>+ Post New Service</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.promoBtnSecondary, { borderColor: colors.primary }]}
+              onPress={() => navigation.navigate('Listings')}
+              activeOpacity={0.8}
+            >
+              <Text style={[styles.promoBtnSecondaryText, { color: colors.primary }]}>Manage All Services →</Text>
+            </TouchableOpacity>
+          </View>
         </View>
 
         {/* ── Active Jobs List ── */}
@@ -276,7 +304,6 @@ export default function ProviderDashboardHomeScreen({ navigation }: any) {
         )}
       </ScrollView>
     </View>
-    </AnimatedBackground>
   );
 }
 
@@ -291,7 +318,18 @@ const styles = StyleSheet.create({
   },
   greetingSub: { fontSize: 12, fontWeight: '600', marginBottom: 2, textTransform: 'uppercase', letterSpacing: 0.5 },
   greetingName: { fontSize: 24, fontWeight: '800' },
-  notificationBtn: { width: 44, height: 44, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
+  notificationBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+    elevation: 2,
+  },
 
   // Balance card
   balanceCard: {

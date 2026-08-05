@@ -38,7 +38,7 @@ export default {
     },
     extra: {
       eas: {
-        projectId: "b0266316-e0b1-4a0e-8638-13b69bf75d2e"
+        projectId: "0e634d8d-f76c-4694-bc34-f5acebeca813"
       },
       googleMapsApiKey: process.env.GOOGLE_MAPS_API_KEY,
       apiBaseUrl: process.env.API_BASE_URL,
@@ -46,7 +46,6 @@ export default {
       appEnv: process.env.APP_ENV ?? 'development',
       wsBaseUrl: process.env.WS_BASE_URL,
     },
-    owner: "alleeennnn",
     plugins: [
       "@react-native-community/datetimepicker",
       [
