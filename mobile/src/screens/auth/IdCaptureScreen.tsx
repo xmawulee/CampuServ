@@ -279,8 +279,8 @@ export default function IdCaptureScreen({ route, navigation }: any) {
           contentContainerStyle={[styles.scrollContent, { paddingBottom: 48 + insets.bottom }]}
           showsVerticalScrollIndicator={false}
         >
-          <View style={[styles.iconCircle, { backgroundColor: colors.primaryLight, alignSelf: 'center' }]}>
-            <Ionicons name="card-outline" size={44} color={colors.primary} />
+          <View style={[styles.iconCircle, { backgroundColor: 'rgba(124, 58, 237, 0.12)', alignSelf: 'center' }]}>
+            <Ionicons name="card-outline" size={44} color="#7C3AED" />
           </View>
 
           <Text style={[styles.stepIndicator, { color: colors.primary }]}>Step 1 of 4</Text>
@@ -307,7 +307,7 @@ export default function IdCaptureScreen({ route, navigation }: any) {
 
           {/* Camera only — no gallery option */}
           <TouchableOpacity
-            style={[styles.cameraBtn, { backgroundColor: colors.primary }]}
+            style={[styles.cameraBtn, { backgroundColor: '#7C3AED' }]}
             onPress={launchCamera}
             disabled={permissionState === 'undetermined'}
           >
@@ -358,7 +358,7 @@ export default function IdCaptureScreen({ route, navigation }: any) {
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[styles.usePhotoBtn, { backgroundColor: colors.primary }]}
+              style={[styles.usePhotoBtn, { backgroundColor: '#7C3AED' }]}
               onPress={handleUpload}
             >
               <Ionicons name="cloud-upload-outline" size={18} color="#FFF" />
@@ -376,8 +376,8 @@ export default function IdCaptureScreen({ route, navigation }: any) {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={styles.centeredContent}>
-        <View style={[styles.iconCircle, { backgroundColor: colors.primaryLight }]}>
-          <Ionicons name="cloud-upload-outline" size={40} color={colors.primary} />
+        <View style={[styles.iconCircle, { backgroundColor: 'rgba(124, 58, 237, 0.12)' }]}>
+          <Ionicons name="cloud-upload-outline" size={40} color="#7C3AED" />
         </View>
         <Text style={[styles.heading, { color: colors.text, textAlign: 'center' }]}>Uploading...</Text>
         <Text style={[styles.subheading, { color: colors.textMuted, textAlign: 'center' }]}>
@@ -388,12 +388,12 @@ export default function IdCaptureScreen({ route, navigation }: any) {
         <View style={[styles.progressTrack, { backgroundColor: colors.border }]}>
           <View
             // eslint-disable-next-line react-native/no-inline-styles
-            style={{ height: '100%', borderRadius: 4, width: `${uploadProgress}%`, backgroundColor: colors.primary }}
+            style={{ height: '100%', borderRadius: 4, width: `${uploadProgress}%`, backgroundColor: '#7C3AED' }}
           />
         </View>
         <Text style={[styles.progressText, { color: colors.textMuted }]}>{uploadProgress}%</Text>
 
-        <ActivityIndicator size="large" color={colors.primary} style={{ marginTop: 16 }} />
+        <ActivityIndicator size="large" color="#7C3AED" style={{ marginTop: 16 }} />
       </View>
     </SafeAreaView>
   );

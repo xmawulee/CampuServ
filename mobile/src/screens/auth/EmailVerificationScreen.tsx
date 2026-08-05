@@ -114,7 +114,7 @@ export default function EmailVerificationScreen() {
           
           <View style={styles.headerWrap}>
             <View style={[styles.iconWrap, { backgroundColor: isDark ? '#1E2D2D' : '#E6F0F0' }]}>
-              <Ionicons name="mail-unread-outline" size={32} color={colors.primary} />
+              <Ionicons name="mail-unread-outline" size={32} color="#008080" />
             </View>
             <Text style={[styles.title, { color: colors.text }]}>Verify Your Email</Text>
             <Text style={[styles.subtitle, { color: colors.textMuted }]}>
@@ -184,7 +184,7 @@ export default function EmailVerificationScreen() {
 
             {loading && (
               <View style={styles.loadingWrap}>
-                <ActivityIndicator size="small" color={colors.primary} />
+                <ActivityIndicator size="small" color="#008080" />
                 <Text style={[styles.loadingText, { color: colors.textMuted }]}>Verifying code...</Text>
               </View>
             )}
@@ -196,7 +196,7 @@ export default function EmailVerificationScreen() {
                 style={[styles.resendBtn, (countdown > 0 || resending) && { opacity: 0.5 }]}
               >
                 {resending ? (
-                  <ActivityIndicator size="small" color={colors.primary} />
+                  <ActivityIndicator size="small" color="#008080" />
                 ) : (
                   <Text style={styles.resendBtnText}>
                     {countdown > 0 ? `Resend Code (${countdown}s)` : 'Resend Code'}
@@ -323,7 +323,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   resendBtnText: {
-    color: colors.primary,
+    color: '#008080',
     fontSize: 15,
     fontWeight: '600',
   },

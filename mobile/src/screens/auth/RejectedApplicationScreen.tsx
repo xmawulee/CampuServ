@@ -155,7 +155,7 @@ export default function RejectedApplicationScreen({ navigation }: any) {
           </TouchableOpacity>
         ) : (
           <TouchableOpacity
-            style={[styles.primaryBtn, { backgroundColor: colors.primary }, isResetting && { opacity: 0.5 }]}
+            style={[styles.primaryBtn, { backgroundColor: '#7C3AED' }, isResetting && { opacity: 0.5 }]}
             onPress={handleResubmit}
             disabled={isResetting}
           >

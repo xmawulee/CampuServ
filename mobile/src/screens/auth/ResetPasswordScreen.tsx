@@ -90,7 +90,7 @@ export default function ResetPasswordScreen({ route, navigation }: any) {
 
           <View style={styles.headerWrap}>
             <View style={[styles.iconWrap, { backgroundColor: isDark ? '#1E2D2D' : '#E6F0F0' }]}>
-              <Ionicons name="lock-closed-outline" size={32} color={colors.primary} />
+              <Ionicons name="lock-closed-outline" size={32} color="#008080" />
             </View>
             <Text style={[styles.title, { color: colors.text }]}>Reset Your Password</Text>
             <Text style={[styles.subtitle, { color: colors.textMuted }]}>
@@ -107,7 +107,7 @@ export default function ResetPasswordScreen({ route, navigation }: any) {
               </Text>
 
               <TouchableOpacity
-                style={[styles.primaryButton, { backgroundColor: colors.primary, marginTop: 24 }]}
+                style={[styles.primaryButton, { backgroundColor: '#008080', marginTop: 24 }]}
                 onPress={() => navigation.navigate('SignIn')}
               >
                 <Text style={styles.primaryButtonText}>Sign In Now</Text>
@@ -220,7 +220,7 @@ export default function ResetPasswordScreen({ route, navigation }: any) {
                 style={[
                   styles.primaryButton,
                   {
-                    backgroundColor: colors.primary,
+                    backgroundColor: '#008080',
                     opacity: loading || !isPasswordValid || !isMatch || !resetSessionToken ? 0.6 : 1,
                   },
                 ]}
@@ -239,7 +239,7 @@ export default function ResetPasswordScreen({ route, navigation }: any) {
                   style={{ marginTop: 20, alignItems: 'center' }}
                   onPress={() => navigation.navigate('ForgotPassword')}
                 >
-                  <Text style={{ color: colors.primary, fontWeight: '600', fontSize: 14 }}>
+                  <Text style={{ color: '#008080', fontWeight: '600', fontSize: 14 }}>
                     Request a new verification code
                   </Text>
                 </TouchableOpacity>
