@@ -51,7 +51,7 @@ interface Notification {
 // ─────────────────────────────────────────────────────────
 
 const NOTIF_META: Record<NotifType, { icon: string; color: string }> = {
-  NEW_BID: { icon: 'pricetag-outline', color: '#7C3AED' },
+  NEW_BID: { icon: 'pricetag-outline', color: colors.primary },
   BID_ACCEPTED: { icon: 'checkmark-circle-outline', color: '#10B981' },
   JOB_STARTED: { icon: 'play-circle-outline', color: '#3B82F6' },
   JOB_COMPLETE: { icon: 'trophy-outline', color: '#F59E0B' },
@@ -60,7 +60,7 @@ const NOTIF_META: Record<NotifType, { icon: string; color: string }> = {
   REVIEW_REQUEST: { icon: 'star-outline', color: '#F59E0B' },
   SYSTEM: { icon: 'information-circle-outline', color: '#6B7280' },
   ANNOUNCEMENT: { icon: 'megaphone-outline', color: '#3B82F6' },
-  CHAT_MESSAGE: { icon: 'chatbubble-outline', color: '#7C3AED' },
+  CHAT_MESSAGE: { icon: 'chatbubble-outline', color: colors.primary },
 };
 
 const getMeta = (type: NotifType) =>
