@@ -390,23 +390,7 @@ function AppNavigatorInner() {
     };
   }, [isAuthenticated, user?.id]);
 
-  // Show session-expired toast exactly once after forced sign-out
-  useEffect(() => {
-    if (sessionExpired && !sessionExpiredShown.current) {
-      sessionExpiredShown.current = true;
-      const t = setTimeout(() => {
-        showToast({
-          status: 'error',
-          title: 'Session Expired',
-          subtitle: 'Please sign in again to continue.',
-          duration: 5000,
-        });
-        useAuthStore.setState({ sessionExpired: false });
-      }, 400);
-      return () => clearTimeout(t);
-    }
-    if (!sessionExpired) sessionExpiredShown.current = false;
-  }, [sessionExpired, showToast]);
+  // (Removed Session Expired toast)
 
   const route = resolveRoute(isAuthenticated, user);
   // Include accountStatus in the key so the navigator fully remounts when an account

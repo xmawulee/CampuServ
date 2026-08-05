@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { StatusBar } from 'expo-status-bar';
 import * as SplashScreen from 'expo-splash-screen';
 import * as Font from 'expo-font';
+import { Asset } from 'expo-asset';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 
 import AppNavigator from './src/navigation/AppNavigator';
@@ -46,9 +47,15 @@ function AppContent() {
   useEffect(() => {
     async function prepare() {
       try {
+        // Preload background images to prevent flashing on logout
+        const preloadImages = Asset.loadAsync([
+          require('./assets/images/bg_tile.png'),
+          require('./assets/images/animated_bg_dark.png')
+        ]).catch(() => {});
+
         // Safety timeout: If SecureStore takes more than 1.5s, proceed to prevent hanging
         await Promise.race([
-          loadStoredAuth(),
+          Promise.all([loadStoredAuth(), preloadImages]),
           new Promise((_, reject) => setTimeout(() => reject(new Error("Auth loading timed out")), 1500))
         ]);
       } catch (e) {

@@ -31,10 +31,12 @@ export default function SettingsScreen({ navigation }: any) {
   const [notifyNewRequests, setNotifyNewRequests] = useState(true);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   const { showToast } = useToast();
 
   const handleLogout = async () => {
+    setIsLoggingOut(true);
     await logout();
   };
 
@@ -74,9 +76,9 @@ export default function SettingsScreen({ navigation }: any) {
   };
 
 
-  if (loading) {
+  if (loading || isLoggingOut) {
     return (
-      <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
+      <View style={[styles.container, { backgroundColor: colors.background, justifyContent: 'center', alignItems: 'center' }]}>
         <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );

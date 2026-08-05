@@ -28,8 +28,8 @@ export const LightColors: ThemeColors = {
   primaryDark: '#FF7846',    // Same as primary (no dark gradient)
   accent: '#FF7846',         // Coral Orange
   secondary: '#4A4A4D',      // Darker muted grey for readability
-  background: '#FDFDFD',     // Clean off-white
-  screenBackground: '#FDFDFD',
+  background: '#F9F7F2',     // Creamy off-white (like login page)
+  screenBackground: '#F9F7F2',
   cardBackground: '#FFFFFF', // Clean white
   inputBackground: '#FFFFFF',
   border: '#D1D1D1',         

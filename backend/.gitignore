@@ -19,3 +19,4 @@ uploads/
 *.keystore
 *.pkcs8
 *.secret
+env

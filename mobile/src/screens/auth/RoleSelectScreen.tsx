@@ -166,7 +166,7 @@ const styles = StyleSheet.create({
   cardsBlock: {
     gap: 12,
     zIndex: 1,
-    marginTop: 6,
+    marginTop: 32,
   },
   chooseLabel: {
     fontSize: 13,
@@ -188,7 +188,7 @@ const styles = StyleSheet.create({
     padding: 18,
     flexDirection: 'row',
     alignItems: 'center',
-    minHeight: 160,
+    height: 185,
   },
   cardIconWrap: {
     width: 52,

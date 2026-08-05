@@ -145,6 +145,8 @@ export default function SignInScreen({ route, navigation }: any) {
       setBannerError('Unexpected account state. Please contact support.');
       setIsLoading(false);
     } catch (error: unknown) {
+      const targetUrl = api.defaults.baseURL;
+      console.error('LOGIN ERROR URL:', targetUrl, 'ERROR:', error);
       if (error && typeof error === 'object' && 'response' in error) {
         const axiosErr = error as { response?: { status?: number; data?: any } };
         const status = axiosErr.response?.status;
