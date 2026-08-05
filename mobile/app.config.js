@@ -2,9 +2,9 @@ import 'dotenv/config';
 
 export default {
   expo: {
-    name: "CampusServ",
-    slug: "campusserv-v2",
-    scheme: "campusserv",
+    name: "CampuServ",
+    slug: "mobile",
+    scheme: "campuserv",
     version: "1.0.0",
     orientation: "portrait",
     icon: "./assets/icon.png",
@@ -17,14 +17,18 @@ export default {
     userInterfaceStyle: "automatic",
     ios: {
       supportsTablet: true,
-      bundleIdentifier: "com.knust.campusserv"
+      bundleIdentifier: "com.knust.campuserv"
     },
     android: {
-      package: "com.knust.campusserv",
+      package: "com.knust.campuserv",
+      config: {
+        googleMaps: {
+          apiKey: process.env.GOOGLE_MAPS_API_KEY
+        }
+      },
       adaptiveIcon: {
-        backgroundColor: "#E6E6E6",
+        backgroundColor: "#FFFFFF",
         foregroundImage: "./assets/android-icon-foreground.png",
-        backgroundImage: "./assets/android-icon-background.png",
         monochromeImage: "./assets/android-icon-monochrome.png"
       },
       predictiveBackGestureEnabled: false
@@ -44,7 +48,21 @@ export default {
     },
     owner: "alleeennnn",
     plugins: [
-      "@react-native-community/datetimepicker"
+      "@react-native-community/datetimepicker",
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Allow CampuServ to access your location to track service requests and provider locations.",
+          "locationWhenInUsePermission": "Allow CampuServ to access your location to search for nearby tasks and update job tracking."
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow CampuServ to access your photos to select listings pictures, upload profile avatars, and send chat images.",
+          "cameraPermission": "Allow CampuServ to access your camera to capture provider verification IDs, profile pictures, and listings photos."
+        }
+      ]
     ]
   }
 };

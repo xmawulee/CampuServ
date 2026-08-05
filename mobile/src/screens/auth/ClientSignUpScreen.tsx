@@ -19,7 +19,7 @@ import { CustomIonicons as Ionicons } from '../../components/CustomIcons';
 import { useTheme } from '../../styles/ThemeContext';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuthStore } from '../../store/authStore';
-import { api } from '../../services/api';
+import { api, isHtmlString } from '../../services/api';
 import AnimatedBackground from '../../components/AnimatedBackground';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
@@ -156,10 +156,13 @@ export default function ClientSignUpScreen({ navigation }: any) {
     } catch (error: any) {
       const responseData = error.response?.data;
       let serverMessage: string | null = null;
-      if (typeof responseData === 'string') {
+      if (typeof responseData === 'string' && !isHtmlString(responseData)) {
         serverMessage = responseData;
       } else if (responseData && typeof responseData === 'object') {
-        serverMessage = responseData.message || responseData.error || null;
+        const msg = responseData.message || responseData.error;
+        if (typeof msg === 'string' && !isHtmlString(msg)) {
+          serverMessage = msg;
+        }
       }
 
       if (error.response?.status === 409) {
@@ -167,7 +170,7 @@ export default function ClientSignUpScreen({ navigation }: any) {
       } else if (error.response?.status === 400) {
         setBannerError(serverMessage || 'Registration failed. Please check your details.');
       } else {
-        setBannerError(serverMessage || 'Something went wrong. Check your connection and try again.');
+        setBannerError(serverMessage || 'Unable to connect to server. Check your connection and try again.');
       }
       setIsLoading(false);
     }
@@ -205,10 +208,9 @@ export default function ClientSignUpScreen({ navigation }: any) {
               <Ionicons name="arrow-back" size={24} color={colors.text} />
             </TouchableOpacity>
 
-            {/* Logo */}
             <Image 
               source={logoImage} 
-              style={[styles.logo, { tintColor: colors.primary }]} 
+              style={styles.logo} 
               resizeMode="contain"
             />
 

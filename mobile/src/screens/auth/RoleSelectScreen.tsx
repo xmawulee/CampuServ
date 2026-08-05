@@ -40,7 +40,7 @@ export default function RoleSelectScreen({ navigation }: any) {
           <View style={[styles.logoIconWrap, { backgroundColor: colors.primaryLight, shadowColor: colors.primary }]}>
             <Image
               source={logoImage}
-              style={[styles.logoImage, { tintColor: colors.primary }]}
+              style={styles.logoImage}
               resizeMode="contain"
             />
           </View>

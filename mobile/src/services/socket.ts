@@ -87,7 +87,10 @@ class StompClient {
       console.log('STOMP: Proactively refreshing expired token before connecting...');
       const response = await fetch(`${ENV.apiBaseUrl ?? 'http://10.183.224.182:8080'}/auth/refresh`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'User-Agent': 'CampuServMobileApp/1.0'
+        },
         body: JSON.stringify({ refreshToken })
       });
       if (response.ok) {
@@ -107,6 +110,10 @@ class StompClient {
         }
       } else {
         console.warn('STOMP: Proactive token refresh failed with status:', response.status);
+        if (response.status === 401 || response.status === 403) {
+          console.warn('STOMP: Refresh token expired or invalid, triggering session expiry.');
+          await authStore.setSessionExpired();
+        }
       }
     } catch (e) {
       console.warn('STOMP: Error during proactive token refresh:', e);

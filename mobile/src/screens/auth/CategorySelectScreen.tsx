@@ -13,7 +13,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useTheme } from '../../styles/ThemeContext';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuthStore } from '../../store/authStore';
-import { api } from '../../services/api';
+import { api, isHtmlString } from '../../services/api';
 import { CategoryIcon } from '../../utils/categoryIcons';
 import type { ServiceCategory } from '../../types/provider';
 
@@ -74,8 +74,8 @@ export default function CategorySelectScreen({ route, navigation }: any) {
       navigation.navigate('ProviderBio');
     } catch (err: any) {
       setIsSubmitting(false);
-      let message = 'Failed to submit application. Please try again.';
-      if (err?.response?.data && typeof err.response.data === 'string') {
+      let message = 'Failed to submit application. Please check your connection and try again.';
+      if (err?.response?.data && typeof err.response.data === 'string' && !isHtmlString(err.response.data)) {
         message = err.response.data;
       }
       setErrorMsg(message);

@@ -32,7 +32,12 @@ export async function fetchAndResolveAccountStatus(source: string): Promise<'ACT
 
   try {
     console.log(`[AccountStatus] Executing check-status request for ${user.email} (Source: ${source}, ts: ${fetchTimestamp})`);
-    const res = await axios.get(`${BASE_URL}/auth/check-status`, { params: { email: user.email } });
+    const res = await axios.get(`${BASE_URL}/auth/check-status`, { 
+      params: { email: user.email },
+      headers: {
+        'User-Agent': 'CampuServMobileApp/1.0',
+      }
+    });
     const serverStatus = (res.data?.accountStatus || 'ACTIVE').toUpperCase() as 'ACTIVE' | 'SUSPENDED' | 'BANNED';
 
     console.log(`[AccountStatus] "${source}" received server status: ${serverStatus}`);

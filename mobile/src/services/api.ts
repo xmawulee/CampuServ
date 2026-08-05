@@ -8,11 +8,23 @@ import ENV from '../config/env';
 
 export const BASE_URL = ENV.apiBaseUrl ?? 'http://localhost:8080';
 
+export function isHtmlString(data: any): boolean {
+  if (typeof data !== 'string') return false;
+  const s = data.trim().toLowerCase();
+  return (
+    s.startsWith('<!doctype') ||
+    s.startsWith('<html') ||
+    s.includes('<html') ||
+    s.includes('<!element') ||
+    s.includes('<body>')
+  );
+}
+
 export const api = axios.create({
   baseURL: BASE_URL,
   headers: {
     'Content-Type': 'application/json',
-    'Bypass-Tunnel-Reminder': 'true',
+    'User-Agent': 'CampuServMobileApp/1.0',
     'Cache-Control': 'no-cache, no-store, must-revalidate',
     'Pragma': 'no-cache',
     'Expires': '0',
@@ -52,9 +64,25 @@ const processQueue = (error: any, token: string | null = null) => {
 };
 
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    if (isHtmlString(response.data)) {
+      const err: any = new Error("Unable to connect to server. The server returned an HTML error page instead of JSON API data.");
+      err.response = response;
+      err.response.data = "Unable to connect to server. Please check your network connection and server status.";
+      return Promise.reject(err);
+    }
+    return response;
+  },
   async (error) => {
     const originalRequest = error.config;
+
+    // Sanitize HTML error responses from reverse proxies or gateways
+    if (error.response && error.response.data && isHtmlString(error.response.data)) {
+      error.response.data = "Unable to connect to server. Please check your network connection and server status.";
+    }
+    if (error.message && isHtmlString(error.message)) {
+      error.message = "Unable to connect to server. Please check your network connection and server status.";
+    }
 
     // Check for explicit Account Restricted status (Banned or Suspended)
     const errData = error.response?.data;
@@ -111,6 +139,10 @@ api.interceptors.response.use(
         // Call the auth service refresh endpoint directly (bypassing authorization interceptor check since we supply body)
         const response = await axios.post(`${BASE_URL}/auth/refresh`, {
           refreshToken: refreshToken,
+        }, {
+          headers: {
+            'User-Agent': 'CampuServMobileApp/1.0',
+          }
         });
 
         const { accessToken: newAccessToken, refreshToken: newRefreshToken } = response.data;
@@ -142,6 +174,8 @@ api.interceptors.response.use(
           } else {
             refreshError.response.data = "An unexpected server error occurred.";
           }
+        } else if (refreshError.response && refreshError.response.data && isHtmlString(refreshError.response.data)) {
+          refreshError.response.data = "Connection to server failed. The server might be down or restarting.";
         }
 
         processQueue(refreshError, null);

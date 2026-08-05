@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { CustomIonicons as Ionicons } from '../../components/CustomIcons';
-import { api } from '../../services/api';
+import { api, isHtmlString } from '../../services/api';
 import { useAuthStore } from '../../store/authStore';
 import { useTheme } from '../../styles/ThemeContext';
 
@@ -77,10 +77,10 @@ export default function ProviderReviewScreen({ navigation }: any) {
       // AppNavigator will automatically drop us into PendingApproval screen.
     } catch (err: any) {
       setIsSubmitting(false);
-      let message = 'Failed to submit application. Please try again.';
-      if (err?.response?.data && typeof err.response.data === 'string') {
+      let message = 'Failed to submit application. Please check your connection and try again.';
+      if (err?.response?.data && typeof err.response.data === 'string' && !isHtmlString(err.response.data)) {
         message = err.response.data;
-      } else if (err?.response?.data?.message && typeof err.response.data.message === 'string') {
+      } else if (err?.response?.data?.message && typeof err.response.data.message === 'string' && !isHtmlString(err.response.data.message)) {
         message = err.response.data.message;
       }
       setErrorMsg(message);

@@ -19,7 +19,7 @@ import { CustomIonicons as Ionicons } from '../../components/CustomIcons';
 import { useTheme } from '../../styles/ThemeContext';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuthStore } from '../../store/authStore';
-import { api } from '../../services/api';
+import { api, isHtmlString } from '../../services/api';
 import AnimatedBackground from '../../components/AnimatedBackground';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
@@ -150,7 +150,9 @@ export default function SignInScreen({ route, navigation }: any) {
         const axiosErr = error as { response?: { status?: number; data?: any } };
         const status = axiosErr.response?.status;
         const data = axiosErr.response?.data;
-        const msg = typeof data === 'string' ? data : (data && typeof data === 'object' && 'message' in data ? (data as any).message : null);
+        const msg = typeof data === 'string' && !isHtmlString(data) 
+          ? data 
+          : (data && typeof data === 'object' && typeof (data as any).message === 'string' && !isHtmlString((data as any).message) ? (data as any).message : null);
 
         if (status === 429) {
           setBannerError(msg || 'Too many failed login attempts. Please try again in 15 minutes.');
@@ -165,10 +167,12 @@ export default function SignInScreen({ route, navigation }: any) {
             setBannerError(msg || 'Account is restricted. Please contact support.');
           }
         } else {
-          setBannerError(msg || 'Something went wrong. Check your connection and try again.');
+          setBannerError(msg || `Unable to connect to server. Please check your connection and try again.`);
         }
+      } else if (error instanceof Error && !isHtmlString(error.message)) {
+        setBannerError(error.message);
       } else {
-        setBannerError('Something went wrong. Check your connection and try again.');
+        setBannerError(`Unable to connect to server. Please check your connection and try again.`);
       }
       setIsLoading(false);
     }
@@ -209,10 +213,9 @@ export default function SignInScreen({ route, navigation }: any) {
               </TouchableOpacity>
             )}
 
-            {/* Logo */}
             <Image 
               source={logoImage} 
-              style={[styles.logo, { tintColor: colors.primary }]} 
+              style={styles.logo} 
               resizeMode="contain"
             />
 

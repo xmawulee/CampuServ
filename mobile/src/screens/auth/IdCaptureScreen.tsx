@@ -15,7 +15,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
 import * as ImageManipulator from 'expo-image-manipulator';
 import { CustomIonicons as Ionicons } from '../../components/CustomIcons';
-import { api } from '../../services/api';
+import { api, isHtmlString } from '../../services/api';
 import { useAuthStore } from '../../store/authStore';
 import { useTheme } from '../../styles/ThemeContext';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -169,7 +169,7 @@ export default function IdCaptureScreen({ route, navigation }: any) {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
-          'Bypass-Tunnel-Reminder': 'true'
+          'User-Agent': 'CampuServMobileApp/1.0',
         },
         body: formData,
       });
@@ -193,9 +193,11 @@ export default function IdCaptureScreen({ route, navigation }: any) {
       let message = 'Upload failed. Please check your connection and try again.';
       if (error && typeof error === 'object' && 'response' in error) {
         const axiosErr = error as { response?: { data?: unknown } };
-        if (typeof axiosErr.response?.data === 'string') {
+        if (typeof axiosErr.response?.data === 'string' && !isHtmlString(axiosErr.response.data)) {
           message = axiosErr.response.data;
         }
+      } else if (error instanceof Error && !isHtmlString(error.message)) {
+        message = error.message;
       }
       setUploadError(message);
       setCaptureState('preview'); // Return to preview so Retry is visible

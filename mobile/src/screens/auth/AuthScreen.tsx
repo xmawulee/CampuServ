@@ -15,7 +15,7 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { CustomIonicons as Ionicons } from '../../components/CustomIcons';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { api } from '../../services/api';
+import { api, isHtmlString } from '../../services/api';
 import { useAuthStore } from '../../store/authStore';
 import { useTheme } from '../../styles/ThemeContext';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -121,12 +121,12 @@ export default function AuthScreen({ navigation }: any) {
 
     } catch (error: any) {
       const serverMessage = error.response?.data;
-      const isStringMsg = typeof serverMessage === 'string';
+      const isStringMsg = typeof serverMessage === 'string' && !isHtmlString(serverMessage);
 
       if (error.response?.status === 401) {
         setBannerError('Invalid email or password. Please try again.');
       } else {
-        setBannerError(isStringMsg ? serverMessage : 'Something went wrong. Check your connection and try again.');
+        setBannerError(isStringMsg ? serverMessage : 'Unable to connect to server. Check your connection and try again.');
       }
       setIsLoading(false);
     }
@@ -184,14 +184,14 @@ export default function AuthScreen({ navigation }: any) {
 
     } catch (error: any) {
       const serverMessage = error.response?.data;
-      const isStringMsg = typeof serverMessage === 'string';
+      const isStringMsg = typeof serverMessage === 'string' && !isHtmlString(serverMessage);
 
       if (error.response?.status === 409 || (isStringMsg && serverMessage.includes('registered'))) {
         setBannerError('An account with this email already exists. Try signing in instead.');
       } else if (error.response?.status === 400) {
         setBannerError(isStringMsg ? serverMessage : 'Registration failed. Please check your details and try again.');
       } else {
-        setBannerError(isStringMsg ? serverMessage : 'Something went wrong. Check your connection and try again.');
+        setBannerError(isStringMsg ? serverMessage : 'Unable to connect to server. Check your connection and try again.');
       }
       setIsLoading(false);
     }
@@ -211,7 +211,7 @@ export default function AuthScreen({ navigation }: any) {
           
           {/* Logo Area */}
           <View style={styles.logoArea}>
-            <Image source={logoImage} style={[styles.logo, { tintColor: colors.primary }]} resizeMode="contain" />
+            <Image source={logoImage} style={styles.logo} resizeMode="contain" />
             <Text style={styles.tagline}>Your campus. Your services.</Text>
           </View>
 
