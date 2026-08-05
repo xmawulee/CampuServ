@@ -89,8 +89,8 @@ export default function ResetPasswordScreen({ route, navigation }: any) {
           </TouchableOpacity>
 
           <View style={styles.headerWrap}>
-            <View style={[styles.iconWrap, { backgroundColor: isDark ? '#1E2D2D' : '#E6F0F0' }]}>
-              <Ionicons name="lock-closed-outline" size={32} color="#008080" />
+            <View style={[styles.iconWrap, { backgroundColor: colors.primaryLight }]}>
+              <Ionicons name="lock-closed-outline" size={32} color={colors.primary} />
             </View>
             <Text style={[styles.title, { color: colors.text }]}>Reset Your Password</Text>
             <Text style={[styles.subtitle, { color: colors.textMuted }]}>
@@ -99,15 +99,15 @@ export default function ResetPasswordScreen({ route, navigation }: any) {
           </View>
 
           {success ? (
-            <View style={[styles.card, { backgroundColor: isDark ? '#1C2E2A' : '#E8F5E9', borderColor: '#4CAF50' }]}>
-              <Ionicons name="checkmark-circle" size={56} color="#4CAF50" style={{ alignSelf: 'center', marginBottom: 12 }} />
+            <View style={[styles.card, { backgroundColor: colors.cardBackground, borderColor: colors.success }]}>
+              <Ionicons name="checkmark-circle" size={56} color={colors.success} style={{ alignSelf: 'center', marginBottom: 12 }} />
               <Text style={[styles.cardTitle, { color: colors.text }]}>Password Reset Successful!</Text>
               <Text style={[styles.cardText, { color: colors.textMuted }]}>
                 Your password has been updated and all existing sessions have been signed out. Please sign in with your new password.
               </Text>
 
               <TouchableOpacity
-                style={[styles.primaryButton, { backgroundColor: '#008080', marginTop: 24 }]}
+                style={[styles.primaryButton, { backgroundColor: colors.primary, marginTop: 24, borderRadius: 26 }]}
                 onPress={() => navigation.navigate('SignIn')}
               >
                 <Text style={styles.primaryButtonText}>Sign In Now</Text>
@@ -116,18 +116,18 @@ export default function ResetPasswordScreen({ route, navigation }: any) {
           ) : (
             <View style={styles.form}>
               {!resetSessionToken ? (
-                <View style={[styles.errorBanner, { marginBottom: 20 }]}>
-                  <Ionicons name="warning-outline" size={24} color="#D32F2F" />
-                  <Text style={styles.errorBannerText}>
+                <View style={[styles.errorBanner, { backgroundColor: colors.errorLight, marginBottom: 20 }]}>
+                  <Ionicons name="warning-outline" size={24} color={colors.error} />
+                  <Text style={[styles.errorBannerText, { color: colors.error }]}>
                     Missing reset session token. Please request a new code.
                   </Text>
                 </View>
               ) : null}
 
               {error ? (
-                <View style={styles.errorBanner}>
-                  <Ionicons name="alert-circle-outline" size={20} color="#D32F2F" />
-                  <Text style={styles.errorBannerText}>{error}</Text>
+                <View style={[styles.errorBanner, { backgroundColor: colors.errorLight }]}>
+                  <Ionicons name="alert-circle-outline" size={20} color={colors.error} />
+                  <Text style={[styles.errorBannerText, { color: colors.error }]}>{error}</Text>
                 </View>
               ) : null}
 
@@ -139,15 +139,15 @@ export default function ResetPasswordScreen({ route, navigation }: any) {
                     styles.inputContainer,
                     {
                       backgroundColor: colors.cardBackground,
-                      borderColor: passwordFocused ? '#008080' : colors.border,
+                      borderColor: passwordFocused ? colors.primary : colors.border,
                     },
                   ]}
                 >
-                  <Ionicons name="lock-closed-outline" size={20} color={passwordFocused ? '#008080' : colors.textMuted} style={styles.inputIcon} />
+                  <Ionicons name="lock-closed-outline" size={20} color={passwordFocused ? colors.primary : colors.textMuted} style={styles.inputIcon} />
                   <TextInput
                     style={[styles.input, { color: colors.text }]}
                     placeholder="Min 8 chars, letters & numbers"
-                    placeholderTextColor={colors.textMuted}
+                    placeholderTextColor={colors.placeholderText}
                     secureTextEntry={!showPassword}
                     value={newPassword}
                     onChangeText={setNewPassword}
@@ -165,9 +165,9 @@ export default function ResetPasswordScreen({ route, navigation }: any) {
                     <Ionicons
                       name={newPassword.length >= 8 ? 'checkmark-circle' : 'ellipse-outline'}
                       size={16}
-                      color={newPassword.length >= 8 ? '#4CAF50' : colors.textMuted}
+                      color={newPassword.length >= 8 ? colors.success : colors.textMuted}
                     />
-                    <Text style={[styles.ruleText, { color: newPassword.length >= 8 ? '#4CAF50' : colors.textMuted }]}>
+                    <Text style={[styles.ruleText, { color: newPassword.length >= 8 ? colors.success : colors.textMuted }]}>
                       At least 8 characters
                     </Text>
                   </View>
@@ -175,9 +175,9 @@ export default function ResetPasswordScreen({ route, navigation }: any) {
                     <Ionicons
                       name={PASSWORD_REGEX.test(newPassword) ? 'checkmark-circle' : 'ellipse-outline'}
                       size={16}
-                      color={PASSWORD_REGEX.test(newPassword) ? '#4CAF50' : colors.textMuted}
+                      color={PASSWORD_REGEX.test(newPassword) ? colors.success : colors.textMuted}
                     />
-                    <Text style={[styles.ruleText, { color: PASSWORD_REGEX.test(newPassword) ? '#4CAF50' : colors.textMuted }]}>
+                    <Text style={[styles.ruleText, { color: PASSWORD_REGEX.test(newPassword) ? colors.success : colors.textMuted }]}>
                       Contains letters & numbers
                     </Text>
                   </View>
@@ -192,15 +192,15 @@ export default function ResetPasswordScreen({ route, navigation }: any) {
                     styles.inputContainer,
                     {
                       backgroundColor: colors.cardBackground,
-                      borderColor: confirmFocused ? '#008080' : colors.border,
+                      borderColor: confirmFocused ? colors.primary : colors.border,
                     },
                   ]}
                 >
-                  <Ionicons name="lock-closed-outline" size={20} color={confirmFocused ? '#008080' : colors.textMuted} style={styles.inputIcon} />
+                  <Ionicons name="lock-closed-outline" size={20} color={confirmFocused ? colors.primary : colors.textMuted} style={styles.inputIcon} />
                   <TextInput
                     style={[styles.input, { color: colors.text }]}
                     placeholder="Re-enter new password"
-                    placeholderTextColor={colors.textMuted}
+                    placeholderTextColor={colors.placeholderText}
                     secureTextEntry={!showConfirmPassword}
                     value={confirmPassword}
                     onChangeText={setConfirmPassword}
@@ -212,7 +212,7 @@ export default function ResetPasswordScreen({ route, navigation }: any) {
                   </TouchableOpacity>
                 </View>
                 {confirmPassword.length > 0 && !isMatch && (
-                  <Text style={styles.matchError}>Passwords do not match</Text>
+                  <Text style={[styles.matchError, { color: colors.error }]}>Passwords do not match</Text>
                 )}
               </View>
 
@@ -220,7 +220,8 @@ export default function ResetPasswordScreen({ route, navigation }: any) {
                 style={[
                   styles.primaryButton,
                   {
-                    backgroundColor: '#008080',
+                    backgroundColor: colors.primary,
+                    borderRadius: 26,
                     opacity: loading || !isPasswordValid || !isMatch || !resetSessionToken ? 0.6 : 1,
                   },
                 ]}
@@ -239,7 +240,7 @@ export default function ResetPasswordScreen({ route, navigation }: any) {
                   style={{ marginTop: 20, alignItems: 'center' }}
                   onPress={() => navigation.navigate('ForgotPassword')}
                 >
-                  <Text style={{ color: '#008080', fontWeight: '600', fontSize: 14 }}>
+                  <Text style={{ color: colors.primary, fontWeight: '600', fontSize: 14 }}>
                     Request a new verification code
                   </Text>
                 </TouchableOpacity>

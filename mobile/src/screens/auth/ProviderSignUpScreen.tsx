@@ -20,6 +20,7 @@ import { useTheme } from '../../styles/ThemeContext';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuthStore } from '../../store/authStore';
 import { api } from '../../services/api';
+import AnimatedBackground from '../../components/AnimatedBackground';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 const KNUST_EMAIL_REGEX = /^[^\s@]+@(st\.)?knust\.edu\.gh$/i;
@@ -180,7 +181,7 @@ export default function ProviderSignUpScreen({ navigation }: any) {
   const providerBtnGradient = [colors.primary, colors.primaryDark] as const;
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.background + '99' }}>
+    <AnimatedBackground style={{ flex: 1 }}>
       <SafeAreaView style={[styles.container, { paddingBottom: insets.bottom }]}>
         <StatusBar barStyle={isDark ? "light-content" : "dark-content"} translucent backgroundColor="transparent" />
 
@@ -202,13 +203,6 @@ export default function ProviderSignUpScreen({ navigation }: any) {
             >
               <Ionicons name="arrow-back" size={24} color={colors.text} />
             </TouchableOpacity>
-
-            {/* Logo */}
-            <Image 
-              source={logoImage} 
-              style={[styles.logo, { tintColor: colors.primary }]} 
-              resizeMode="contain"
-            />
 
             <Text style={[styles.heading, { color: colors.text }]}>Provider Sign Up</Text>
             <Text style={[styles.subheading, { color: colors.textMuted }]}>
@@ -382,7 +376,7 @@ export default function ProviderSignUpScreen({ navigation }: any) {
           </ScrollView>
         </KeyboardAvoidingView>
       </SafeAreaView>
-    </View>
+    </AnimatedBackground>
   );
 }
 
@@ -416,15 +410,20 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 3,
   },
-  logo: {
-    width: 64,
-    height: 64,
+  brandRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
     marginBottom: 20,
-    alignSelf: 'flex-start',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.1,
-    shadowRadius: 10,
+  },
+  brandIcon: {
+    width: 36,
+    height: 36,
+    marginRight: 10,
+  },
+  brandTitle: {
+    fontSize: 26,
+    fontWeight: '900',
+    letterSpacing: -0.8,
   },
   badgeRow: { marginBottom: 12 },
   badge: {

@@ -434,8 +434,8 @@ function AppNavigatorInner() {
         headerShadowVisible: false,
         headerTintColor: colors.text,
         headerTitleStyle: { fontWeight: '700', fontSize: 17 },
-        contentStyle: { backgroundColor: route === 'auth' ? 'transparent' : colors.background },
-        animation: reduceMotion ? 'default' : (route === 'auth' ? 'default' : 'fade_from_bottom'),
+        contentStyle: { backgroundColor: colors.background },
+        animation: reduceMotion ? 'default' : 'fade_from_bottom',
       }}
     >
       {/* ── Unauthenticated ── */}

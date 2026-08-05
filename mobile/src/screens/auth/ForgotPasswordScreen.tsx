@@ -67,8 +67,8 @@ export default function ForgotPasswordScreen({ navigation }: any) {
           </TouchableOpacity>
 
           <View style={styles.headerWrap}>
-            <View style={[styles.iconWrap, { backgroundColor: isDark ? '#1E2D2D' : '#E6F0F0' }]}>
-              <Ionicons name="key-outline" size={32} color="#008080" />
+            <View style={[styles.iconWrap, { backgroundColor: colors.primaryLight }]}>
+              <Ionicons name="key-outline" size={32} color={colors.primary} />
             </View>
             <Text style={[styles.title, { color: colors.text }]}>Forgot Password?</Text>
             <Text style={[styles.subtitle, { color: colors.textMuted }]}>
@@ -78,9 +78,9 @@ export default function ForgotPasswordScreen({ navigation }: any) {
 
           <View style={styles.form}>
               {error && (
-                <View style={styles.errorBanner}>
-                  <Ionicons name="alert-circle-outline" size={20} color="#D32F2F" />
-                  <Text style={styles.errorBannerText}>{error}</Text>
+                <View style={[styles.errorBanner, { backgroundColor: colors.errorLight }]}>
+                  <Ionicons name="alert-circle-outline" size={20} color={colors.error} />
+                  <Text style={[styles.errorBannerText, { color: colors.error }]}>{error}</Text>
                 </View>
               )}
 
@@ -91,15 +91,15 @@ export default function ForgotPasswordScreen({ navigation }: any) {
                     styles.inputContainer,
                     {
                       backgroundColor: colors.cardBackground,
-                      borderColor: emailFocused ? '#008080' : colors.border,
+                      borderColor: emailFocused ? colors.primary : colors.border,
                     },
                   ]}
                 >
-                  <Ionicons name="mail-outline" size={20} color={emailFocused ? '#008080' : colors.textMuted} style={styles.inputIcon} />
+                  <Ionicons name="mail-outline" size={20} color={emailFocused ? colors.primary : colors.textMuted} style={styles.inputIcon} />
                   <TextInput
                     style={[styles.input, { color: colors.text }]}
                     placeholder="e.g. kwame@st.knust.edu.gh"
-                    placeholderTextColor={colors.textMuted}
+                    placeholderTextColor={colors.placeholderText}
                     value={email}
                     onChangeText={setEmail}
                     keyboardType="email-address"
@@ -112,15 +112,18 @@ export default function ForgotPasswordScreen({ navigation }: any) {
               </View>
 
               <TouchableOpacity
-                style={[styles.primaryButton, { backgroundColor: '#008080', opacity: loading ? 0.7 : 1 }]}
+                style={[styles.primaryButtonTouch, { opacity: loading ? 0.7 : 1 }]}
                 onPress={handleSubmit}
                 disabled={loading}
+                activeOpacity={0.88}
               >
-                {loading ? (
-                  <ActivityIndicator color="#FFFFFF" size="small" />
-                ) : (
-                  <Text style={styles.primaryButtonText}>Send Code</Text>
-                )}
+                <View style={[styles.primaryButton, { backgroundColor: colors.primary }]}>
+                  {loading ? (
+                    <ActivityIndicator color="#FFFFFF" size="small" />
+                  ) : (
+                    <Text style={styles.primaryButtonText}>Send Code</Text>
+                  )}
+                </View>
               </TouchableOpacity>
             </View>
 
@@ -178,14 +181,12 @@ const styles = StyleSheet.create({
   errorBanner: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFEBEE',
     padding: 12,
-    borderRadius: 8,
+    borderRadius: 12,
     marginBottom: 16,
     gap: 8,
   },
   errorBannerText: {
-    color: '#D32F2F',
     fontSize: 14,
     fontWeight: '500',
     flex: 1,
@@ -213,9 +214,13 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 15,
   },
+  primaryButtonTouch: {
+    borderRadius: 26,
+    overflow: 'hidden',
+  },
   primaryButton: {
     height: 52,
-    borderRadius: 14,
+    borderRadius: 26,
     alignItems: 'center',
     justifyContent: 'center',
   },

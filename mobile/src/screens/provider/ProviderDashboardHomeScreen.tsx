@@ -205,35 +205,7 @@ export default function ProviderDashboardHomeScreen({ navigation }: any) {
           </TouchableOpacity>
         </View>
 
-        {/* ── Marketplace Listings & Services Quick Action Card ── */}
-        <View style={[styles.promoCard, { backgroundColor: colors.primaryLight, borderColor: colors.primary + '30' }]}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 8 }}>
-            <View style={[styles.promoIconWrap, { backgroundColor: colors.primary }]}>
-              <Ionicons name="sparkles" size={18} color="#FFF" />
-            </View>
-            <Text style={[styles.promoTitle, { color: colors.text }]}>Marketplace Listings & Services</Text>
-          </View>
-          <Text style={[styles.promoSub, { color: colors.textMuted }]}>
-            Create service offerings, upload work sample photos to your portfolio, and set base pricing for student feeds.
-          </Text>
-          <View style={styles.promoActions}>
-            <TouchableOpacity
-              style={[styles.promoBtnPrimary, { backgroundColor: colors.primary }]}
-              onPress={() => navigation.navigate('CreateEditListing')}
-              activeOpacity={0.85}
-            >
-              <Ionicons name="add-circle-outline" size={16} color="#FFF" />
-              <Text style={styles.promoBtnPrimaryText}>+ Post New Service</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.promoBtnSecondary, { borderColor: colors.primary }]}
-              onPress={() => navigation.navigate('Listings')}
-              activeOpacity={0.8}
-            >
-              <Text style={[styles.promoBtnSecondaryText, { color: colors.primary }]}>Manage All Services →</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
+
 
         {/* ── Active Jobs List ── */}
         <View style={styles.sectionRow}>

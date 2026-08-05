@@ -20,6 +20,7 @@ import { useTheme } from '../../styles/ThemeContext';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuthStore } from '../../store/authStore';
 import { api } from '../../services/api';
+import AnimatedBackground from '../../components/AnimatedBackground';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 const KNUST_EMAIL_REGEX = /^[^\s@]+@st\.knust\.edu\.gh$/i;
@@ -184,11 +185,9 @@ export default function SignInScreen({ route, navigation }: any) {
   const submitBtnColors = activeRole === 'CLIENT' ? clientBtnGradient : providerBtnGradient;
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.background + '99' }}>
+    <AnimatedBackground style={{ flex: 1 }}>
       <SafeAreaView style={[styles.container, { paddingBottom: insets.bottom }]}>
         <StatusBar barStyle={isDark ? "light-content" : "dark-content"} translucent backgroundColor="transparent" />
-
-
 
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -209,13 +208,6 @@ export default function SignInScreen({ route, navigation }: any) {
                 <Ionicons name="arrow-back" size={20} color={colors.text} />
               </TouchableOpacity>
             )}
-
-            {/* Logo */}
-            <Image 
-              source={logoImage} 
-              style={[styles.logo, { tintColor: colors.primary }]} 
-              resizeMode="contain"
-            />
 
             {/* Header */}
             <Text style={[styles.heading, { color: colors.text }]}>Welcome back</Text>
@@ -355,7 +347,7 @@ export default function SignInScreen({ route, navigation }: any) {
           </ScrollView>
         </KeyboardAvoidingView>
       </SafeAreaView>
-    </View>
+    </AnimatedBackground>
   );
 }
 
@@ -389,15 +381,20 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 3,
   },
-  logo: {
-    width: 68,
-    height: 68,
+  brandRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
     marginBottom: 20,
-    alignSelf: 'flex-start',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.1,
-    shadowRadius: 10,
+  },
+  brandIcon: {
+    width: 36,
+    height: 36,
+    marginRight: 10,
+  },
+  brandTitle: {
+    fontSize: 26,
+    fontWeight: '900',
+    letterSpacing: -0.8,
   },
   heading: { fontSize: 32, fontWeight: '900', letterSpacing: -1, marginBottom: 8 },
   subheading: { fontSize: 15, fontFamily: 'Inter-Medium', lineHeight: 22, marginBottom: 28 },
