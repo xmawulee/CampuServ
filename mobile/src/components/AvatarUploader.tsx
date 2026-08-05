@@ -7,6 +7,7 @@ import {
   Text,
   ActivityIndicator,
   Alert,
+  Modal,
 } from 'react-native';
 import { CustomIonicons as Ionicons } from './CustomIcons';
 import * as ImagePicker from 'expo-image-picker';
@@ -41,6 +42,7 @@ export default function AvatarUploader({
 
   const [sessionExpiredDialogVisible, setSessionExpiredDialogVisible] = useState(false);
   const [removeDialogVisible, setRemoveDialogVisible] = useState(false);
+  const [optionsModalVisible, setOptionsModalVisible] = useState(false);
 
   const getFullImageUrl = (url?: string | null) => {
     if (!url) return null;
@@ -182,19 +184,7 @@ export default function AvatarUploader({
 
   const handlePress = () => {
     if (isUploading) return;
-
-    const options = [
-      { text: "Take Photo", onPress: () => handlePickImage(true) },
-      { text: "Choose from Library", onPress: () => handlePickImage(false) },
-    ];
-
-    if (currentAvatarUrl || localUri) {
-      options.push({ text: "Remove Photo", onPress: handleRemovePhoto });
-    }
-
-    options.push({ text: "Cancel", style: "cancel" } as any);
-
-    Alert.alert("Profile Picture", "Update your profile picture", options);
+    setOptionsModalVisible(true);
   };
 
   const imageUri = getFullImageUrl(localUri ?? currentAvatarUrl);
@@ -241,6 +231,68 @@ export default function AvatarUploader({
           <Ionicons name="camera-outline" size={16} color="#FFFFFF" />
         </View>
       )}
+
+      {/* Options Selection Modal with explicit BACK button */}
+      <Modal
+        visible={optionsModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setOptionsModalVisible(false)}
+      >
+        <TouchableOpacity
+          style={styles.pickerOverlay}
+          activeOpacity={1}
+          onPress={() => setOptionsModalVisible(false)}
+        >
+          <TouchableOpacity
+            activeOpacity={1}
+            style={[styles.pickerCard, { backgroundColor: colors.cardBackground }]}
+            onPress={(e) => e.stopPropagation()}
+          >
+            <Text style={[styles.pickerTitle, { color: colors.text }]}>Profile Picture</Text>
+            <Text style={[styles.pickerSubtitle, { color: colors.textMuted }]}>Update your profile picture</Text>
+
+            {(currentAvatarUrl || localUri) && (
+              <TouchableOpacity
+                style={[styles.pickerOptionBtn, { borderTopWidth: 1, borderTopColor: colors.border }]}
+                onPress={() => {
+                  setOptionsModalVisible(false);
+                  handleRemovePhoto();
+                }}
+              >
+                <Text style={[styles.pickerOptionText, { color: '#0284C7' }]}>REMOVE PHOTO</Text>
+              </TouchableOpacity>
+            )}
+
+            <TouchableOpacity
+              style={[styles.pickerOptionBtn, { borderTopWidth: 1, borderTopColor: colors.border }]}
+              onPress={() => {
+                setOptionsModalVisible(false);
+                handlePickImage(false);
+              }}
+            >
+              <Text style={[styles.pickerOptionText, { color: '#0284C7' }]}>CHOOSE FROM LIBRARY</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.pickerOptionBtn, { borderTopWidth: 1, borderTopColor: colors.border }]}
+              onPress={() => {
+                setOptionsModalVisible(false);
+                handlePickImage(true);
+              }}
+            >
+              <Text style={[styles.pickerOptionText, { color: '#0284C7' }]}>TAKE PHOTO</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.pickerOptionBtn, { borderTopWidth: 1, borderTopColor: colors.border }]}
+              onPress={() => setOptionsModalVisible(false)}
+            >
+              <Text style={[styles.pickerOptionText, { color: colors.textMuted }]}>BACK</Text>
+            </TouchableOpacity>
+          </TouchableOpacity>
+        </TouchableOpacity>
+      </Modal>
 
       <StatusDialog
         visible={sessionExpiredDialogVisible}
@@ -323,5 +375,44 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.3,
     shadowRadius: 3,
+  },
+  pickerOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(15, 23, 42, 0.55)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  pickerCard: {
+    width: '100%',
+    maxWidth: 340,
+    borderRadius: 20,
+    paddingTop: 24,
+    paddingBottom: 8,
+    paddingHorizontal: 24,
+    elevation: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 16,
+  },
+  pickerTitle: {
+    fontSize: 20,
+    fontWeight: '800',
+    marginBottom: 4,
+  },
+  pickerSubtitle: {
+    fontSize: 14,
+    marginBottom: 20,
+  },
+  pickerOptionBtn: {
+    alignItems: 'flex-end',
+    justifyContent: 'center',
+    paddingVertical: 16,
+  },
+  pickerOptionText: {
+    fontSize: 14,
+    fontWeight: '700',
+    letterSpacing: 0.6,
   },
 });

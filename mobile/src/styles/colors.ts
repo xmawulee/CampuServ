@@ -28,11 +28,11 @@ export const LightColors: ThemeColors = {
   primaryDark: '#FF7846',    // Same as primary (no dark gradient)
   accent: '#FF7846',         // Coral Orange
   secondary: '#4A4A4D',      // Darker muted grey for readability
-  background: '#F9F7F2',     // Creamy off-white (like login page)
-  screenBackground: '#F9F7F2',
-  cardBackground: '#FFFFFF', // Clean white
+  background: '#F5F6F8',     // Off-white screen background
+  screenBackground: '#F5F6F8',
+  cardBackground: '#FFFFFF', // Clean white cards & containers
   inputBackground: '#FFFFFF',
-  border: '#D1D1D1',         
+  border: '#E2E8F0',         // Soft subtle border
   text: '#1C1C1E',           // Almost black
   textMuted: '#2C2C2E',      // Darker muted for readability on patterns
   placeholderText: '#7A7A80',// Darker placeholder for readability

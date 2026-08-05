@@ -61,7 +61,8 @@ const ProviderFeedCard = React.memo(function ProviderFeedCard({ provider, onPres
           <Image source={{ uri: heroUrl }} style={styles.heroImage} resizeMode="cover" />
         ) : (
           <View style={styles.placeholderBanner}>
-            <Ionicons name="briefcase-outline" size={40} color={colors.textMuted} />
+            <Ionicons name="briefcase-outline" size={36} color={colors.primary} />
+            <Text style={{ fontSize: 12, fontWeight: '600', color: colors.textMuted }}>No photo preview</Text>
           </View>
         )}
 
@@ -173,10 +174,12 @@ const getStyles = (colors: any) => StyleSheet.create({
     borderColor: colors.border,
   },
   imageContainer: {
-    height: 140,
+    height: 150,
     width: '100%',
-    backgroundColor: colors.inputBackground,
+    backgroundColor: colors.background,
     position: 'relative',
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
   },
   heroImage: {
     width: '100%',
@@ -187,7 +190,8 @@ const getStyles = (colors: any) => StyleSheet.create({
     height: '100%',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.inputBackground,
+    backgroundColor: colors.background,
+    gap: 6,
   },
   statusBadge: {
     position: 'absolute',

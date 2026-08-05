@@ -183,9 +183,9 @@ export default function SettingsScreen({ navigation }: any) {
                       showToast({ status: 'error', title: 'Error', subtitle: 'Failed to update notification settings.' });
                     }
                   }}
-                  trackColor={{ false: colors.primary, true: colors.primary }}
+                  trackColor={{ false: isDark ? '#334155' : '#D1D5DB', true: colors.primary }}
                   thumbColor="#FFFFFF"
-                  ios_backgroundColor={colors.primary}
+                  ios_backgroundColor={isDark ? '#334155' : '#D1D5DB'}
                 />
               </View>
             )}
@@ -204,9 +204,9 @@ export default function SettingsScreen({ navigation }: any) {
               <Switch
                 value={isDark}
                 onValueChange={toggleTheme}
-                trackColor={{ false: colors.primary, true: colors.primary }}
+                trackColor={{ false: isDark ? '#334155' : '#D1D5DB', true: colors.primary }}
                 thumbColor="#FFFFFF"
-                ios_backgroundColor={colors.primary}
+                ios_backgroundColor={isDark ? '#334155' : '#D1D5DB'}
               />
             </View>
 
@@ -224,9 +224,9 @@ export default function SettingsScreen({ navigation }: any) {
               <Switch
                 value={reduceMotion}
                 onValueChange={toggleReduceMotion}
-                trackColor={{ false: colors.primary, true: colors.primary }}
+                trackColor={{ false: isDark ? '#334155' : '#D1D5DB', true: colors.primary }}
                 thumbColor="#FFFFFF"
-                ios_backgroundColor={colors.primary}
+                ios_backgroundColor={isDark ? '#334155' : '#D1D5DB'}
               />
             </View>
 

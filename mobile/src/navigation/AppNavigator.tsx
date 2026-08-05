@@ -406,9 +406,9 @@ function AppNavigatorInner() {
       <Stack.Screen name="ChatThread" component={ChatThreadScreen} options={{ headerShown: false }} />
       <Stack.Screen name="ActiveJob" component={ActiveJobScreen} options={{ headerShown: false }} />
       <Stack.Screen name="RiderLiveTracking" component={RiderLiveTrackingScreen} options={{ title: 'Track Provider', headerShown: false }} />
-      <Stack.Screen name="ReviewSubmission" component={ReviewSubmissionScreen} options={{ title: 'Submit Review', presentation: 'modal' }} />
-      <Stack.Screen name="Withdrawal" component={WithdrawalScreen} options={{ title: 'Withdraw Funds' }} />
-      <Stack.Screen name="Deposit" component={DepositScreen} options={{ title: 'Deposit Funds', animation: 'default' }} />
+      <Stack.Screen name="ReviewSubmission" component={ReviewSubmissionScreen} options={{ headerShown: false, presentation: 'modal' }} />
+      <Stack.Screen name="Withdrawal" component={WithdrawalScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="Deposit" component={DepositScreen} options={{ headerShown: false, animation: 'default' }} />
       <Stack.Screen name="WalletReceiptScreen" component={WalletReceiptScreen} options={{ presentation: 'modal', headerShown: false, animation: 'slide_from_bottom' }} />
       <Stack.Screen name="NotificationCenter" component={NotificationCenterScreen} options={{ headerShown: false, animation: 'default' }} />
       <Stack.Screen name="DeleteAccount" component={DeleteAccountScreen} options={{ headerShown: false }} />

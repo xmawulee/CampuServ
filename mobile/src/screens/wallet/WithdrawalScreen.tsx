@@ -102,7 +102,7 @@ export const WithdrawalScreen = () => {
   const isValidAmount = !isNaN(currentNumericAmount) && currentNumericAmount > 0;
 
   return (
-    <AnimatedBackground style={{ flex: 1 }}>
+    <View style={{ flex: 1, backgroundColor: colors.background }}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={{ flex: 1 }}
@@ -110,7 +110,7 @@ export const WithdrawalScreen = () => {
         <ScrollView
           contentContainerStyle={[
             styles.scrollContainer,
-            { paddingTop: insets.top + 12, paddingBottom: insets.bottom + 32 }
+            { paddingTop: Math.max(insets.top + 8, 16), paddingBottom: insets.bottom + 32 }
           ]}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
@@ -280,7 +280,7 @@ export const WithdrawalScreen = () => {
           </TouchableOpacity>
         </ScrollView>
       </KeyboardAvoidingView>
-    </AnimatedBackground>
+    </View>
   );
 };
 

@@ -818,9 +818,9 @@ export default function HomeScreen({ route, navigation }: any) {
                 <Switch
                   value={tempVerifiedOnly}
                   onValueChange={setTempVerifiedOnly}
-                  trackColor={{ false: colors.primary, true: colors.primary }}
+                  trackColor={{ false: isDark ? '#334155' : '#D1D5DB', true: colors.primary }}
                   thumbColor="#FFFFFF"
-                  ios_backgroundColor={colors.primary}
+                  ios_backgroundColor={isDark ? '#334155' : '#D1D5DB'}
                 />
               </View>
 

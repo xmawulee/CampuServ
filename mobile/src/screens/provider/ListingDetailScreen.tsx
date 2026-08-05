@@ -166,6 +166,13 @@ export default function ListingDetailScreen({ route, navigation }: any) {
     });
   };
 
+  const handleRequestQuote = () => {
+    navigation.navigate('PostRequest', {
+      selectedTargetProvider: profile,
+      preselectedCategory: profile?.serviceCategory || currentListing?.category,
+    });
+  };
+
   const handleChat = async () => {
     if (!profile?.id) return;
     setChatLoading(true);
@@ -258,34 +265,37 @@ export default function ListingDetailScreen({ route, navigation }: any) {
 
   const memberSince = profile.createdAt ? new Date(profile.createdAt).getFullYear() : '2026';
 
+  const heroImageSource = images.length > 0 ? { uri: images[selectedImageIndex] || images[0] } : null;
+
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       {/* Top Header / Breadcrumb */}
       <View style={[styles.topHeader, { backgroundColor: colors.primary, paddingTop: insets.top, height: 56 + insets.top }]}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={[styles.iconBtn, { backgroundColor: 'rgba(255,255,255,0.2)' }]}>
-          <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
+          <Ionicons name="arrow-back" size={20} color="#FFFFFF" />
         </TouchableOpacity>
         <View style={styles.breadcrumbWrap}>
           <Text style={[styles.breadcrumbText, { color: '#FFFFFF' }]} numberOfLines={1}>
             {(currentListing?.category?.name) || profile.serviceCategory || 'Service Listing'} • {profile.fullName}
           </Text>
         </View>
-        <TouchableOpacity onPress={handleToggleSave} style={[styles.iconBtn, { backgroundColor: 'rgba(255,255,255,0.2)' }]}>
+        <TouchableOpacity onPress={handleToggleSave} disabled={saving} style={[styles.iconBtn, { backgroundColor: 'rgba(255,255,255,0.2)' }]}>
           <Ionicons 
             name={isSaved ? "bookmark" : "bookmark-outline"} 
-            size={24} 
+            size={20} 
             color="#FFFFFF" 
           />
         </TouchableOpacity>
       </View>
 
       <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}
+        contentContainerStyle={{ paddingBottom: 40 + insets.bottom }}
+        showsVerticalScrollIndicator={false}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} colors={[colors.primary]} />}
       >
         {/* Hero Image / Carousel */}
-        <View style={[styles.heroSection, { backgroundColor: colors.background }]}>
-          {images.length > 0 ? (
+        <View style={styles.heroSection}>
+          {heroImageSource ? (
             <FlatList
               ref={flatListRef}
               data={images}
@@ -307,9 +317,9 @@ export default function ListingDetailScreen({ route, navigation }: any) {
               )}
             />
           ) : (
-            <View style={[styles.heroPlaceholder, { backgroundColor: colors.background }]}>
-              <Ionicons name="storefront-outline" size={64} color={colors.textMuted} />
-              <Text style={styles.heroPlaceholderText}>No photo preview available</Text>
+            <View style={[styles.heroPlaceholder, { backgroundColor: colors.cardBackground }]}>
+              <Ionicons name="storefront-outline" size={64} color={colors.primary} />
+              <Text style={[styles.heroPlaceholderText, { color: colors.primary }]}>No photo preview available</Text>
             </View>
           )}
 
@@ -321,7 +331,7 @@ export default function ListingDetailScreen({ route, navigation }: any) {
                   key={idx}
                   style={[
                     styles.thumbWrap,
-                    selectedImageIndex === idx && styles.thumbWrapActive
+                    selectedImageIndex === idx && [styles.thumbWrapActive, { borderColor: colors.primary }]
                   ]}
                   onPress={() => {
                     setSelectedImageIndex(idx);
@@ -362,14 +372,25 @@ export default function ListingDetailScreen({ route, navigation }: any) {
 
           {/* Contact CTAs */}
           <View style={[styles.ctaContainer]}>
-            <TouchableOpacity style={[styles.ctaBtn, { backgroundColor: colors.primary }]} onPress={handleChat}>
-              <Ionicons name="chatbubbles-outline" size={18} color="#FFFFFF" />
-              <Text style={[styles.ctaBtnText, { color: '#FFFFFF' }]}>Chat</Text>
+            <TouchableOpacity style={[styles.ctaBtn, { backgroundColor: colors.primary, flex: 1 }]} onPress={handleChat} disabled={chatLoading}>
+              {chatLoading ? (
+                <ActivityIndicator size="small" color="#FFFFFF" />
+              ) : (
+                <>
+                  <Ionicons name="chatbubbles-outline" size={16} color="#FFFFFF" />
+                  <Text style={[styles.ctaBtnText, { color: '#FFFFFF', fontSize: 13 }]}>Chat</Text>
+                </>
+              )}
             </TouchableOpacity>
 
-            <TouchableOpacity style={[styles.ctaBtn, { backgroundColor: colors.primaryLight }]} onPress={handleCallNow}>
-              <Ionicons name="call-outline" size={18} color={colors.primary} />
-              <Text style={[styles.ctaBtnText, { color: colors.primary }]}>Call Now</Text>
+            <TouchableOpacity style={[styles.ctaBtn, { backgroundColor: colors.primaryLight, flex: 1 }]} onPress={handleCallNow}>
+              <Ionicons name="call-outline" size={16} color={colors.primary} />
+              <Text style={[styles.ctaBtnText, { color: colors.primary, fontSize: 13 }]}>Call Now</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={[styles.ctaBtn, { backgroundColor: colors.primaryLight, flex: 1.2 }]} onPress={handleRequestQuote}>
+              <Ionicons name="document-text-outline" size={16} color={colors.primary} />
+              <Text style={[styles.ctaBtnText, { color: colors.primary, fontSize: 13 }]}>Request Quote</Text>
             </TouchableOpacity>
           </View>
         </View>
