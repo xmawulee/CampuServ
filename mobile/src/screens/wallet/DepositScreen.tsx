@@ -120,9 +120,6 @@ export const DepositScreen = () => {
 
                     <Text style={[styles.sectionTitle, { color: colors.text }]}>Select Deposit Method</Text>
                     
-                    <View style={{ backgroundColor: 'rgba(255, 165, 0, 0.15)', padding: 10, borderRadius: 8, marginBottom: 15, borderLeftWidth: 3, borderLeftColor: '#FFA500' }}>
-                        <Text style={{ color: '#FFA500', fontSize: 12, fontWeight: '600' }}>💡 Simulated in Local Development Mode (Paystack Dev Sandbox)</Text>
-                    </View>
 
                     <FlatList
                         data={depositMethods}

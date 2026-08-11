@@ -22,9 +22,9 @@ export default function DashboardLayout({
   useEffect(() => {
     setMounted(true);
     if (!accessToken || adminUser?.role !== 'ADMIN') {
-      router.push('/login');
+      window.location.href = '/login';
     }
-  }, [accessToken, adminUser, router]);
+  }, [accessToken, adminUser]);
 
   if (!mounted || !accessToken) {
     return (

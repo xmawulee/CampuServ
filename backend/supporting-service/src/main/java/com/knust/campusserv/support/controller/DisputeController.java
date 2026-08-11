@@ -39,12 +39,22 @@ public class DisputeController {
         }
     }
 
-    @PostMapping("/{jobId}")
-    public ResponseEntity<?> raiseDispute(@PathVariable("jobId") String jobId,
+    @PostMapping(value = {"", "/{jobId}"})
+    public ResponseEntity<?> raiseDispute(@PathVariable(value = "jobId", required = false) String jobId,
                                           @RequestBody Map<String, String> body,
                                           @RequestHeader("X-User-Id") String userId) {
         try {
-            Dispute dispute = disputeService.raiseDispute(jobId, userId, body.get("reason"));
+            String complaintType = body.get("complaintType");
+            String incidentDateStr = body.get("incidentDate");
+            java.time.LocalDateTime incidentDate = null;
+            if (incidentDateStr != null && !incidentDateStr.isEmpty()) {
+                // Remove Z if present to avoid parsing errors with some formatters, or just use ISO_DATE_TIME
+                incidentDateStr = incidentDateStr.endsWith("Z") ? incidentDateStr.substring(0, incidentDateStr.length()-1) : incidentDateStr;
+                incidentDate = java.time.LocalDateTime.parse(incidentDateStr, java.time.format.DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+            }
+            Boolean requestRefund = body.containsKey("requestRefund") ? Boolean.parseBoolean(body.get("requestRefund")) : false;
+
+            Dispute dispute = disputeService.raiseDispute(jobId, userId, body.get("reason"), complaintType, incidentDate, requestRefund);
             return ResponseEntity.ok(dispute);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());

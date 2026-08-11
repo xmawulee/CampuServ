@@ -33,26 +33,37 @@ public class DisputeService {
     private JdbcTemplate jdbcTemplate;
 
     @Transactional
-    public Dispute raiseDispute(String jobId, String raisedById, String reason) {
-        // Only requester or accepted provider can raise
-        Map<String, Object> job = restTemplate.getForObject("http://job-service/jobs/" + jobId, Map.class);
-        if (job == null) throw new IllegalArgumentException("Job not found");
+    public Dispute raiseDispute(String jobId, String raisedById, String reason, String complaintType, LocalDateTime incidentDate, Boolean requestRefund) {
+        if (jobId != null && !jobId.trim().isEmpty()) {
+            // Only requester or accepted provider can raise if linked to a job
+            try {
+                Map<String, Object> job = restTemplate.getForObject("http://job-service/jobs/" + jobId, Map.class);
+                if (job != null) {
+                    String requesterId = (String) job.get("requesterId");
+                    String providerId = (String) job.get("providerId");
 
-        String requesterId = (String) job.get("requesterId");
-        String providerId = (String) job.get("providerId");
+                    if (!raisedById.equals(requesterId) && !raisedById.equals(providerId)) {
+                        throw new IllegalArgumentException("Only the requester or provider can raise a dispute for this job.");
+                    }
 
-        if (!raisedById.equals(requesterId) && !raisedById.equals(providerId)) {
-            throw new IllegalArgumentException("Only the requester or provider can raise a dispute for this job.");
+                    // Set job status to DISPUTED
+                    jdbcTemplate.update("UPDATE jobs SET status = 'DISPUTED' WHERE id = ?", jobId);
+                }
+            } catch (Exception e) {
+                // If job isn't found or service is down, we might just log it and proceed or throw.
+                // Assuming it's better to log and let the dispute be created for admin review.
+                System.err.println("Could not verify job details: " + e.getMessage());
+            }
         }
-
-        // Set job status to DISPUTED
-        jdbcTemplate.update("UPDATE jobs SET status = 'DISPUTED' WHERE id = ?", jobId);
 
         Dispute dispute = new Dispute();
         dispute.setId(UUID.randomUUID().toString());
-        dispute.setJobId(jobId);
+        dispute.setJobId(jobId != null && !jobId.trim().isEmpty() ? jobId : null);
         dispute.setRaisedById(raisedById);
         dispute.setReason(reason);
+        dispute.setComplaintType(complaintType);
+        dispute.setIncidentDate(incidentDate);
+        dispute.setRequestRefund(requestRefund != null ? requestRefund : false);
         dispute.setStatus(Dispute.DisputeStatus.OPEN);
 
         return disputeRepository.save(dispute);

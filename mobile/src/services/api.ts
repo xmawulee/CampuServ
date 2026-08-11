@@ -113,10 +113,10 @@ api.interceptors.response.use(
           refreshToken: refreshToken,
         });
 
-        const { accessToken: newAccessToken } = response.data;
+        const { accessToken: newAccessToken, refreshToken: newRefreshToken } = response.data;
         
         // Update the Zustand store
-        await getAuthStore().getState().updateAccessToken(newAccessToken);
+        await getAuthStore().getState().updateTokens(newAccessToken, newRefreshToken);
 
         // Process any queued requests
         processQueue(null, newAccessToken);

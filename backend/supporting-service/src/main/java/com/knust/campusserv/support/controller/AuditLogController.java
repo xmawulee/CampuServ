@@ -3,7 +3,6 @@ package com.knust.campusserv.support.controller;
 import com.knust.campusserv.support.dto.AuditLogRequest;
 import com.knust.campusserv.support.model.AuditLog;
 import com.knust.campusserv.support.service.AuditLogService;
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -12,10 +11,13 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/admin/audit")
-@RequiredArgsConstructor
 public class AuditLogController {
 
     private final AuditLogService auditLogService;
+
+    public AuditLogController(AuditLogService auditLogService) {
+        this.auditLogService = auditLogService;
+    }
 
     @PostMapping
     public ResponseEntity<AuditLog> createLog(@RequestBody AuditLogRequest request) {

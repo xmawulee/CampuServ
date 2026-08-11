@@ -10,8 +10,17 @@ public class Dispute {
     @Id
     private String id;
 
-    @Column(name = "job_id", nullable = false)
+    @Column(name = "job_id", nullable = true)
     private String jobId;
+
+    @Column(name = "complaint_type")
+    private String complaintType;
+
+    @Column(name = "incident_date")
+    private LocalDateTime incidentDate;
+
+    @Column(name = "request_refund")
+    private Boolean requestRefund;
 
     @Column(name = "raised_by_id", nullable = false)
     private String raisedById;
@@ -57,6 +66,15 @@ public class Dispute {
 
     public String getRaisedById() { return raisedById; }
     public void setRaisedById(String raisedById) { this.raisedById = raisedById; }
+
+    public String getComplaintType() { return complaintType; }
+    public void setComplaintType(String complaintType) { this.complaintType = complaintType; }
+
+    public LocalDateTime getIncidentDate() { return incidentDate; }
+    public void setIncidentDate(LocalDateTime incidentDate) { this.incidentDate = incidentDate; }
+
+    public Boolean getRequestRefund() { return requestRefund; }
+    public void setRequestRefund(Boolean requestRefund) { this.requestRefund = requestRefund; }
 
     public String getReason() { return reason; }
     public void setReason(String reason) { this.reason = reason; }

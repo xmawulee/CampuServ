@@ -28,6 +28,7 @@ import ProviderReviewScreen from '../screens/auth/ProviderReviewScreen';
 import ForgotPasswordScreen from '../screens/auth/ForgotPasswordScreen';
 import ResetPasswordScreen from '../screens/auth/ResetPasswordScreen';
 import ResetPasswordCodeScreen from '../screens/auth/ResetPasswordCodeScreen';
+import HelpAndSupportScreen from '../screens/settings/HelpAndSupportScreen';
 
 import HomeScreen from '../screens/core/HomeScreen';
 import RequestDetailsScreen from '../screens/core/RequestDetailsScreen';
@@ -411,6 +412,7 @@ function AppNavigatorInner() {
       <Stack.Screen name="Deposit" component={DepositScreen} options={{ title: 'Deposit Funds', animation: 'default' }} />
       <Stack.Screen name="WalletReceiptScreen" component={WalletReceiptScreen} options={{ presentation: 'modal', headerShown: false, animation: 'slide_from_bottom' }} />
       <Stack.Screen name="NotificationCenter" component={NotificationCenterScreen} options={{ headerShown: false, animation: 'default' }} />
+      <Stack.Screen name="HelpAndSupport" component={HelpAndSupportScreen} options={{ headerShown: false, animation: 'slide_from_right' }} />
       <Stack.Screen name="DeleteAccount" component={DeleteAccountScreen} options={{ headerShown: false }} />
       <Stack.Screen name="RaiseDispute" component={RaiseDisputeScreen} options={{ headerShown: false }} />
       <Stack.Screen name="DisputeThread" component={DisputeThreadScreen} options={{ headerShown: false }} />

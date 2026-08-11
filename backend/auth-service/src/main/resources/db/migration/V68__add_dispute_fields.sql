@@ -1,0 +1,6 @@
+ALTER TABLE disputes
+ADD COLUMN complaint_type VARCHAR(255),
+ADD COLUMN incident_date TIMESTAMP,
+ADD COLUMN request_refund BOOLEAN DEFAULT FALSE;
+
+ALTER TABLE disputes ALTER COLUMN job_id DROP NOT NULL;

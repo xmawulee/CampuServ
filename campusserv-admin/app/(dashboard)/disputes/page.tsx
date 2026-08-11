@@ -24,6 +24,16 @@ interface Dispute {
   resolution: string | null;
   resolvedAt: string | null;
   createdAt: string;
+  complaintType?: string;
+  incidentDate?: string;
+  requestRefund?: boolean;
+}
+
+interface DisputeEvidence {
+  id: string;
+  fileUrl: string;
+  description: string;
+  uploadedAt: string;
 }
 
 const columnHelper = createColumnHelper<Dispute>();
@@ -32,6 +42,8 @@ export default function DisputesPage() {
   const [disputes, setDisputes] = useState<Dispute[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedDispute, setSelectedDispute] = useState<Dispute | null>(null);
+  const [evidenceList, setEvidenceList] = useState<DisputeEvidence[]>([]);
+  const [loadingDetails, setLoadingDetails] = useState(false);
   const [globalFilter, setGlobalFilter] = useState('');
 
   // Resolution state
@@ -52,6 +64,22 @@ export default function DisputesPage() {
       toast.error('Failed to load disputes');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleSelectDispute = async (dispute: Dispute | null) => {
+    setSelectedDispute(dispute);
+    setEvidenceList([]);
+    if (!dispute) return;
+    
+    setLoadingDetails(true);
+    try {
+      const res = await api.get(`/disputes/${dispute.id}`);
+      setEvidenceList(res.data.evidence || []);
+    } catch (error) {
+      toast.error('Failed to load dispute evidence');
+    } finally {
+      setLoadingDetails(false);
     }
   };
 
@@ -78,7 +106,7 @@ export default function DisputesPage() {
       });
       toast.success('Dispute resolved');
       fetchDisputes();
-      setSelectedDispute(null);
+      handleSelectDispute(null);
       setResolutionNote('');
       setSplitPercentage('50');
     } catch (error: any) {
@@ -93,11 +121,20 @@ export default function DisputesPage() {
     }),
     columnHelper.accessor('jobId', {
       header: 'Job ID',
-      cell: info => <div className="font-medium text-slate-900 font-bold truncate max-w-[120px]">{info.getValue().split('-')[0]}...</div>,
+      cell: info => <div className="font-medium text-slate-900 font-bold truncate max-w-[120px]">{info.getValue() ? info.getValue().split('-')[0] : 'N/A'}</div>,
     }),
     columnHelper.accessor('reason', {
       header: 'Reason',
-      cell: info => <div className="text-gray-300 truncate max-w-[200px]" title={info.getValue()}>{info.getValue()}</div>,
+      cell: info => (
+        <div className="flex flex-col">
+          <div className="text-gray-900 font-medium truncate max-w-[200px]" title={info.row.original.complaintType || 'General'}>
+            {info.row.original.complaintType || 'General'}
+          </div>
+          <div className="text-gray-400 text-xs truncate max-w-[200px]" title={info.getValue()}>
+            {info.getValue()}
+          </div>
+        </div>
+      ),
     }),
     columnHelper.accessor('status', {
       header: 'Status',
@@ -119,7 +156,7 @@ export default function DisputesPage() {
       header: 'Actions',
       cell: props => (
         <button 
-          onClick={() => setSelectedDispute(props.row.original)}
+          onClick={(e) => { e.stopPropagation(); handleSelectDispute(props.row.original); }}
           className="px-3 py-1 text-xs bg-indigo-600/20 text-indigo-600 hover:bg-indigo-600/40 rounded transition-colors"
         >
           Investigate
@@ -188,7 +225,7 @@ export default function DisputesPage() {
                     <tr 
                       key={row.id} 
                       className={`border-b border-gray-100 hover:bg-slate-50/50 transition-colors cursor-pointer ${selectedDispute?.id === row.original.id ? 'bg-indigo-600/10' : ''}`}
-                      onClick={() => setSelectedDispute(row.original)}
+                      onClick={() => handleSelectDispute(row.original)}
                     >
                       {row.getVisibleCells().map(cell => (
                         <td key={cell.id} className="p-4 text-sm">
@@ -218,7 +255,7 @@ export default function DisputesPage() {
                 <AlertTriangle className="w-5 h-5 text-red-500" /> Investigation
               </h2>
               <button 
-                onClick={() => setSelectedDispute(null)}
+                onClick={() => handleSelectDispute(null)}
                 className="text-slate-500 font-medium hover:text-slate-900 font-bold"
               >
                 &times;
@@ -230,12 +267,32 @@ export default function DisputesPage() {
               <div>
                 <h3 className="text-sm font-semibold text-slate-900 font-bold mb-2 uppercase tracking-wide">Context</h3>
                 <div className="space-y-2 text-sm text-slate-500 font-medium">
-                  <p><span className="font-medium text-slate-900 font-bold">Job ID:</span> {selectedDispute.jobId}</p>
+                  {selectedDispute.jobId && <p><span className="font-medium text-slate-900 font-bold">Job ID:</span> {selectedDispute.jobId}</p>}
                   <p><span className="font-medium text-slate-900 font-bold">Raised By:</span> {selectedDispute.raisedById}</p>
-                  <p><span className="font-medium text-slate-900 font-bold">Date:</span> {new Date(selectedDispute.createdAt).toLocaleString()}</p>
+                  <p><span className="font-medium text-slate-900 font-bold">Date Raised:</span> {new Date(selectedDispute.createdAt).toLocaleString()}</p>
+                  {selectedDispute.incidentDate && <p><span className="font-medium text-slate-900 font-bold">Incident Date:</span> {new Date(selectedDispute.incidentDate).toLocaleString()}</p>}
+                  {selectedDispute.complaintType && <p><span className="font-medium text-slate-900 font-bold">Complaint Type:</span> <span className="bg-orange-100 text-orange-700 px-2 py-0.5 rounded text-xs">{selectedDispute.complaintType}</span></p>}
+                  {selectedDispute.requestRefund !== undefined && (
+                    <p><span className="font-medium text-slate-900 font-bold">Requested Refund:</span> {selectedDispute.requestRefund ? <span className="text-red-500 font-bold">YES</span> : 'NO'}</p>
+                  )}
                   <div className="bg-slate-50 p-3 rounded mt-2 border border-gray-100">
                     <p className="text-slate-900 font-bold italic">&quot;{selectedDispute.reason}&quot;</p>
                   </div>
+                  
+                  {loadingDetails ? (
+                    <div className="flex items-center gap-2 mt-4 text-xs text-slate-400"><Loader2 className="w-4 h-4 animate-spin" /> Loading evidence...</div>
+                  ) : evidenceList.length > 0 ? (
+                    <div className="mt-4">
+                      <span className="font-medium text-slate-900 font-bold mb-2 block">Evidence:</span>
+                      <div className="flex gap-2 overflow-x-auto pb-2">
+                        {evidenceList.map((ev, i) => (
+                          <a key={ev.id} href={ev.fileUrl} target="_blank" rel="noreferrer" className="shrink-0 relative group">
+                            <img src={ev.fileUrl} alt="evidence" className="w-16 h-16 object-cover rounded-lg border border-slate-200 group-hover:opacity-80" />
+                          </a>
+                        ))}
+                      </div>
+                    </div>
+                  ) : null}
                 </div>
               </div>
 

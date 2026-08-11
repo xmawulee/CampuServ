@@ -242,12 +242,7 @@ export default function SettingsScreen({ navigation }: any) {
                 icon: 'help-circle-outline',
                 label: 'Help & Support',
                 sub: 'Get assistance',
-                onPress: () => {
-                  Alert.alert(
-                    "Help & Support",
-                    "Email: allenhodoameda@gmail.com\nPhone: +233 20 535 2535"
-                  );
-                }
+                onPress: () => navigation.navigate('HelpAndSupport'),
               },
               {
                 icon: 'log-out-outline',

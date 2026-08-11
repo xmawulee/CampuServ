@@ -34,6 +34,7 @@ interface AuthState {
   sessionExpired: boolean;
   setAuth: (accessToken: string, refreshToken: string, user: User, roleMode?: 'CLIENT' | 'PROVIDER') => Promise<void>;
   updateUser: (userUpdates: Partial<User>) => Promise<void>;
+  updateTokens: (accessToken: string, refreshToken: string) => Promise<void>;
   updateAccessToken: (accessToken: string) => Promise<void>;
   logout: () => Promise<void>;
   clearAuth: () => Promise<void>;
@@ -82,6 +83,12 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         console.warn('[authStore] Failed to save user to SecureStore:', err);
       }
     }
+  },
+  updateTokens: async (accessToken, refreshToken) => {
+    await SecureStore.setItemAsync('accessToken', accessToken);
+    await SecureStore.setItemAsync('refreshToken', refreshToken);
+    set({ accessToken, refreshToken });
+    stompClient.connect(accessToken);
   },
   updateAccessToken: async (accessToken) => {
     await SecureStore.setItemAsync('accessToken', accessToken);
