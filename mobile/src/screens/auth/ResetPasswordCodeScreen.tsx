@@ -92,7 +92,7 @@ export default function ResetPasswordCodeScreen({ route, navigation }: any) {
   }
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top', 'left', 'right', 'bottom']}>
+    <SafeAreaView style={[styles.container, { backgroundColor: 'transparent' }]} edges={['top', 'left', 'right', 'bottom']}>
       <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} />
       <KeyboardAvoidingView
         style={{ flex: 1 }}
@@ -105,8 +105,8 @@ export default function ResetPasswordCodeScreen({ route, navigation }: any) {
           </TouchableOpacity>
 
           <View style={styles.headerWrap}>
-            <View style={[styles.iconWrap, { backgroundColor: isDark ? '#1E2D2D' : '#E6F0F0' }]}>
-              <Ionicons name="mail-unread-outline" size={32} color="#008080" />
+            <View style={[styles.iconWrap, { backgroundColor: '#FFEBE3' }]}>
+              <Ionicons name="mail-unread-outline" size={32} color={colors.primary} />
             </View>
             <Text style={[styles.title, { color: colors.text }]}>Enter Reset Code</Text>
             <Text style={[styles.subtitle, { color: colors.textMuted }]}>
@@ -123,7 +123,7 @@ export default function ResetPasswordCodeScreen({ route, navigation }: any) {
           <View style={styles.form}>
             {error && (
               <View style={styles.errorBanner}>
-                <Ionicons name="alert-circle-outline" size={20} color="#D32F2F" />
+                <Ionicons name="alert-circle-outline" size={20} color={colors.error} />
                 <Text style={styles.errorBannerText}>{error}</Text>
               </View>
             )}
@@ -144,7 +144,7 @@ export default function ResetPasswordCodeScreen({ route, navigation }: any) {
                         styles.otpBox,
                         {
                           backgroundColor: colors.cardBackground,
-                          borderColor: isFocused ? '#008080' : colors.border,
+                          borderColor: isFocused ? colors.primary : colors.border,
                         },
                       ]}
                     >
@@ -175,7 +175,7 @@ export default function ResetPasswordCodeScreen({ route, navigation }: any) {
 
             {loading && (
               <View style={styles.loadingWrap}>
-                <ActivityIndicator size="small" color="#008080" />
+                <ActivityIndicator size="small" color={colors.primary} />
                 <Text style={[styles.loadingText, { color: colors.textMuted }]}>Verifying code...</Text>
               </View>
             )}
@@ -187,7 +187,7 @@ export default function ResetPasswordCodeScreen({ route, navigation }: any) {
                 style={[styles.resendBtn, (countdown > 0 || resending) && { opacity: 0.5 }]}
               >
                 {resending ? (
-                  <ActivityIndicator size="small" color="#008080" />
+                  <ActivityIndicator size="small" color={colors.primary} />
                 ) : (
                   <Text style={styles.resendBtnText}>
                     {countdown > 0 ? `Resend Code (${countdown}s)` : 'Resend Code'}
@@ -263,7 +263,7 @@ const styles = StyleSheet.create({
   errorBanner: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFEBEE',
+    backgroundColor: '#FDECEB',
     padding: 12,
     borderRadius: 8,
     marginBottom: 20,
@@ -322,7 +322,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   resendBtnText: {
-    color: '#008080',
+    color: '#FF7846',
     fontSize: 15,
     fontWeight: '600',
   },

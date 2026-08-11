@@ -92,7 +92,7 @@ export default function DeleteAccountScreen({ navigation }: any) {
 
   if (checking) {
     return (
-      <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
+      <View style={[styles.loadingContainer, { backgroundColor: 'transparent' }]}>
         <ActivityIndicator size="large" color={colors.primary} />
         <Text style={[styles.loadingText, { color: colors.text }]}>Checking account status...</Text>
       </View>

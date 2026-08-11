@@ -276,7 +276,7 @@ export default function CreateEditListingScreen({ navigation, route }: any) {
       </View>
 
       <ScrollView
-        style={{ flex: 1, backgroundColor: colors.background }}
+        style={{ flex: 1, backgroundColor: 'transparent' }}
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >

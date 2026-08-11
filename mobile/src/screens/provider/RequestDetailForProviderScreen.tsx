@@ -144,7 +144,7 @@ export default function RequestDetailForProviderScreen({ navigation, route }: an
 
   if (loading) {
     return (
-      <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
+      <View style={[styles.loadingContainer, { backgroundColor: 'transparent' }]}>
         <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
@@ -152,7 +152,7 @@ export default function RequestDetailForProviderScreen({ navigation, route }: an
 
   if (!request) {
     return (
-      <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
+      <View style={[styles.loadingContainer, { backgroundColor: 'transparent' }]}>
         <Ionicons name="alert-circle-outline" size={48} color={colors.textMuted} />
         <Text style={[styles.emptyTitle, { color: colors.text, marginTop: 12 }]}>Request Not Found</Text>
       </View>
@@ -172,7 +172,7 @@ export default function RequestDetailForProviderScreen({ navigation, route }: an
   return (
     <View style={{ flex: 1 }}>
       {/* Header */}
-      <SafeAreaView edges={['top']} style={{ backgroundColor: colors.background }}>
+      <SafeAreaView edges={['top']} style={{ backgroundColor: 'transparent' }}>
         <View style={[styles.header, { borderBottomColor: colors.border }]}>
           <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()} activeOpacity={0.7}>
             <Ionicons name="arrow-back" size={22} color={colors.text} />

@@ -61,7 +61,7 @@ export default function StudentWalletScreen() {
 
   if (loading) {
     return (
-      <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
+      <View style={[styles.loadingContainer, { backgroundColor: 'transparent' }]}>
         <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );

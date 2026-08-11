@@ -76,7 +76,7 @@ export default function ResetPasswordScreen({ route, navigation }: any) {
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top', 'left', 'right']}>
+    <SafeAreaView style={[styles.container, { backgroundColor: 'transparent' }]} edges={['top', 'left', 'right']}>
       <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} />
       <KeyboardAvoidingView
         style={{ flex: 1 }}
@@ -89,8 +89,8 @@ export default function ResetPasswordScreen({ route, navigation }: any) {
           </TouchableOpacity>
 
           <View style={styles.headerWrap}>
-            <View style={[styles.iconWrap, { backgroundColor: isDark ? '#1E2D2D' : '#E6F0F0' }]}>
-              <Ionicons name="lock-closed-outline" size={32} color="#008080" />
+            <View style={[styles.iconWrap, { backgroundColor: '#FFEBE3' }]}>
+              <Ionicons name="lock-closed-outline" size={32} color={colors.primary} />
             </View>
             <Text style={[styles.title, { color: colors.text }]}>Reset Your Password</Text>
             <Text style={[styles.subtitle, { color: colors.textMuted }]}>
@@ -107,7 +107,7 @@ export default function ResetPasswordScreen({ route, navigation }: any) {
               </Text>
 
               <TouchableOpacity
-                style={[styles.primaryButton, { backgroundColor: '#008080', marginTop: 24 }]}
+                style={[styles.primaryButton, { backgroundColor: '#FF7846', marginTop: 24 }]}
                 onPress={() => navigation.navigate('SignIn')}
               >
                 <Text style={styles.primaryButtonText}>Sign In Now</Text>
@@ -117,7 +117,7 @@ export default function ResetPasswordScreen({ route, navigation }: any) {
             <View style={styles.form}>
               {!resetSessionToken ? (
                 <View style={[styles.errorBanner, { marginBottom: 20 }]}>
-                  <Ionicons name="warning-outline" size={24} color="#D32F2F" />
+                  <Ionicons name="warning-outline" size={24} color={colors.error} />
                   <Text style={styles.errorBannerText}>
                     Missing reset session token. Please request a new code.
                   </Text>
@@ -126,7 +126,7 @@ export default function ResetPasswordScreen({ route, navigation }: any) {
 
               {error ? (
                 <View style={styles.errorBanner}>
-                  <Ionicons name="alert-circle-outline" size={20} color="#D32F2F" />
+                  <Ionicons name="alert-circle-outline" size={20} color={colors.error} />
                   <Text style={styles.errorBannerText}>{error}</Text>
                 </View>
               ) : null}
@@ -139,11 +139,11 @@ export default function ResetPasswordScreen({ route, navigation }: any) {
                     styles.inputContainer,
                     {
                       backgroundColor: colors.cardBackground,
-                      borderColor: passwordFocused ? '#008080' : colors.border,
+                      borderColor: passwordFocused ? colors.primary : colors.border,
                     },
                   ]}
                 >
-                  <Ionicons name="lock-closed-outline" size={20} color={passwordFocused ? '#008080' : colors.textMuted} style={styles.inputIcon} />
+                  <Ionicons name="lock-closed-outline" size={20} color={passwordFocused ? colors.primary : colors.textMuted} style={styles.inputIcon} />
                   <TextInput
                     style={[styles.input, { color: colors.text }]}
                     placeholder="Min 8 chars, letters & numbers"
@@ -192,11 +192,11 @@ export default function ResetPasswordScreen({ route, navigation }: any) {
                     styles.inputContainer,
                     {
                       backgroundColor: colors.cardBackground,
-                      borderColor: confirmFocused ? '#008080' : colors.border,
+                      borderColor: confirmFocused ? colors.primary : colors.border,
                     },
                   ]}
                 >
-                  <Ionicons name="lock-closed-outline" size={20} color={confirmFocused ? '#008080' : colors.textMuted} style={styles.inputIcon} />
+                  <Ionicons name="lock-closed-outline" size={20} color={confirmFocused ? colors.primary : colors.textMuted} style={styles.inputIcon} />
                   <TextInput
                     style={[styles.input, { color: colors.text }]}
                     placeholder="Re-enter new password"
@@ -220,7 +220,7 @@ export default function ResetPasswordScreen({ route, navigation }: any) {
                 style={[
                   styles.primaryButton,
                   {
-                    backgroundColor: '#008080',
+                    backgroundColor: '#FF7846',
                     opacity: loading || !isPasswordValid || !isMatch || !resetSessionToken ? 0.6 : 1,
                   },
                 ]}
@@ -239,7 +239,7 @@ export default function ResetPasswordScreen({ route, navigation }: any) {
                   style={{ marginTop: 20, alignItems: 'center' }}
                   onPress={() => navigation.navigate('ForgotPassword')}
                 >
-                  <Text style={{ color: '#008080', fontWeight: '600', fontSize: 14 }}>
+                  <Text style={{ color: '#FF7846', fontWeight: '600', fontSize: 14 }}>
                     Request a new verification code
                   </Text>
                 </TouchableOpacity>
@@ -300,14 +300,14 @@ const styles = StyleSheet.create({
   errorBanner: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFEBEE',
+    backgroundColor: '#FDECEB',
     padding: 12,
     borderRadius: 8,
     marginBottom: 20,
     gap: 8,
   },
   errorBannerText: {
-    color: '#D32F2F',
+    color: '#C0392B',
     fontSize: 14,
     fontWeight: '500',
     flex: 1,
@@ -349,7 +349,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   matchError: {
-    color: '#D32F2F',
+    color: '#C0392B',
     fontSize: 12,
     marginTop: 4,
     fontWeight: '500',

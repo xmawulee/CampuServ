@@ -201,7 +201,7 @@ export default function ListingDetailScreen({ route, navigation }: any) {
 
   if (loading) {
     return (
-      <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <View style={[styles.container, { backgroundColor: 'transparent' }]}>
         <View style={[styles.topHeader, { backgroundColor: colors.primary, paddingTop: insets.top, height: 56 + insets.top }]}>
           <TouchableOpacity onPress={() => navigation.goBack()} style={[styles.iconBtn, { backgroundColor: 'rgba(255,255,255,0.2)' }]}>
             <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
@@ -216,7 +216,7 @@ export default function ListingDetailScreen({ route, navigation }: any) {
 
   if (!profile) {
     return (
-      <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <View style={[styles.container, { backgroundColor: 'transparent' }]}>
         <View style={[styles.topHeader, { backgroundColor: colors.primary, paddingTop: insets.top, height: 56 + insets.top }]}>
           <TouchableOpacity onPress={() => navigation.goBack()} style={[styles.iconBtn, { backgroundColor: 'rgba(255,255,255,0.2)' }]}>
             <Ionicons name="arrow-back" size={24} color="#FFFFFF" />

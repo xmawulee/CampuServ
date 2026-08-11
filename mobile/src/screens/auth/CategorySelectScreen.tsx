@@ -83,7 +83,7 @@ export default function CategorySelectScreen({ route, navigation }: any) {
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: 'transparent' }]}>
       <ScrollView
         contentContainerStyle={[styles.scrollContent, { paddingBottom: 48 + insets.bottom }]}
         showsVerticalScrollIndicator={false}

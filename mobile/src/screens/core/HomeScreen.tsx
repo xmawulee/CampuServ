@@ -669,7 +669,7 @@ export default function HomeScreen({ route, navigation }: any) {
 
   if (loading || (loadingProviders && !isProvider)) {
     return (
-      <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
+      <View style={[styles.loadingContainer, { backgroundColor: 'transparent' }]}>
         <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );

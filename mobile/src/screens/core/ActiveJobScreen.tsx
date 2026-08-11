@@ -381,7 +381,7 @@ export default function ActiveJobScreen({ navigation, route }: any) {
 
   if (loading) {
     return (
-      <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
+      <View style={[styles.loadingContainer, { backgroundColor: 'transparent' }]}>
         <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
@@ -389,7 +389,7 @@ export default function ActiveJobScreen({ navigation, route }: any) {
 
   if (!job) {
     return (
-      <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
+      <View style={[styles.loadingContainer, { backgroundColor: 'transparent' }]}>
         <Ionicons name="alert-circle-outline" size={48} color={colors.textMuted} />
         <Text style={[styles.emptyTitle, { color: colors.text }]}>Job Not Found</Text>
       </View>

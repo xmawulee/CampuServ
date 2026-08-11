@@ -97,7 +97,7 @@ export const DepositScreen = () => {
 
     return (
         <KeyboardAvoidingView 
-            style={{ flex: 1, backgroundColor: colors.background }} 
+            style={{ flex: 1, backgroundColor: 'transparent' }} 
             behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         >
             <TouchableWithoutFeedback onPress={Keyboard.dismiss}>

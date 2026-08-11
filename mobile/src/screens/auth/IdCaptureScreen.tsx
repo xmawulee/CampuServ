@@ -206,7 +206,7 @@ export default function IdCaptureScreen({ route, navigation }: any) {
   // ── Permission Denied States ──────────────────────────────────────────────
   if (permissionState === 'blocked') {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+      <SafeAreaView style={[styles.container, { backgroundColor: 'transparent' }]}>
         <View style={styles.centeredContent}>
           <View style={[styles.iconCircle, { backgroundColor: colors.errorLight }]}>
             <Ionicons name="camera-outline" size={40} color={colors.error} />
@@ -229,7 +229,7 @@ export default function IdCaptureScreen({ route, navigation }: any) {
 
   if (permissionState === 'denied') {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+      <SafeAreaView style={[styles.container, { backgroundColor: 'transparent' }]}>
         <View style={styles.centeredContent}>
           <View style={[styles.iconCircle, { backgroundColor: colors.warningLight }]}>
             <Ionicons name="camera-outline" size={40} color={colors.warning} />
@@ -260,7 +260,7 @@ export default function IdCaptureScreen({ route, navigation }: any) {
   // ── Instructions State ────────────────────────────────────────────────────
   if (captureState === 'instructions') {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+      <SafeAreaView style={[styles.container, { backgroundColor: 'transparent' }]}>
         <View style={styles.headerBar}>
           <TouchableOpacity
             style={[styles.backButton, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}
@@ -324,7 +324,7 @@ export default function IdCaptureScreen({ route, navigation }: any) {
   // ── Preview State ─────────────────────────────────────────────────────────
   if (captureState === 'preview') {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+      <SafeAreaView style={[styles.container, { backgroundColor: 'transparent' }]}>
         <ScrollView contentContainerStyle={styles.scrollContent}>
           <Text style={[styles.heading, { color: colors.text }]}>Review Your Photo</Text>
           <Text style={[styles.subheading, { color: colors.textMuted }]}>
@@ -372,7 +372,7 @@ export default function IdCaptureScreen({ route, navigation }: any) {
 
   // ── Uploading State ───────────────────────────────────────────────────────
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: 'transparent' }]}>
       <View style={styles.centeredContent}>
         <View style={[styles.iconCircle, { backgroundColor: 'rgba(124, 58, 237, 0.12)' }]}>
           <Ionicons name="cloud-upload-outline" size={40} color="#7C3AED" />

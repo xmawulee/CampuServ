@@ -85,7 +85,7 @@ export default function SettingsScreen({ navigation }: any) {
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.background }}>
+    <View style={{ flex: 1, backgroundColor: 'transparent' }}>
       <ScrollView
         style={[styles.container, { backgroundColor: 'transparent' }]}
         showsVerticalScrollIndicator={false}

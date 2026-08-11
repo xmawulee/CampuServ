@@ -84,7 +84,7 @@ export default function ProviderBioScreen({ navigation, route }: any) {
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: 'transparent' }]}>
       <View style={[styles.headerBar, { justifyContent: 'space-between' }]}>
           <TouchableOpacity
             style={[styles.backButton, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}

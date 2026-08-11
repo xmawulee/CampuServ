@@ -155,7 +155,7 @@ export default function PendingApprovalScreen({ navigation }: any) {
   }, [accessToken, user, navigation, setAuth, updateUser]);
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: 'transparent' }]}>
       {/* Top Navigation Bar with Context-Aware Back Action */}
       <View style={styles.headerBar}>
         <TouchableOpacity

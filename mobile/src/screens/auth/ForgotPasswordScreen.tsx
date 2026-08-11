@@ -51,7 +51,7 @@ export default function ForgotPasswordScreen({ navigation }: any) {
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top', 'left', 'right']}>
+    <SafeAreaView style={[styles.container, { backgroundColor: 'transparent' }]} edges={['top', 'left', 'right']}>
       <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} />
       <KeyboardAvoidingView
         style={{ flex: 1 }}
@@ -65,8 +65,8 @@ export default function ForgotPasswordScreen({ navigation }: any) {
           </TouchableOpacity>
 
           <View style={styles.headerWrap}>
-            <View style={[styles.iconWrap, { backgroundColor: isDark ? '#1E2D2D' : '#E6F0F0' }]}>
-              <Ionicons name="key-outline" size={32} color="#008080" />
+            <View style={[styles.iconWrap, { backgroundColor: '#FFEBE3' }]}>
+              <Ionicons name="key-outline" size={32} color={colors.primary} />
             </View>
             <Text style={[styles.title, { color: colors.text }]}>Forgot Password?</Text>
             <Text style={[styles.subtitle, { color: colors.textMuted }]}>
@@ -77,7 +77,7 @@ export default function ForgotPasswordScreen({ navigation }: any) {
           <View style={styles.form}>
               {error && (
                 <View style={styles.errorBanner}>
-                  <Ionicons name="alert-circle-outline" size={20} color="#D32F2F" />
+                  <Ionicons name="alert-circle-outline" size={20} color={colors.error} />
                   <Text style={styles.errorBannerText}>{error}</Text>
                 </View>
               )}
@@ -89,11 +89,11 @@ export default function ForgotPasswordScreen({ navigation }: any) {
                     styles.inputContainer,
                     {
                       backgroundColor: colors.cardBackground,
-                      borderColor: emailFocused ? '#008080' : colors.border,
+                      borderColor: emailFocused ? colors.primary : colors.border,
                     },
                   ]}
                 >
-                  <Ionicons name="mail-outline" size={20} color={emailFocused ? '#008080' : colors.textMuted} style={styles.inputIcon} />
+                  <Ionicons name="mail-outline" size={20} color={emailFocused ? colors.primary : colors.textMuted} style={styles.inputIcon} />
                   <TextInput
                     style={[styles.input, { color: colors.text }]}
                     placeholder="e.g. kwame@st.knust.edu.gh"
@@ -110,7 +110,7 @@ export default function ForgotPasswordScreen({ navigation }: any) {
               </View>
 
               <TouchableOpacity
-                style={[styles.primaryButton, { backgroundColor: '#008080', opacity: loading ? 0.7 : 1 }]}
+                style={[styles.primaryButton, { backgroundColor: '#FF7846', opacity: loading ? 0.7 : 1 }]}
                 onPress={handleSubmit}
                 disabled={loading}
               >
@@ -175,14 +175,14 @@ const styles = StyleSheet.create({
   errorBanner: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFEBEE',
+    backgroundColor: '#FDECEB',
     padding: 12,
     borderRadius: 8,
     marginBottom: 16,
     gap: 8,
   },
   errorBannerText: {
-    color: '#D32F2F',
+    color: '#C0392B',
     fontSize: 14,
     fontWeight: '500',
     flex: 1,

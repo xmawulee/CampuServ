@@ -210,7 +210,7 @@ export default function AuthScreen({ navigation }: any) {
           
           {/* Logo Area */}
           <View style={styles.logoArea}>
-            <Image source={logoImage} style={[styles.logo, { tintColor: colors.primary }]} resizeMode="contain" />
+            <Image source={logoImage} style={[styles.logo, { tintColor: '#FF7846' }]} resizeMode="contain" />
             <Text style={styles.tagline}>Your campus. Your services.</Text>
           </View>
 
@@ -502,15 +502,15 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   errorBanner: {
-    backgroundColor: '#FFEBEE',
+    backgroundColor: '#FDECEB',
     borderWidth: 1,
-    borderColor: '#D32F2F',
+    borderColor: '#C0392B',
     padding: 12,
     borderRadius: 8,
     marginBottom: 16,
   },
   errorBannerText: {
-    color: '#D32F2F',
+    color: '#C0392B',
     fontSize: 14,
     textAlign: 'center',
   },
@@ -554,7 +554,7 @@ const styles = StyleSheet.create({
     color: '#1E293B',
   },
   inputError: {
-    borderColor: '#D32F2F',
+    borderColor: '#C0392B',
   },
   passwordContainer: {
     position: 'relative',
@@ -570,7 +570,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   errorText: {
-    color: '#D32F2F',
+    color: '#C0392B',
     fontSize: 12,
     marginTop: 4,
   },

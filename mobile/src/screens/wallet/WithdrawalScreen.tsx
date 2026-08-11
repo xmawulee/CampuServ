@@ -104,7 +104,7 @@ export const WithdrawalScreen = () => {
     );
 
     return (
-        <View style={[styles.container, { backgroundColor: colors.background }]}>
+        <View style={[styles.container, { backgroundColor: 'transparent' }]}>
             <Text style={[styles.title, { color: colors.text }]}>Withdraw Funds</Text>
 
             <View style={styles.amountContainer}>

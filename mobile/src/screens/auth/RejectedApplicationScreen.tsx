@@ -82,7 +82,7 @@ export default function RejectedApplicationScreen({ navigation }: any) {
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: 'transparent' }]}>
       <ScrollView contentContainerStyle={styles.content}>
         {/* Icon */}
         <View style={[styles.iconCircle, { backgroundColor: colors.errorLight }]}>

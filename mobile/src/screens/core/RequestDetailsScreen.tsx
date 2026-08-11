@@ -259,7 +259,7 @@ export default function RequestDetailsScreen({ route, navigation }: any) {
 
   if (loading || !request) {
     return (
-      <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
+      <View style={[styles.loadingContainer, { backgroundColor: 'transparent' }]}>
         <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
@@ -292,7 +292,7 @@ export default function RequestDetailsScreen({ route, navigation }: any) {
       >
       
       {/* ── Hero Card ── */}
-      <View style={[styles.heroCard, { backgroundColor: colors.primary }]}>
+      <View style={[styles.heroCard, { backgroundColor: '#FF7846' }]}>
         <View style={styles.heroBadge}>
           <Text style={styles.heroBadgeText}>Category: {request.category?.name || 'Service'}</Text>
         </View>
@@ -488,7 +488,7 @@ export default function RequestDetailsScreen({ route, navigation }: any) {
           {job && (
             <View style={styles.navigationActions}>
               <TouchableOpacity
-                style={[styles.navigationBtn, { backgroundColor: colors.primary, shadowColor: colors.primary }]}
+                style={[styles.navigationBtn, { backgroundColor: '#FF7846', shadowColor: '#FF7846' }]}
                 onPress={() => {
                   navigation.navigate("ActiveJob", {
                     jobId: job.id,
@@ -508,7 +508,7 @@ export default function RequestDetailsScreen({ route, navigation }: any) {
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: colors.text, marginBottom: 16 }]}>
             Provider Bids
-            <Text style={[styles.sectionCount, { color: colors.primary }]}> ({request.offers?.length || 0})</Text>
+            <Text style={[styles.sectionCount, { color: '#FF7846' }]}> ({request.offers?.length || 0})</Text>
           </Text>
 
           {request.targetProviderId && (request.offers || []).length === 0 ? (
@@ -537,7 +537,7 @@ export default function RequestDetailsScreen({ route, navigation }: any) {
               <View key={offer.id} style={[styles.offerCard, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
                 <View style={styles.offerTop}>
                   <View style={styles.offerProviderInfo}>
-                    <View style={[styles.offerAvatar, { backgroundColor: colors.primaryLight }]}>
+                    <View style={[styles.offerAvatar, { backgroundColor: '#FFEBE3' }]}>
                       {offer.providerAvatar ? (
                         <Image source={{ uri: offer.providerAvatar }} style={{ width: '100%', height: '100%', borderRadius: 16 }} />
                       ) : (
@@ -557,7 +557,7 @@ export default function RequestDetailsScreen({ route, navigation }: any) {
                       <Text style={[styles.offerEta, { color: colors.textMuted }]}>ETA: {offer.eta}</Text>
                     </View>
                   </View>
-                  <Text style={[styles.offerPrice, { color: colors.primary }]}>{offer.price} GHS</Text>
+                  <Text style={[styles.offerPrice, { color: '#FF7846' }]}>{offer.price} GHS</Text>
                 </View>
 
                 {offer.message ? (
@@ -586,7 +586,7 @@ export default function RequestDetailsScreen({ route, navigation }: any) {
                       <Text style={[styles.declineBtnText, { color: colors.text }]}>Decline</Text>
                     </TouchableOpacity>
                     <TouchableOpacity
-                      style={[styles.acceptBtn, { backgroundColor: colors.primary, shadowColor: colors.primary }]}
+                      style={[styles.acceptBtn, { backgroundColor: '#FF7846', shadowColor: '#FF7846' }]}
                       onPress={() => handleAcceptOffer(offer.id)}
                     >
                       <Text style={styles.acceptBtnText}>Accept Bid</Text>
@@ -601,7 +601,7 @@ export default function RequestDetailsScreen({ route, navigation }: any) {
                   </View>
                 )}
                 {offer.status === 'DECLINED' && (
-                  <Text style={[styles.declinedText, { color: colors.error }]}>✕ Declined</Text>
+                  <Text style={[styles.declinedText, { color: '#C0392B' }]}>✕ Declined</Text>
                 )}
               </View>
             ))
@@ -667,7 +667,7 @@ export default function RequestDetailsScreen({ route, navigation }: any) {
             />
 
             <TouchableOpacity
-              style={[styles.submitBidBtn, { backgroundColor: colors.primary, shadowColor: colors.primary }, bidding && { opacity: 0.6 }]}
+              style={[styles.submitBidBtn, { backgroundColor: '#FF7846', shadowColor: '#FF7846' }, bidding && { opacity: 0.6 }]}
               onPress={handleBidSubmit}
               disabled={bidding}
             >
@@ -691,7 +691,7 @@ export default function RequestDetailsScreen({ route, navigation }: any) {
           <Text style={[
             styles.bidStatusValue,
             userOffer.status === 'ACCEPTED' ? { color: '#10B981' } :
-              userOffer.status === 'DECLINED' ? { color: colors.error } : { color: '#F59E0B' }
+              userOffer.status === 'DECLINED' ? { color: '#C0392B' } : { color: '#F59E0B' }
           ]}>
             {userOffer.status}
           </Text>
@@ -700,7 +700,7 @@ export default function RequestDetailsScreen({ route, navigation }: any) {
           </Text>
           {userOffer.status === 'ACCEPTED' && (
             <TouchableOpacity
-              style={[styles.chatBtn, { backgroundColor: colors.primary, shadowColor: colors.primary }]}
+              style={[styles.chatBtn, { backgroundColor: '#FF7846', shadowColor: '#FF7846' }]}
               onPress={() => navigation.navigate('ChatList')}
             >
               <Ionicons name="chatbubbles" size={18} color="#FFF" style={{ marginRight: 8 }} />
@@ -714,7 +714,7 @@ export default function RequestDetailsScreen({ route, navigation }: any) {
       {isMyRequest && request.status === 'OPEN' && (
         <View style={styles.cancelSection}>
           {cancellingRequest ? (
-            <ActivityIndicator size="small" color="#D32F2F" />
+            <ActivityIndicator size="small" color={colors.error} />
           ) : (
             <TouchableOpacity
               style={styles.cancelRequestBtn}
@@ -762,7 +762,7 @@ export default function RequestDetailsScreen({ route, navigation }: any) {
               <View style={[styles.sheetDivider, { backgroundColor: colors.border }]} />
               <View style={styles.sheetRow}>
                 <Text style={[styles.sheetTotalLabel, { color: colors.text }]}>You Pay</Text>
-                <Text style={[styles.sheetTotalValue, { color: colors.primary }]}>{offerPrice.toFixed(2)} GHS</Text>
+                <Text style={[styles.sheetTotalValue, { color: '#FF7846' }]}>{offerPrice.toFixed(2)} GHS</Text>
               </View>
             </View>
 
@@ -775,7 +775,7 @@ export default function RequestDetailsScreen({ route, navigation }: any) {
 
             <View style={[styles.escrowInfo, { backgroundColor: 'rgba(21, 101, 192, 0.1)' }]}>
               <Ionicons name="lock-closed" size={24} color={colors.primary} />
-              <Text style={[styles.escrowInfoText, { color: colors.primary }]}>
+              <Text style={[styles.escrowInfoText, { color: '#FF7846' }]}>
                 Funds will be securely locked in escrow. They are only released to the provider once you confirm the job is complete.
               </Text>
             </View>
@@ -784,7 +784,7 @@ export default function RequestDetailsScreen({ route, navigation }: any) {
               <TouchableOpacity style={[styles.sheetBtn, styles.sheetBtnCancel, { borderColor: colors.border }]} onPress={() => setAcceptDialogVisible(false)}>
                 <Text style={[styles.sheetBtnCancelText, { color: colors.text }]} numberOfLines={1}>Cancel</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={[styles.sheetBtn, styles.sheetBtnConfirm, { backgroundColor: colors.primary, shadowColor: colors.primary }]} onPress={confirmAcceptOffer}>
+              <TouchableOpacity style={[styles.sheetBtn, styles.sheetBtnConfirm, { backgroundColor: '#FF7846', shadowColor: '#FF7846' }]} onPress={confirmAcceptOffer}>
                 <Text style={styles.sheetBtnConfirmText} numberOfLines={1} adjustsFontSizeToFit>Accept & Lock Funds</Text>
               </TouchableOpacity>
             </View>
