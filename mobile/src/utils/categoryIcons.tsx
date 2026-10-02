@@ -12,7 +12,6 @@ export const CATEGORY_STYLES: Record<string, { icon: any; bg: string; iconColor:
   'Printing': { icon: 'text-box-outline', bg: '#EEF2F6', iconColor: '#475569' },
   'Repairs': { icon: 'hammer-wrench', bg: '#E6F4FF', iconColor: '#1E88E5' },
   'Tech Repairs': { icon: 'monitor-cellphone', bg: '#E3F2FD', iconColor: '#1E88E5' },
-  'Tech Repair': { icon: 'monitor-cellphone', bg: '#E3F2FD', iconColor: '#1E88E5' },
   'Delivery': { icon: 'truck-delivery', bg: '#FEE6E6', iconColor: '#E53935' },
   'Beauty': { icon: 'face-woman-shimmer', bg: '#FCE4EC', iconColor: '#D81B60' },
   'Hair & Beauty': { icon: 'face-woman-shimmer', bg: '#FCE4EC', iconColor: '#D81B60' },

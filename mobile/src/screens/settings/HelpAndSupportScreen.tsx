@@ -170,8 +170,8 @@ export default function HelpAndSupportScreen() {
 
                 {/* Request Refund */}
                 <View style={[styles.switchRow, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
-                    <View style={[styles.menuIconWrap, { backgroundColor: colors.primaryLight, marginRight: 12 }]}>
-                        <Ionicons name="cash-outline" size={18} color={colors.primary} />
+                    <View style={[styles.menuIconWrap, { backgroundColor: colors.primary, marginRight: 12 }]}>
+                        <Ionicons name="cash-outline" size={18} color="#FFFFFF" />
                     </View>
                     <View style={{ flex: 1, paddingRight: 16 }}>
                         <Text style={[styles.label, { color: colors.text, marginBottom: 2 }]}>Request Refund</Text>
@@ -180,9 +180,9 @@ export default function HelpAndSupportScreen() {
                     <Switch
                         value={requestRefund}
                         onValueChange={setRequestRefund}
-                        trackColor={{ false: colors.primary, true: colors.primary }}
+                        trackColor={{ false: isDark ? '#374151' : '#E5E7EB', true: colors.primary }}
                         thumbColor="#FFFFFF"
-                        ios_backgroundColor={colors.primary}
+                        ios_backgroundColor={isDark ? '#374151' : '#E5E7EB'}
                     />
                 </View>
 

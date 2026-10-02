@@ -119,8 +119,12 @@ FROM service_categories
 WHERE name = 'Room Cleaning'
 LIMIT 1;
 
+-- Assign Category to Provider 2 (Tech Repairs)
 INSERT INTO provider_categories (provider_id, category_id, status)
-SELECT 'usr-provider-techrepair', id, 'VERIFIED'
-FROM service_categories
-WHERE name = 'Tech Repair'
-LIMIT 1;
+SELECT 
+    'usr-provider-techrepair', 
+    id, 
+    'VERIFIED'
+FROM service_categories 
+WHERE name = 'Tech Repairs'
+ON CONFLICT (provider_id, category_id) DO NOTHING;

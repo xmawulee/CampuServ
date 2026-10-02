@@ -161,7 +161,7 @@ export default function SignInScreen({ route, navigation }: any) {
           // Check if this is a pending-verification provider vs a general restriction
           const isPending = msg && (msg.toLowerCase().includes('pending') || msg.toLowerCase().includes('under review') || msg.toLowerCase().includes('verification'));
           if (isPending) {
-            setBannerError('Your provider application is still under review — we\'ll notify you when a decision is made. Note: this is a provider-only account, so it won\'t have student access even after approval.');
+            setBannerError('Your provider application is still under review — we\'ll notify you when a decision is made.');
           } else {
             setBannerError(msg || 'Account is restricted. Please contact support.');
           }

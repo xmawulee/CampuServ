@@ -17,13 +17,13 @@ export default function AnimatedSplashScreen({ onAnimationComplete, isAppReady, 
   
   // Animation values
   const scaleAnim = useRef(new Animated.Value(0.7)).current;
-  const opacityAnim = useRef(new Animated.Value(0)).current;
-  const appOpacityAnim = useRef(new Animated.Value(0)).current;
+  const logoOpacityAnim = useRef(new Animated.Value(0)).current;
+  const overlayOpacityAnim = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
     // 1. Initial fade in and subtle scale up (breathing/booting effect)
     Animated.parallel([
-      Animated.timing(opacityAnim, {
+      Animated.timing(logoOpacityAnim, {
         toValue: 1,
         duration: 800,
         easing: Easing.out(Easing.cubic),
@@ -39,53 +39,61 @@ export default function AnimatedSplashScreen({ onAnimationComplete, isAppReady, 
   }, []);
 
   useEffect(() => {
-    // 2. Once app is ready (fonts/auth loaded), crossfade from splash to app
+    // 2. Once app is ready, fade out the entire splash overlay smoothly
     if (isAppReady) {
-      SplashScreen.hideAsync().then(() => {
+      SplashScreen.hideAsync().catch(() => {}).finally(() => {
+        // Fallback to ensure it always completes even if animations hang
+        const fallbackTimer = setTimeout(() => {
+          setIsAnimationComplete(true);
+          onAnimationComplete();
+        }, 3000);
+
+        // Keep the splash screen visible for an extra 1.5 seconds
         setTimeout(() => {
           Animated.parallel([
-            Animated.timing(opacityAnim, {
+            Animated.timing(logoOpacityAnim, {
               toValue: 0,
-              duration: 600,
-              easing: Easing.in(Easing.cubic),
+              duration: 500,
+              easing: Easing.inOut(Easing.cubic),
+              useNativeDriver: true,
+            }),
+            Animated.timing(overlayOpacityAnim, {
+              toValue: 0,
+              duration: 700,
+              easing: Easing.inOut(Easing.cubic),
               useNativeDriver: true,
             }),
             Animated.timing(scaleAnim, {
-              toValue: 1.2,
-              duration: 600,
-              easing: Easing.in(Easing.cubic),
-              useNativeDriver: true,
-            }),
-            Animated.timing(appOpacityAnim, {
-              toValue: 1,
-              duration: 800,
-              easing: Easing.out(Easing.cubic),
+              toValue: 1.05, // Gentle push back, not aggressive 1.2
+              duration: 500,
+              easing: Easing.inOut(Easing.cubic),
               useNativeDriver: true,
             }),
           ]).start(() => {
+            clearTimeout(fallbackTimer);
             setIsAnimationComplete(true);
             onAnimationComplete();
           });
-        }, 400);
+        }, 1500);
       });
     }
   }, [isAppReady]);
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <Animated.View style={[styles.appContainer, { opacity: appOpacityAnim }]}>
+      <View style={styles.appContainer}>
         {children}
-      </Animated.View>
+      </View>
 
       {!isAnimationComplete && (
         <Animated.View
           style={[
             styles.splashOverlay,
-            { backgroundColor: isDark ? '#111827' : '#ffffff' },
+            { backgroundColor: isDark ? '#111827' : '#ffffff', opacity: overlayOpacityAnim },
           ]}
           pointerEvents="none"
         >
-          <Animated.View style={{ alignItems: 'center', opacity: opacityAnim, transform: [{ scale: scaleAnim }] }}>
+          <Animated.View style={{ alignItems: 'center', opacity: logoOpacityAnim, transform: [{ scale: scaleAnim }] }}>
             <Animated.Image
               source={require('../../assets/logo-transparent.png')}
               style={styles.logo}
@@ -105,10 +113,17 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   appContainer: { flex: 1 },
   splashOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    left: 0,
+    right: 0,
+    width: '100%',
+    height: '100%',
     alignItems: 'center',
     justifyContent: 'center',
     zIndex: 9999,
+    elevation: 9999,
   },
   logo: {
     width: width * 0.5,

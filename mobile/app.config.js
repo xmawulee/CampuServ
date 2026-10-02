@@ -43,7 +43,11 @@ export default {
       wsBaseUrl: process.env.WS_BASE_URL,
     },
     plugins: [
-      "@react-native-community/datetimepicker"
+      "@react-native-community/datetimepicker",
+      "expo-font",
+      "expo-secure-store",
+      "expo-splash-screen",
+      "expo-status-bar"
     ]
   }
 };
