@@ -92,7 +92,7 @@ export default function RoleSelectScreen({ navigation, route }: any) {
               <View style={styles.cardTextBlock}>
                 <Text style={[styles.cardTitle, { color: '#FFF' }]}>I provide services</Text>
                 <Text style={[styles.cardSubtitle, { color: '#FFFFFF' }]}>Offer your skills, accept jobs, earn money, and help fellow students.</Text>
-                <Text style={[styles.cardScopeNote, { color: 'rgba(255,255,255,0.9)', marginTop: 6 }]}>Provider-only account — no student access. Need both? Use a separate email.</Text>
+
               </View>
               <View style={[styles.cardArrow, { backgroundColor: 'rgba(255,255,255,0.15)' }]}>
                 <Ionicons name="arrow-forward" size={16} color="#FFF" />
