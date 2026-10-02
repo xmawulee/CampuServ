@@ -9,7 +9,6 @@ INSERT INTO service_categories (id, name, description, icon_key, active) VALUES
 (gen_random_uuid()::varchar, 'Laundry', 'Washing, drying, and ironing services', 'shirt', TRUE),
 (gen_random_uuid()::varchar, 'Tutoring', 'Academic help and coaching', 'book-open', TRUE),
 (gen_random_uuid()::varchar, 'Errands', 'Running campus errands', 'shopping-bag', TRUE),
-(gen_random_uuid()::varchar, 'Tech Repair', 'Laptop and phone repairs', 'wrench', TRUE),
 (gen_random_uuid()::varchar, 'Room Cleaning', 'Dorm and hostel cleaning', 'sparkles', TRUE),
 (gen_random_uuid()::varchar, 'Printing', 'Document printing and delivery', 'printer', TRUE),
 (gen_random_uuid()::varchar, 'Delivery', 'Food and package delivery', 'truck', TRUE),

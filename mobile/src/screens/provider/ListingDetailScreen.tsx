@@ -338,10 +338,7 @@ export default function ListingDetailScreen({ route, navigation }: any) {
         {/* Listing Title & Price Treatment Card */}
         <View style={[styles.mainInfoCard, { backgroundColor: colors.cardBackground, borderBottomColor: colors.border }]}>
           <View style={styles.verifiedRow}>
-            <View style={styles.verifiedBadge}>
-              <Ionicons name="checkmark-circle" size={16} color={colors.success} />
-              <Text style={[styles.verifiedText, { color: colors.success }]}>Verified Pro</Text>
-            </View>
+
             {!!profile.serviceCategory && (
               <View style={[styles.verifiedBadge, { backgroundColor: 'rgba(255, 120, 70, 0.08)', borderColor: 'rgba(255, 120, 70, 0.25)', borderWidth: 1.5 }]}>
                 <Ionicons name="pricetag-outline" size={12} color={colors.primary} style={{ marginRight: 4 }} />

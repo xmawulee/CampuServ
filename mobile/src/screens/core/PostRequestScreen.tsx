@@ -37,7 +37,7 @@ const FALLBACK_CATEGORIES = [
   { id: 'cat-2', name: 'Cleaning', icon: 'sparkles-outline', bg: '#E8F8F0', iconColor: '#27AE60' },
   { id: 'cat-3', name: 'Tutoring', icon: 'school-outline', bg: '#EEF0FF', iconColor: '#5C6BC0' },
   { id: 'cat-4', name: 'Errands', icon: 'bicycle-outline', bg: '#FFF9E6', iconColor: '#F39C12' },
-  { id: 'cat-6', name: 'Tech Repair', icon: 'construct-outline', bg: '#E6F4FF', iconColor: '#1E88E5' },
+  { id: 'cat-6', name: 'Tech Repairs', icon: 'construct-outline', bg: '#E6F4FF', iconColor: '#1E88E5' },
 ];
 
 const BUDGET_SUGGESTIONS = [

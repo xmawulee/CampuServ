@@ -341,13 +341,7 @@ export default function ProviderSignUpScreen({ navigation }: any) {
               </Text>
             </View>
 
-            {/* Provider-only scope reminder — consistent with RoleSelectScreen */}
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 12, paddingHorizontal: 4 }}>
-              <Ionicons name="information-circle-outline" size={14} color={colors.textMuted} />
-              <Text style={{ flex: 1, fontSize: 12, color: colors.textMuted, lineHeight: 17, fontStyle: 'italic' }}>
-                Provider-only account — no student access on this account. Need both? Use a separate email for a student account.
-              </Text>
-            </View>
+
 
             {/* Create Account Button */}
             <TouchableOpacity
